@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Куки: document.cookie, Path и HttpOnly · HTTP · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Как устроены cookies: Path, HttpOnly, Secure, Max-Age, SameSite. Живой тренажёр document.cookie и задания для requests.Session и Selenium." />
+  <script src="../assets/js/cookies.js" defer></script>
+</head>
+<body data-page="http/cookies" data-module="http">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Куки: что браузер молча возвращает серверу</h1>
+  <p class="lede">Одна кука объясняет, почему «в браузере каталог работает, а в скрипте — страница входа». Разбираем атрибуты, пробуем их руками и забираем то же самое из Python.</p>
+  <p class="warn"><strong>Нужен локальный сервер.</strong> На <code>file://</code> браузер не даёт читать и писать <code>document.cookie</code>: тренажёр ниже покажет предупреждение. Запустите <code>node tools/build.mjs</code>, затем <code>node tools/serve.mjs</code> и откройте <code>http://localhost:8000/http/cookies.html</code>.</p>
+
+  <h2 id="anatomiya">Анатомия одной куки</h2>
+  <pre data-lang="http"><code>Set-Cookie: session_id=demo-session-42; Path=/; Max-Age=3600
+Set-Cookie: cart=wagon-7; Path=/http; HttpOnly
+Set-Cookie: theme=dark; Path=/; Max-Age=600; SameSite=Lax
+
+GET /http/cookies HTTP/1.1
+Cookie: session_id=demo-session-42; theme=dark</code></pre>
+  <p>Кука <code>cart</code> в ответ не попала: она живёт в области <code>/http</code> и она <code>HttpOnly</code>. Браузер приложит её к запросу автоматически, но JavaScript её не увидит никогда.</p>
+
+  <h2 id="atributy">Атрибуты: что ломает парсер</h2>
+  <table class="table--striped cookie-attrs">
+    <caption>Семь атрибутов и их последствия для сбора данных</caption>
+    <thead>
+      <tr><th>Атрибут</th><th>Что делает</th><th>Последствие для парсера</th></tr>
+    </thead>
+    <tbody>
+      <tr data-attr="name-value"><td>имя и значение</td><td>единственная обязательная пара <code>name=value</code></td><td>значение без пробелов; кириллицу кодируют <code>encodeURIComponent</code></td></tr>
+      <tr data-attr="path"><td><code>Path=/http</code></td><td>область: кука улетает только на этот префикс путей</td><td>на <code>/basics/hello.html</code> её не будет — кажется, что «кука пропала»</td></tr>
+      <tr data-attr="domain"><td><code>Domain=.example.com</code></td><td>область по домену, включая поддомены</td><td>поддомены шарят сессию: проверьте, не та ли кука вам нужна</td></tr>
+      <tr data-attr="httponly"><td><code>HttpOnly</code></td><td>запрет читать куку из JavaScript</td><td><code>document.cookie</code> её не вернёт; достают через <code>get_cookies()</code> в Selenium</td></tr>
+      <tr data-attr="secure"><td><code>Secure</code></td><td>только по HTTPS</td><td>на <code>localhost</code> без HTTPS кука не установится</td></tr>
+      <tr data-attr="max-age"><td><code>Max-Age=600</code></td><td>время жизни в секундах, приоритетнее <code>Expires</code></td><td>сеансовые куки без срока живут до закрытия браузера</td></tr>
+      <tr data-attr="samesite"><td><code>SameSite=Lax</code></td><td>ограничение отправки при внешних переходах</td><td>кука может «исчезнуть» при запросе с другого домена</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="demo">Демо-набор этого тренажёра</h2>
+  <p class="muted">Кнопка ниже записывает ровно эти пять значений. Таблица статичная — её можно парсить как обычный HTML, в отличие от таблицы куки справа внизу.</p>
+  <table class="table--striped demo-cookies">
+    <thead>
+      <tr><th>Имя</th><th>Значение</th><th>Path</th><th>Жизнь</th><th>Назначение</th></tr>
+    </thead>
+    <tbody>
+      <tr data-path="/"><td class="mono" data-name="session_id">session_id</td><td class="mono">demo-session-42</td><td class="mono">/</td><td>1 час</td><td>идентификатор визита</td></tr>
+      <tr data-path="/"><td class="mono" data-name="cart">cart</td><td class="mono">wagon-7</td><td class="mono">/</td><td>неделя</td><td>состав корзины</td></tr>
+      <tr data-path="/"><td class="mono" data-name="theme">theme</td><td class="mono">dark</td><td class="mono">/</td><td>10 минут</td><td>тема интерфейса</td></tr>
+      <tr data-path="/"><td class="mono" data-name="consent">consent</td><td class="mono">granted</td><td class="mono">/</td><td>месяц</td><td>согласие на обработку</td></tr>
+      <tr data-path="/http"><td class="mono" data-name="referral_code">referral_code</td><td class="mono">TICHAJA-2026</td><td class="mono" data-current-dir>/http</td><td>1 час</td><td>партнёрская метка, видна только внутри этого каталога</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="vidzhet">Тренажёр: почитать, выдать, удалить</h2>
+  <div class="cookie-widget" data-widget="cookies">
+    <p class="field-row">
+      <button class="btn" type="button" data-cookie-op="issue">Выдать набор демо-куки</button>
+      <button class="btn ghost" type="button" data-cookie-op="read">Прочитать document.cookie</button>
+      <button class="btn ghost" type="button" data-cookie-op="clear">Удалить всё видимое</button>
+    </p>
+    <p class="status" id="cookie-status" role="status" aria-live="polite" data-role="cookie-status">Ожидание действия. Куки в таблице: <span class="mono" data-role="cookie-count">0</span>.</p>
+    <table class="table--striped" id="cookie-table">
+      <caption>Живое содержимое <code>document.cookie</code></caption>
+      <thead>
+        <tr><th>Имя</th><th>Значение</th><th>Path</th><th>Доступна из JS</th><th>Комментарий</th><th>Действие</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <p class="hint">Скрипт <code>../assets/js/cookies.js</code> перерисовывает <code>tbody</code> после каждого нажатия. В исходном HTML тела таблицы нет ни на одной строки: типичная картина для страницы, которую «дорисовывает JavaScript».</p>
+  </div>
+
+  <h2 id="requests">То же самое в requests</h2>
+  <pre data-lang="python"><code>import requests
+
+session = requests.Session()          # куки хранятся внутри сессии, а не в воздухе
+session.headers["User-Agent"] = "TikhayaParser/1.0 (+contact@example.com)"
+
+first = session.get("http://localhost:8000/http/cookies", timeout=10)
+print(dict(first.cookies))            # Set-Cookie уже разобраны в CookieJar
+print(session.cookies.get("session_id"))
+print(session.cookies.get("cart", domain="localhost", path="/http"))
+
+second = session.get("http://localhost:8000/http/echo", timeout=10)
+print(second.json()["cookies"])       # то же, что браузер положил в заголовок Cookie
+
+# Set-Cookie в ответе бывает несколько: dict(r.headers) оставит только последний.
+print(second.raw.headers.getlist("Set-Cookie"))   # полный список через urllib3</code></pre>
+  <p class="tip">Одиночный <code>requests.get()</code> не сохраняет куки: каждая строка таблицы «исчезает» между запросами. Рабочая привычка — один <code>Session()</code> на весь краулер.</p>
+
+  <h2 id="selenium">То же самое в Selenium</h2>
+  <pre data-lang="python"><code>from selenium import webdriver
+from selenium.webdriver.common.by import By
+
+driver = webdriver.Chrome()
+driver.get("http://localhost:8000/http/cookies.html")
+
+js_cookies = driver.execute_script("return document.cookie")   # без HttpOnly
+all_cookies = driver.get_cookies()                             # все, включая HttpOnly
+for c in all_cookies:
+    print(c["name"], c["value"], c["path"], c.get("httpOnly"), c.get("expiry"))
+
+cart = driver.get_cookie("cart")               # одна кука по имени
+driver.delete_cookie("theme")                  # убрать одну
+driver.delete_all_cookies()                    # и всё сразу
+driver.quit()</code></pre>
+  <p class="warn">Разница <code>document.cookie</code> и <code>get_cookies()</code> — ровно в <code>HttpOnly</code>. Если задача «достать корзину», а в <code>document.cookie</code> её нет — это не ошибка кода, это запрет на чтение из скрипта.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

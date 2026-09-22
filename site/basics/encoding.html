@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Кодировки и «кракозябры» · Основы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="UTF-8 и windows-1251, response.text против response.content, html.parser и lxml: почему вместо «Тихой бухты» приходит «Ð¢Ð¸Ñ…Ð°Ñ» и как это починить." />
+</head>
+<body data-page="basics/encoding" data-module="basics">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Кодировки и «кракозябры»</h1>
+  <p class="lede">Битый текст — не магия и не «сломанный сайт». Это одна лишняя или одна пропущенная попытка интерпретировать байты. Разбираем три места, где ошибка возникает, и лечим каждое.</p>
+
+  <h2 id="urovni">Три уровня, на которых можно ошибиться</h2>
+  <ol class="levels">
+    <li><strong>Заголовок сервера.</strong> <code>Content-Type: text/html; charset=windows-1251</code> — самый надёжный источник: requests подставляет его в <code>r.encoding</code>.</li>
+    <li><strong>Мета внутри документа.</strong> <code>&lt;meta charset="utf-8"&gt;</code> или старый <code>&lt;meta http-equiv="Content-Type" content="text/html; charset=cp1251"&gt;</code>. Сервер мог соврать, а файл — нет.</li>
+    <li><strong>Разбор и вывод.</strong> Парсер получил строку, а вы печатаете её в консоль Windows с кодировкой <code>cp866</code> — текст «портится» уже на экране, данные целы.</li>
+  </ol>
+
+  <h2 id="simptomy">Таблица симптомов</h2>
+  <p class="muted">Во всех примерах задумано одно: <span class="correct-text">Тихая бухта: термос 0.75 л</span>. Сравните с тем, что реально пришло.</p>
+  <table class="table--striped mojibake-table">
+    <caption>Что видите → что произошло → что делать</caption>
+    <thead>
+      <tr><th>Что в результате</th><th>Причина</th><th>Лечение</th></tr>
+    </thead>
+    <tbody>
+      <tr data-cause="utf8-as-latin1">
+        <td><code class="broken">Ð¢Ð¸Ñ…Ð°Ñ Ð±ÑƒÑ…Ñ‚Ð°: Ñ‚ÐµÑ€Ð¼Ð¾Ñ 0.75 Ð»</code></td>
+        <td>UTF-8 прочитали как latin-1: каждый из двух-трёх байтов буквы стал отдельным символом</td>
+        <td>не доверять угаданной кодировке: <code>r.encoding = "utf-8"</code> или <code>r.content.decode("utf-8")</code></td>
+      </tr>
+      <tr data-cause="cp1251-as-latin1">
+        <td><code class="broken">Òèõàÿ áóõòà: òåðìîñ 0.75 ë</code></td>
+        <td>windows-1251 прочитали как latin-1 — классика «старых» сайтов рунета</td>
+        <td>читать <code>charset</code> из заголовка: <code>r.content.decode("cp1251")</code></td>
+      </tr>
+      <tr data-cause="utf8-as-cp1251">
+        <td><code class="broken">РўРёС…Р°СЏ Р±СѓС…С‚Р°: С‚РµСЂРјРѕСЃ 0.75 Р»</code></td>
+        <td>UTF-8 прочитали как windows-1251: при декодировании обратно в cp1251 текст иногда «восстанавливается» — на этом держится народный способ лечения</td>
+        <td><code>text.encode("cp1251", errors="ignore").decode("utf-8", errors="ignore")</code> — костыль, а не решение</td>
+      </tr>
+      <tr data-cause="cp1251-as-utf8">
+        <td><code class="broken">&#65533;&#65533;&#65533;&#65533;&#65533;&#65533; &#65533;&#65533;&#65533;&#65533;&#65533;: &#65533;&#65533;&#65533;&#65533;&#65533;&#65533;&#65533; 0.75 &#65533;</code></td>
+        <td>Байты windows-1251 не собираются в валидные последовательности UTF-8 — появляются символы  (U+FFFD), часть данных безвозвратна</td>
+        <td>декодировать правильной однобайтовой кодировкой, а не «игнорировать ошибки»</td>
+      </tr>
+      <tr data-cause="bom">
+        <td><code class="broken">ï»¿Тихая бухта</code></td>
+        <td>BOM в начале файла: UTF-8 без метки прочитала её как три латинских символа</td>
+        <td><code>r.content.decode("utf-8-sig")</code> — «sig» срежет метку</td>
+      </tr>
+      <tr data-cause="entities">
+        <td><code class="broken">&amp;#1058;&amp;#1080;&amp;#1093;&amp;#1072;&amp;#1103;</code></td>
+        <td>Данные лежат в HTML-сущностях: байты в порядке, текст ещё не развернули</td>
+        <td><code>html.unescape(text)</code>; в bs4 уже делает <code>get_text()</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="text-content">response.text и response.content</h2>
+  <p>У <code>requests</code> есть два способа забрать тело, и путаница между ними стоит больше всего битых отчётов.</p>
+  <table class="table--striped text-vs-content">
+    <thead>
+      <tr><th>Что берём</th><th>Тип</th><th>Как появляется</th><th>Когда нужно</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>r.content</code></td><td>байты</td><td>ровно то, что прислал сервер</td><td>всегда как исходная точка: свой <code>decode</code>, запись в файл, картинки, gzip</td></tr>
+      <tr><td><code>r.text</code></td><td>строка</td><td><code>content.decode(r.encoding)</code></td><td>когда доверяете заголовку <code>charset</code></td></tr>
+      <tr><td><code>r.encoding</code></td><td>строка или <code>None</code></td><td>из <code>Content-Type</code>, иначе <code>None</code> → <code>apparent_encoding</code> по содержимому</td><td>проверить и при необходимости перезаписать</td></tr>
+      <tr><td><code>r.apparent_encoding</code></td><td>строка</td><td>догадка по частотам байтов</td><td>подсказка, не истина: часто путает UTF-8 и windows-1251</td></tr>
+    </tbody>
+  </table>
+  <pre data-lang="python"><code>import requests
+from bs4 import BeautifulSoup
+
+r = requests.get("http://localhost:8000/http/charset", timeout=10)
+print(r.headers["Content-Type"])   # text/html; charset=windows-1251
+print(r.encoding)                  # windows-1251 — заголовок важнее мета-тега
+
+# Плохо: encoding может быть угадан неверно, тогда кракозябры.
+soup_bad = BeautifulSoup(r.text, "html.parser")
+
+# Хорошо: сами декодируем байты той кодировкой, которую объявил сервер.
+html = r.content.decode("cp1251", errors="replace")
+soup = BeautifulSoup(html, "html.parser")
+print(soup.select_one("h1").get_text(strip=True))   # Щука и флинт
+</code></pre>
+  <p class="note"><strong>Порядок поиска кодировки.</strong> Заголовок <code>Content-Type</code> → <code>meta charset</code> в файле → <code>apparent_encoding</code> как последняя догадка → ручная проверка на редких символах (<code>Ñ</code>, <code>Ã</code>, <code>ï»¿</code>, <code></code>).</p>
+
+  <h2 id="parsers">html.parser и lxml: два разных дерева</h2>
+  <table class="table--striped parser-table">
+    <thead>
+      <tr><th>Свойство</th><th>html.parser</th><th>lxml</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Откуда берётся</td><td>стандартная библиотека Python</td><td>нужен <code>pip install lxml</code></td></tr>
+      <tr><td>Скорость на больших файлах</td><td>медленнее</td><td>заметно быстрее</td></tr>
+      <tr><td>Битая разметка</td><td>чинит мягко, иногда оставляет «хвосты» текстом</td><td>строит дерево по своим правилам, агрессивнее закрывает теги</td></tr>
+      <tr><td><code>noscript</code></td><td>дочерние элементы остаются узлами</td><td>тоже узлы, но содержимое может уехать в <code>text</code></td></tr>
+      <tr><td>Пробелы в <code>get_text()</code></td><td>сохраняет переносы разметки</td><td>сохраняет, но дерево другое → список строк отличается</td></tr>
+      <tr><td>Один и тот же селектор</td><td colspan="2">может дать <strong>разное число узлов</strong>: сверяйте <code>len()</code> на обоих парсерах</td></tr>
+    </tbody>
+  </table>
+  <p>Практический вывод: фиксируйте парсер в проекте. Если в коде <code>BeautifulSoup(html, "html.parser")</code>, то и проверки, и уроки прогоняйте на нём: переезд на <code>lxml</code> меняет количество найденных узлов на битой разметке.</p>
+
+  <h2 id="shpargalka">Шпаргалка кодировок</h2>
+  <dl class="kv charset-cheatsheet">
+    <dt><code data-charset="utf-8">utf-8</code></dt><dd>Современный стандарт сайта, до 4 байта на символ; кириллица — 2 байта.</dd>
+    <dt><code data-charset="windows-1251">windows-1251</code></dt><dd>cp1251: кириллица в одном байте, встречалась на старых русскоязычных сайтах.</dd>
+    <dt><code data-charset="koi8-r">koi8-r</code></dt><dd>Советская 8-битная раскладка, до сих пор встречается в почтовых заголовках и логах.</dd>
+    <dt><code data-charset="cp866">cp866</code></dt><dd>Кодировка консоли DOS: из-за неё битый вывод в терминале Windows.</dd>
+    <dt><code data-charset="iso-8859-1">iso-8859-1</code></dt><dd>latin-1: по стандарту HTTP «значение по умолчанию» для text/* — источник главных недоразумений.</dd>
+  </dl>
+
+  <h2 id="target">Локальная мишень: страница в windows-1251</h2>
+  <p>На полигоне есть специальная «старая» страница — эндпоинт <code>/http/charset</code>. Он живёт <strong>только на локальном сервере</strong>: его отдаёт <code>node tools/serve.mjs</code>, на GitHub Pages таких эндпоинтов нет. Запуск: <code>node tools/build.mjs</code>, затем <code>node tools/serve.mjs</code>, затем адрес <code>http://localhost:8000/http/charset</code>.</p>
+  <p>Ответ приходит с заголовком <code>Content-Type: text/html; charset=windows-1251</code> и телом в однобайтовой кириллице. Три упражнения:</p>
+  <ul class="charset-tasks">
+    <li data-step="1">Прочитать через <code>r.text</code> и убедиться, что requests угадал заголовок правильно.</li>
+    <li data-step="2">Принудительно декодировать байты как <code>utf-8</code> и прочитать исходную фразу без потерь.</li>
+    <li data-step="3">Сохранить <code>r.content</code> в файл, открыть редактором с ручной сменой кодировки и увидеть разницу между <code>cp1251</code> и <code>latin-1</code>.</li>
+  </ul>
+  <p class="warn">Тот же приём работает с реальными «старыми» сайтами, но помните про <a href="etiquette.html">правила парсинга</a>: заголовок <code>User-Agent</code>, пауза и robots.txt обязательны и для одностраничной мишени.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

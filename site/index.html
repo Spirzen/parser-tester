@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Парсинг-тренажёр · учебный сайт-мишень для уроков по веб-парсингу</title>
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <meta name="description" content="Статичный учебный полигон «Тихая бухта»: заголовки, вложенные блоки, таблицы, data-атрибуты, пагинация, формы, куки, редиректы, битая разметка, JSON API, страницы с JS и сценарии для Scrapy." />
+  <link rel="canonical" href="index.html" />
+  <link rel="alternate" type="application/rss+xml" title="Лента новостей тренажёра" href="feed.xml" />
+</head>
+<body data-page="index" data-module="">
+<!-- inject:nav -->
+<main class="page page--wide">
+  <section class="hero">
+    <h1>Парсинг-тренажёр</h1>
+    <p class="lede">Учебный сайт-мишень: выглядит как живой каталог «Тихой бухты», а на деле — полностью
+    статичная, предсказуемая и безопасная площадка. Здесь есть всё, что обычно не находят на реальных
+    сайтах: все уровни заголовков, вложенные <code>div</code>, списки и таблицы, соседние элементы,
+    <code>data-*</code> атрибуты, пагинацию, формы, куки, редиректы, битую разметку, динамическую
+    подгрузку, JSON API, <code>robots.txt</code>, <code>sitemap.xml</code> и RSS.</p>
+    <p class="tip">Нагрузки не будет: это набор файлов. Его можно открыть с диска, поднять локально
+    и повесить на GitHub Pages — и спокойно дать ссылку целой группе.</p>
+  </section>
+
+  <section>
+    <h2>Три способа работать</h2>
+    <div class="grid grid--3">
+      <article class="card">
+        <h3>1. Только браузер</h3>
+        <p>Откройте любую страницу и справа внизу включите <strong>«Тренажёр селекторов»</strong>:
+        CSS, XPath и регулярки ищут прямо по открытому DOM, показывают число совпадений, эквивалент
+        для BeautifulSoup и подсвечивают найденные узлы.</p>
+        <p>Кнопкой в шапке (или адресом <code>?mode=exam</code>) включается <strong>режим без
+        подсказок</strong>: разборы в заданиях и сам тренажёр скрываются — так страницу можно
+        давать группе как самостоятельную работу.</p>
+      </article>
+      <article class="card">
+        <h3>2. Локальный сервер</h3>
+        <pre><code>node tools/build.mjs
+node tools/serve.mjs --port 8000</code></pre>
+        <p>Появляются настоящие HTTP-ситуации: <code>301/302</code>, <code>429 + Retry-After</code>,
+        <code>Set-Cookie</code>, медленный ответ, <code>windows-1251</code>, JSON API с
+        <code>?page=</code>. Список эндпоинтов сервер печатает при старте.</p>
+      </article>
+      <article class="card">
+        <h3>3. Деплой для группы</h3>
+        <p>GitHub Pages разворачивает <code>dist/</code> автоматически (workflow в репозитории).
+        Ссылка одна на всю группу, студент ничего не устанавливает.</p>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Модули</h2>
+    <div class="grid grid--3">
+      <article class="card">
+        <h3><a href="basics/index.html">Основы</a></h3>
+        <p class="card__meta">Запрос и ответ, <code>requests</code> против <code>urllib</code>, кодировки,
+        вежливость парсера и что такое хорошо.</p>
+      </article>
+      <article class="card">
+        <h3><a href="selectors/index.html">Селекторы</a></h3>
+        <p class="card__meta">CSS ↔ XPath ↔ BeautifulSoup, вложенные блоки, соседи, атрибуты,
+        <code>data-*</code>, карточки товаров и намеренный шум.</p>
+      </article>
+      <article class="card">
+        <h3><a href="http/index.html">HTTP</a></h3>
+        <p class="card__meta">Заголовки, коды ответов, куки, редиректы, JSON API, RSS и sitemap как
+        источник ссылок.</p>
+      </article>
+      <article class="card">
+        <h3><a href="markup/index.html">HTML-разметка</a></h3>
+        <p class="card__meta">Заголовки, списки, таблицы, навигация по дереву и битая разметка:
+        три парсера — три результата.</p>
+      </article>
+      <article class="card">
+        <h3><a href="pagination/index.html">Пагинация</a></h3>
+        <p class="card__meta">Нумерованные страницы, <code>rel="next"</code>, «показать ещё»,
+        бесконечная прокрутка, URL-паттерны.</p>
+      </article>
+      <article class="card">
+        <h3><a href="forms/index.html">Формы</a></h3>
+        <p class="card__meta">GET и POST, скрытые и csrf-поля, <code>select multiple</code>,
+        что парсер отправляет вместо браузера.</p>
+      </article>
+      <article class="card">
+        <h3><a href="js/index.html">JS-страницы</a></h3>
+        <p class="card__meta">Контент появляется позже: ожидания Selenium и Playwright, SPA,
+        shadow DOM, iframe, ленивая загрузка.</p>
+      </article>
+      <article class="card">
+        <h3><a href="scrapy/index.html">Scrapy</a></h3>
+        <p class="card__meta">Каталог и карточки, цитаты с авторами, правила краулера, фиды
+        и выгрузка без дублей.</p>
+      </article>
+      <article class="card">
+        <h3><a href="exam/index.html">Экзамен</a></h3>
+        <p class="card__meta">12 заданий на одном плотном полигоне и автопроверка ответа
+        без откровений в исходнике.</p>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Что здесь есть для тренировки</h2>
+    <table class="table--striped">
+      <thead><tr><th>Конструкция</th><th>Где</th><th>Зачем в уроке</th></tr></thead>
+      <tbody>
+        <tr><td>Заголовки h1–h6, вложенные div</td><td><code>markup/headings.html</code>, <code>selectors/nesting.html</code></td><td>иерархия, <code>&gt;</code>, <code>//</code>, <code>parent/children</code></td></tr>
+        <tr><td>Списки ul/ol/dl</td><td><code>markup/lists.html</code></td><td>вложенность, пустые элементы, скрытые <code>&lt;li&gt;</code></td></tr>
+        <tr><td>Таблицы, в том числе вложенные и «разъехавшиеся»</td><td><code>markup/tables.html</code>, <code>js/dynamic-table.html</code></td><td>устойчивый разбор строк и заголовков</td></tr>
+        <tr><td>Соседние элементы</td><td><code>selectors/nesting.html</code></td><td><code>+</code>, <code>~</code>, <code>next_sibling</code></td></tr>
+        <tr><td><code>data-*</code> и aria-атрибуты</td><td><code>selectors/attributes.html</code></td><td>данные иногда лежат в атрибутах, а не в тексте</td></tr>
+        <tr><td>Относительные пути и дубли ссылок</td><td><code>selectors/ambiguous.html</code>, <code>scrapy/*</code></td><td><code>urljoin</code>, <code>response.follow</code>, дедупликация</td></tr>
+        <tr><td>Пагинация: ссылки, <code>rel="next"</code>, скролл</td><td><code>pagination/</code></td><td>обход без пропусков и повторов</td></tr>
+        <tr><td>Формы и скрытые поля</td><td><code>forms/</code></td><td>params/data вместо кликов</td></tr>
+        <tr><td>Куки, редиректы, коды 4xx/5xx</td><td><code>http/</code> + локальный сервер</td><td>сессии, <code>allow_redirects</code>, обработка ошибок</td></tr>
+        <tr><td>Битая разметка</td><td><code>markup/broken.html</code></td><td>html.parser vs lxml vs html5lib</td></tr>
+        <tr><td>Динамическая подгрузка и JSON API</td><td><code>js/</code>, <code>data/*.json</code>, <code>/http/api/*</code></td><td>найти настоящий источник данных</td></tr>
+        <tr><td>robots.txt, sitemap.xml, RSS</td><td>корень сайта</td><td>карта сайта и правила обхода</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Быстрый старт на 5 минут</h2>
+    <pre><code>pip install requests beautifulsoup4 lxml
+python -c "import requests; from bs4 import BeautifulSoup as bs; \
+r = requests.get('http://localhost:8000/basics/hello.html'); \
+print(bs(r.text, 'lxml').select_one('h1#main-title').get_text(strip=True))"</code></pre>
+    <p class="muted">Готовые примеры под каждую библиотеку лежат в папке <code>examples/</code>
+    (requests, urllib, BeautifulSoup, Selenium, Playwright, Scrapy) — они же запускаются в CI,
+    поэтому всегда рабочие.</p>
+  </section>
+
+  <section class="note">
+    <h2 style="margin-top:0">Правила полигона</h2>
+    <ul>
+      <li>Все данные вымышлены: магазин «Тихая бухта», люди, города, цены, почты <code>@example.com</code>. Персональных данных нет.</li>
+      <li>Парсить можно всё, включая <code>robots.txt</code>. Раздел <code>/private/</code> запрещён намеренно — это упражнение на уважение к правилам обхода.</li>
+      <li>Отрабатывайте вежливость даже здесь: <code>User-Agent</code> с контактом, задержка между запросами, повтор только после ошибки.</li>
+      <li>Сайт не меняется между занятиями: структуру правим только осознанно и через <code>docs/AUTHORING.md</code>.</li>
+    </ul>
+  </section>
+</main>
+<!-- inject:footer -->
+<script src="assets/js/common.js" defer></script>
+</body>
+</html>

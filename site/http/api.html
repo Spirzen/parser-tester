@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JSON-API полигона · HTTP · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Файлы data/*.json и локальные эндпоинты /http/api/*: примеры curl и requests, сравнение поля в JSON и поля в HTML-разметке." />
+</head>
+<body data-page="http/api" data-module="http">
+<!-- inject:nav -->
+<main class="page">
+  <h1>JSON-API полигона: сначала данные, потом разметка</h1>
+  <p class="lede">Почти всё, что видно на витрине, лежит в файлах <a href="../data/products.json">products.json</a>, <a href="../data/articles.json">articles.json</a>, <a href="../data/reviews.json">reviews.json</a>, <a href="../data/quotes.json">quotes.json</a> и <a href="../data/site-stats.json">site-stats.json</a>. Прямой запрос к JSON быстрее и устойчивее, чем разбор HTML, — и почти всегда законнее.</p>
+
+  <h2 id="files">Статические файлы: работают где угодно</h2>
+  <p class="muted">Это обычные файлы репозитория: их отдаёт и <code>node tools/serve.mjs</code>, и GitHub Pages, и диск. Открывать с диска можно, но браузер не покажет их как «ответ API» без запуска сервера.</p>
+  <table class="table--striped api-files">
+    <caption>Что лежит в <code>data/</code></caption>
+    <thead>
+      <tr><th>Файл</th><th>Корневой ключ</th><th>Записей</th><th>Содержимое</th></tr>
+    </thead>
+    <tbody>
+      <tr data-file="products"><td><a href="../data/products.json">../data/products.json</a></td><td class="mono" data-root-key="products">products</td><td class="mono" data-count="12">12</td><td>товары «Тихой бухты»: артикул, цена, остаток, рейтинг, теги, характеристики</td></tr>
+      <tr data-file="articles"><td><a href="../data/articles.json">../data/articles.json</a></td><td class="mono" data-root-key="articles">articles</td><td class="mono" data-count="8">8</td><td>новости: id, ссылка-якорь, дата, категория, заголовок, краткий текст</td></tr>
+      <tr data-file="reviews"><td><a href="../data/reviews.json">../data/reviews.json</a></td><td class="mono" data-root-key="reviews">reviews</td><td class="mono" data-count="30">30</td><td>отзывы: автор, город, оценка, текст, полезность, наличие фото</td></tr>
+      <tr data-file="quotes"><td><a href="../data/quotes.json">../data/quotes.json</a></td><td class="mono" data-root-key="quotes">quotes</td><td class="mono" data-count="10">10</td><td>короткие цитаты для уроков про динамическую подгрузку</td></tr>
+      <tr data-file="site-stats"><td><a href="../data/site-stats.json">../data/site-stats.json</a></td><td class="mono" data-root-key="sections">sections</td><td class="mono" data-count="3">3</td><td>сводка для мини-SPA: таблицы цен, рецензии и авторы — три раздела в <code>sections</code></td></tr>
+    </tbody>
+  </table>
+  <p class="note">Все пять файлов — обычная статика: их отдаёт как есть и GitHub Pages, и <code>node tools/serve.mjs</code>, и даже диск через <code>file://</code>. Никакой серверной логики в них нет: это готовые выгрузки, а не живой API. У всех файлов есть служебный блок <code>meta</code> — не забывайте его при разборе: <code>data["products"]</code>, а не весь корень.</p>
+
+  <h2 id="endpoints">Локальные эндпоинты: нужен serve.mjs</h2>
+  <p>Эти адреса существуют только когда запущен <code>node tools/serve.mjs</code>: они умеют пагинацию, фильтр по категории, коды ошибок и заголовки кэша. Без сервера вы получите <code>404</code> — файлов с такими именами в <code>dist/</code> нет.</p>
+  <table class="table--striped api-endpoints">
+    <thead>
+      <tr><th>Метод</th><th>Адрес</th><th>Параметры</th><th>Ответ</th></tr>
+    </thead>
+    <tbody>
+      <tr data-local="true"><td><code>GET</code></td><td><code data-endpoint="/http/api/products">/http/api/products</code></td><td><code>page</code>, <code>size</code>, <code>category</code></td><td>страница выдачи: <code>items</code>, <code>total</code>, <code>pages</code>, <code>next</code></td></tr>
+      <tr data-local="true"><td><code>GET</code></td><td><code data-endpoint="/http/api/product">/http/api/product</code></td><td><code>id</code></td><td>одна карточка; есть <code>ETag</code>, для неверного id — <code>404</code></td></tr>
+      <tr data-local="true"><td><code>GET</code></td><td><code data-endpoint="/http/echo">/http/echo</code></td><td>любые</td><td>JSON с вашими заголовками, query и куками</td></tr>
+      <tr data-local="true"><td><code>GET</code></td><td><code data-endpoint="/http/protected">/http/protected</code></td><td>заголовок <code>X-API-Key</code></td><td>данные или <code>401</code> без ключа</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="examples">curl и requests</h2>
+  <pre data-lang="bash"><code>curl -s "http://localhost:8000/http/api/products?page=1&amp;size=8" | head -30
+curl -s "http://localhost:8000/http/api/products?category=%D1%81%D0%B2%D0%B5%D1%82"   # фильтр по-русски
+curl -si "http://localhost:8000/http/api/product?id=3" | grep -i etag
+curl -si -H "X-API-Key: trainer-demo-key" "http://localhost:8000/http/protected"</code></pre>
+  <pre data-lang="python"><code>import requests
+
+session = requests.Session()
+session.headers.update({"User-Agent": "TikhayaParser/1.0 (+contact@example.com)"})
+
+page = session.get("http://localhost:8000/http/api/products",
+                   params={"page": 1, "size": 8}, timeout=10)
+page.raise_for_status()
+data = page.json()
+print(data["total"], data["pages"], data["next"])
+
+items = data["items"]
+while data["next"]:
+    page = session.get("http://localhost:8000" + data["next"], timeout=10)
+    data = page.json()
+    items += data["items"]
+
+# Тот же файл напрямую, без эндпоинта:
+local = session.get("http://localhost:8000/data/products.json", timeout=10).json()
+print(len(local["products"]), local["meta"]["currency"])</code></pre>
+  <pre data-lang="python"><code># Тот же запрос на чистом urllib: байты, ручная склейка параметров, сам decode.
+import json
+import urllib.request
+import urllib.parse
+
+base = "http://localhost:8000/http/api/products"
+query = urllib.parse.urlencode({"page": 1, "size": 8, "category": "свет"})
+req = urllib.request.Request(f"{base}?{query}", headers={"User-Agent": "TikhayaParser/1.0"})
+
+with urllib.request.urlopen(req, timeout=10) as resp:
+    data = json.loads(resp.read().decode("utf-8"))   # .json() в requests делает это сам
+
+print(data["total"], data["pages"], data["next"])
+products = json.loads(
+    urllib.request.urlopen("http://localhost:8000/data/products.json", timeout=10).read()
+)</code></pre>
+
+  <h2 id="pole-vs-pole">Поле против поля: что теряется при парсинге HTML</h2>
+  <table class="table--striped field-compare">
+    <caption>Одни и те же данные в JSON и на витрине <a href="../selectors/products.html">selectors/products.html</a></caption>
+    <thead>
+      <tr><th>Поле</th><th>В JSON</th><th>В HTML</th><th>Что теряется</th></tr>
+    </thead>
+    <tbody>
+      <tr data-loss="no"><td>артикул</td><td class="mono">sku</td><td><code>article[data-sku]</code></td><td>ничего: значение в атрибуте</td></tr>
+      <tr data-loss="no"><td>цена</td><td class="mono">price = 2490</td><td><code>.price[data-price]</code></td><td>в тексте — «2 490 ₽» с пробелом: число берите из атрибута</td></tr>
+      <tr data-loss="yes"><td>старая цена</td><td class="mono">oldPrice = null</td><td><code>.price--old[data-old-price]</code></td><td>JSON различает <code>null</code> и отсутствие ключа, HTML — только «элемента нет»</td></tr>
+      <tr data-loss="yes"><td>вложенные характеристики</td><td class="mono">specs { вес, нагрузка }</td><td>список <code>dl.spec</code> на карточке товара</td><td>пары «ключ-значение» надо собирать циклом и чистить пробелы</td></tr>
+      <tr data-loss="yes"><td>признак наличия</td><td class="mono">inStock, stock</td><td><code>[data-stock]</code> и текст «нет в наличии»</td><td><code>0</code> и отсутствующий атрибут — разные случаи, на витрине оба выглядят пусто</td></tr>
+      <tr data-loss="no"><td>рейтинг</td><td class="mono">rating = 4.6</td><td><code>[data-rating]</code></td><td>в тексте рядом «из 5» — не тащите его в число</td></tr>
+      <tr data-loss="yes"><td>дата обновления</td><td class="mono">updatedAt = …T10:15:00Z</td><td><code>time[datetime]</code> и видимый текст</td><td>видимая дата без времени и без часового пояса</td></tr>
+      <tr data-loss="yes"><td>продавец</td><td class="mono">seller</td><td><code>.seller</code></td><td>в выдаче API продавца нет — он только в разметке</td></tr>
+    </tbody>
+  </table>
+  <p class="warn">Ссылки на карточки в JSON (<code>url: "item-03.html"</code>) относительные и без папки: к ним придётся добавлять <code>scrapy/</code> вручную. В HTML та же ссылка уже содержит путь — проверяйте <code>urljoin</code>, иначе соберёте несуществующие адреса.</p>
+  <p class="tip">Порядок действий на реальном проекте: открыть DevTools → Network → найти JSON-ответ → читать его. HTML разбираем только тогда, когда данных в ответе нет вовсе.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

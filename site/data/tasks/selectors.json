@@ -1,0 +1,461 @@
+{
+  "selectors/index": [
+    {
+      "id": "S-01",
+      "level": 2,
+      "q": "Соберите имена всех операций из таблицы соответствий: строки с data-op",
+      "solution": {
+        "css": "tr[data-op]",
+        "xpath": "//tr[@data-op]",
+        "bs4": "[tr['data-op'] for tr in soup.select('tr[data-op]')]"
+      },
+      "answer": "21 операция от tag до union"
+    },
+    {
+      "id": "S-02",
+      "level": 2,
+      "q": "Найдите ситуации с высокой частотой ошибок: строки pitfalls c data-severity=high",
+      "solution": {
+        "css": "tr[data-severity='high']",
+        "xpath": "//tr[@data-severity='high']",
+        "bs4": "[tr.select_one('td').get_text(strip=True) for tr in soup.select('tr[data-severity=\"high\"]')]"
+      },
+      "answer": "2 строки: «работает в DevTools, но не в requests» и «13 карточек вместо 12»"
+    },
+    {
+      "id": "S-03",
+      "level": 2,
+      "q": "Соберите шесть правил работы с селекторами из нумерованного списка rules",
+      "solution": {
+        "css": "ol.rules > li",
+        "xpath": "//ol[@class='rules']/li",
+        "bs4": "[li.get_text(' ', strip=True) for li in soup.select('ol.rules > li')]"
+      },
+      "answer": "6 правил; первое — про «наименее общий из работающих»"
+    },
+    {
+      "id": "S-04",
+      "level": 3,
+      "q": "Определите самое частое «почему пусто» по числовому рейтингу частоты (data-severity-value)",
+      "solution": {
+        "css": "td[data-severity-value='5']",
+        "xpath": "//td[@data-severity-value='5']",
+        "bs4": "soup.select_one('td[data-severity-value=\"5\"]').get_text(strip=True)"
+      },
+      "answer": "«очень часто» — про JavaScript-дерево в браузере"
+    },
+    {
+      "id": "S-05",
+      "level": 3,
+      "q": "Соберите ссылки на страницы модуля со карточек блока module-pages",
+      "solution": {
+        "css": ".module-pages a.page-card__link",
+        "xpath": "//div[contains(@class, 'module-pages')]//a[@class='page-card__link']",
+        "bs4": "[a['href'] for a in soup.select('.module-pages a.page-card__link')]"
+      },
+      "answer": "5 ссылок: nesting.html, attributes.html, products.html, ambiguous.html, long-list.html"
+    }
+  ],
+  "selectors/nesting": [
+    {
+      "id": "S-06",
+      "level": 1,
+      "q": "Соберите служебные подписи всех пяти уровней вложенности",
+      "solution": {
+        "css": "p.lvl-note",
+        "xpath": "//p[@class='lvl-note']",
+        "bs4": "[p.get_text(strip=True) for p in soup.select('p.lvl-note')]"
+      },
+      "answer": "5 подписей, последнее слово пятого уровня — «штиль»"
+    },
+    {
+      "id": "S-07",
+      "level": 2,
+      "q": "Найдите только прямой дочерний div первого уровня (не всех потомков!)",
+      "solution": {
+        "css": "div.lvl1 > div",
+        "xpath": "//div[@class='lvl1']/div",
+        "bs4": "len(soup.select('div.lvl1 > div'))"
+      },
+      "answer": "1 узел: div.lvl2; descendant-вариант '.lvl1 div' вернул бы 4"
+    },
+    {
+      "id": "S-08",
+      "level": 2,
+      "q": "Соберите элементы, которые идут после целевого узла-соседа: li внутри sibling-after",
+      "solution": {
+        "css": ".sibling-target ~ ul .sibling-item",
+        "xpath": "//h3[@class='sibling-target']/following-sibling::ul/li",
+        "bs4": "[li.get_text(strip=True) for li in soup.select('.sibling-target ~ ul .sibling-item')]"
+      },
+      "answer": "2 элемента: «Первый элемент сразу после цели» и «Второй элемент после цели»"
+    },
+    {
+      "id": "S-09",
+      "level": 3,
+      "q": "Одним соседним селектором найдите абзац, лежащий через один узел после h3.sibling-target",
+      "solution": {
+        "css": ".sibling-target ~ p",
+        "xpath": "//h3[@class='sibling-target']/following-sibling::p",
+        "bs4": "soup.select_one('.sibling-target ~ p').get_text(strip=True)"
+      },
+      "answer": "«Узел через один после цели»; плюс-селектор '.sibling-target + p' не нашёл бы ничего"
+    },
+    {
+      "id": "S-10",
+      "level": 3,
+      "q": "Соберите листья дерева каталога: элементы li третьего уровня вложенности списков tree",
+      "solution": {
+        "css": "section.tree-catalog ul.tree ul.tree ul.tree > li",
+        "xpath": "//section[@class='tree-catalog']//ul//ul//ul/li",
+        "bs4": "[li.get_text(strip=True) for li in soup.select('section.tree-catalog ul.tree ul.tree ul.tree > li')]"
+      },
+      "answer": "3 листа: Стулья, Столы, Налобные"
+    },
+    {
+      "id": "S-11",
+      "level": 3,
+      "q": "В блоке «Родня» возьмите имена только дочерних узлов (data-rel=child), не трогая их соседей",
+      "solution": {
+        "css": "[data-rel='child'] > .relative__name",
+        "xpath": "//div[@data-rel='child']/span[@class='relative__name']",
+        "bs4": "[s.get_text(strip=True) for s in soup.select('[data-rel=\"child\"] > .relative__name')]"
+      },
+      "answer": "2 имени: «Дочерний узел А» и «Дочерний узел Б»"
+    },
+    {
+      "id": "S-12",
+      "level": 4,
+      "q": "Через родителя найдите блок-дядю для кузена: в CSS такого средства нет, возьмите XPath или bs4-родителя",
+      "solution": {
+        "xpath": "//div[@data-rel='cousin']/parent::div[@data-rel='uncle']",
+        "bs4": "soup.select_one(\"[data-rel='cousin']\").find_parent(attrs={'data-rel': 'uncle'})['data-rel']"
+      },
+      "answer": "data-rel=uncle; в CSS эту связь выразить нечем"
+    },
+    {
+      "id": "S-13",
+      "level": 4,
+      "q": "Ограничьте поиск вторым деревом (section.tree-alt) и соберите все вложенные li от второго уровня",
+      "solution": {
+        "css": "section.tree-alt li li",
+        "xpath": "//section[@class='tree-alt']//li//li",
+        "bs4": "[li.contents[0].get_text(strip=True) for li in soup.select('section.tree-alt li li')]"
+      },
+      "answer": "3 листа отзыва (Размер маломерит, Швы ровные, Тяжелеет под дождём) внутри узла «Куртка «Маяк»» — всего li li даёт 4 узла с потомками"
+    }
+  ],
+  "selectors/attributes": [
+    {
+      "id": "S-14",
+      "level": 2,
+      "q": "Соберите артикулы всех товарных карточек: ограничьте тег, чтобы не поймать дубли в тексте",
+      "solution": {
+        "css": "article[data-sku]",
+        "xpath": "//article[@data-sku]",
+        "bs4": "[a['data-sku'] for a in soup.select('article[data-sku]')]"
+      },
+      "answer": "8 карточек от TB-1001 до TB-6051"
+    },
+    {
+      "id": "S-15",
+      "level": 3,
+      "q": "Найдите карточки, где остаток не объявлен вовсе: data-sku есть, data-stock нет",
+      "solution": {
+        "css": "article[data-sku]:not([data-stock])",
+        "xpath": "//article[@data-sku and not(@data-stock)]",
+        "bs4": "[a['data-sku'] for a in soup.select('article[data-sku]') if 'data-stock' not in a.attrs]"
+      },
+      "answer": "2 артикула: TB-5040 и TB-6051"
+    },
+    {
+      "id": "S-16",
+      "level": 3,
+      "q": "Отделите карточку с классами в точном порядке «card note-box legacy-promo» от копии с переставленными классами",
+      "solution": {
+        "css": "[class='card note-box legacy-promo']",
+        "xpath": "//*[@class='card note-box legacy-promo']",
+        "bs4": "soup.find(attrs={'class': 'card note-box legacy-promo'})['data-case']"
+      },
+      "answer": "1 узел, data-case=triple; перестановка классов ломает точное сравнение атрибута"
+    },
+    {
+      "id": "S-17",
+      "level": 3,
+      "q": "Найдите декоративный символ, скрытый от скринридеров, — его заберёт любой get_text, если не фильтровать",
+      "solution": {
+        "css": "[aria-hidden='true']",
+        "xpath": "//*[@aria-hidden='true']",
+        "bs4": "[el.get_text() for el in soup.select('[aria-hidden=\"true\"]')]"
+      },
+      "answer": "1 элемент: звезда ★"
+    },
+    {
+      "id": "S-18",
+      "level": 2,
+      "q": "Найдите единственный элемент-маркер конца блока по его служебному атрибуту",
+      "solution": {
+        "css": "[data-no-attrs]",
+        "xpath": "//*[@data-no-attrs]",
+        "bs4": "soup.find(attrs={'data-no-attrs': True}).get_text(strip=True)[:30]"
+      },
+      "answer": "Абзац-подсказка после блока .no-attrs"
+    },
+    {
+      "id": "S-19",
+      "level": 4,
+      "q": "Посчитайте узлы без единого атрибута внутри блока .no-attrs (по всему документу их больше — не путайте)",
+      "solution": {
+        "xpath": "//div[@class='no-attrs']//*[count(@*)=0]",
+        "bs4": "[el.name for el in soup.select('.no-attrs *') if not el.attrs]"
+      },
+      "answer": "4 узла: p, span, em, b; абзац .has-class не входит"
+    },
+    {
+      "id": "S-20",
+      "level": 2,
+      "q": "Соберите цены всех восьми карточек: значение берите из атрибута data-price, а не из текста с пробелом",
+      "solution": {
+        "css": "article.attr-card .price[data-price]",
+        "xpath": "//article[@class='attr-card']//span[@class='price']/@data-price",
+        "bs4": "[int(s['data-price']) for s in soup.select('article.attr-card .price[data-price]')]"
+      },
+      "answer": "8 цен (по одной на карточку): 2490, 8990, 640, 3290, 1990, 15900, 9800, 1690"
+    },
+    {
+      "id": "S-21",
+      "level": 3,
+      "q": "Проверьте кавычки: у одной карточки значение в одинарных, у другой пустое — заберите оба атрибута",
+      "solution": {
+        "css": "article[data-quoted], article[data-empty]",
+        "xpath": "//article[@data-quoted or @data-empty]",
+        "bs4": "{a['data-sku']: (a.get('data-quoted'), a.get('data-empty')) for a in soup.select('article[data-quoted], article[data-empty]')}"
+      },
+      "answer": "TB-5040: текст в одинарных кавычках и data-empty=''; пустое значение — существующий атрибут"
+    }
+  ],
+  "selectors/products": [
+    {
+      "id": "S-22",
+      "level": 1,
+      "q": "Посчитайте карточки каталога, не схватив похожую-двойник",
+      "solution": {
+        "css": "article.product-card",
+        "xpath": "//article[@class='product-card']",
+        "bs4": "len(soup.select('article.product-card'))"
+      },
+      "answer": "12; [class*='product-card'] наивно вернул бы 13"
+    },
+    {
+      "id": "S-23",
+      "level": 2,
+      "q": "Соберите цены всех карточек из data-атрибутов: и обычные, и старые",
+      "solution": {
+        "css": "article.product-card .price[data-price]",
+        "xpath": "//article[@class='product-card']//span[contains(@class, 'price')]/@data-price",
+        "bs4": "[int(s['data-price']) for s in soup.select('article.product-card .price[data-price]')]"
+      },
+      "answer": "18 значений: 12 основных цен + 6 старых со скидкой"
+    },
+    {
+      "id": "S-24",
+      "level": 2,
+      "q": "Найдите карточку с обнулённым остатком по data-stock",
+      "solution": {
+        "css": "article.product-card[data-stock='0']",
+        "xpath": "//article[@class='product-card'][@data-stock='0']",
+        "bs4": "soup.select_one('article.product-card[data-stock=\"0\"]').select_one('.product-card__title').get_text(strip=True)"
+      },
+      "answer": "Картуш газовой смеси 450 мл (TB-1002)"
+    },
+    {
+      "id": "S-25",
+      "level": 3,
+      "q": "Обнаружьте спрятанную карточку: она видна bs4, но не видна Selenium без visibility_of",
+      "solution": {
+        "css": "article.product-card[style*='display:none']",
+        "bs4": "[a['data-sku'] for a in soup.select('article.product-card') if 'display:none' in a.get('style', '')]",
+        "xpath": "//article[@class='product-card'][contains(@style, 'display:none')]"
+      },
+      "answer": "1 карточка: Гирлянда кемпинговая 10 м (TB-3021), плюс признак data-hidden=true"
+    },
+    {
+      "id": "S-26",
+      "level": 3,
+      "q": "Соберите все карточки категории «одежда» и их названия",
+      "solution": {
+        "css": "article.product-card[data-category='одежда']",
+        "xpath": "//article[@class='product-card'][@data-category='одежда']",
+        "bs4": "[c.select_one('.product-card__title').get_text(strip=True) for c in soup.select('article.product-card[data-category=\"одежда\"]')]"
+      },
+      "answer": "2 карточки: Куртка штормовая «Маяк» и Носки трекинговые, пара"
+    },
+    {
+      "id": "S-27",
+      "level": 4,
+      "q": "Отфильтруйте каталог по основной цене дороже 8000: сравнение по data-price первой цены карточки",
+      "solution": {
+        "bs4": "[c['data-sku'] for c in soup.select('article.product-card') if int(c.select_one('.price')['data-price']) > 8000]",
+        "xpath": "//article[@class='product-card'][.//span[contains(@class, 'price')]/@data-price > 8000]"
+      },
+      "answer": "4 артикула: TB-2010, TB-4030, TB-4031, TB-6050"
+    },
+    {
+      "id": "S-28",
+      "level": 3,
+      "q": "Посчитайте все товарные теги витрины (списки tag-list внутри карточек каталога)",
+      "solution": {
+        "css": "article.product-card ul.tag-list > li",
+        "xpath": "//article[@class='product-card']//ul[@class='tag-list']/li",
+        "bs4": "len(soup.select('article.product-card ul.tag-list > li'))"
+      },
+      "answer": "29 тегов на 12 карточках"
+    },
+    {
+      "id": "S-29",
+      "level": 4,
+      "q": "Докажите ловушку: соберите все article с data-sku=TB-2010 и найдите среди них «похожую»",
+      "solution": {
+        "css": "article[data-sku='TB-2010']",
+        "xpath": "//article[@data-sku='TB-2010']",
+        "bs4": "[a.get('data-test', 'нет data-test') for a in soup.select('article[data-sku=\"TB-2010\"]')]"
+      },
+      "answer": "2 узла: каталожный (data-test=product-card) и двойник без data-test и data-stock"
+    }
+  ],
+  "selectors/ambiguous": [
+    {
+      "id": "S-30",
+      "level": 2,
+      "q": "Соберите заголовки новостей из первой секции, не трогая title из других зон",
+      "solution": {
+        "css": "[data-zone='news'] h3.title",
+        "xpath": "//section[@data-zone='news']//h3[@class='title']",
+        "bs4": "[h.get_text(strip=True) for h in soup.select('[data-zone=\"news\"] h3.title')]"
+      },
+      "answer": "3 заголовка в зоне news"
+    },
+    {
+      "id": "S-31",
+      "level": 2,
+      "q": "Посчитайте ячейки таблицы заказов: item внутри зоны orders",
+      "solution": {
+        "css": "[data-zone='orders'] td.item",
+        "xpath": "//section[@data-zone='orders']//td[@class='item']",
+        "bs4": "len(soup.select('[data-zone=\"orders\"] td.item'))"
+      },
+      "answer": "9 ячеек (3 строки по 3)"
+    },
+    {
+      "id": "S-32",
+      "level": 3,
+      "q": "Найдите все учебные ловушки-скрытности по служебному атрибуту data-trap",
+      "solution": {
+        "css": "[data-trap]",
+        "xpath": "//*[@data-trap]",
+        "bs4": "[el['data-trap'] for el in soup.select('[data-trap]')]"
+      },
+      "answer": "3 ловушки: hidden-block, inline-style, hidden-attr"
+    },
+    {
+      "id": "S-33",
+      "level": 3,
+      "q": "Соберите ссылки «Подробнее» только из каталожной зоны (вместе со ссылкой скрытой карточки)",
+      "solution": {
+        "css": "[data-zone='catalog'] a.more",
+        "xpath": "//section[@data-zone='catalog']//a[@class='more']",
+        "bs4": "[(a.get_text(strip=True), a['href']) for a in soup.select('[data-zone=\"catalog\"] a.more')]"
+      },
+      "answer": "3 ссылки: item-09, item-12 и скрытая scrapy/index"
+    },
+    {
+      "id": "S-34",
+      "level": 3,
+      "q": "Найдите в зоне поддержки абзац, скрытый булевым атрибутом hidden",
+      "solution": {
+        "css": "[data-zone='support'] p[hidden]",
+        "xpath": "//section[@data-zone='support']//p[@hidden]",
+        "bs4": "soup.select_one('[data-zone=\"support\"] p[hidden]').get_text(strip=True)[:20]"
+      },
+      "answer": "«Заголовок с атрибутом hidden…»; bs4 его видит, браузер — нет"
+    },
+    {
+      "id": "S-35",
+      "level": 4,
+      "q": "Три похожих id в последней зоне: соберите узлы со всеми тремя сразу",
+      "solution": {
+        "css": "#product-card-1, #product_card_1, #ProductCard1",
+        "xpath": "//*[@id='product-card-1' or @id='product_card_1' or @id='ProductCard1']",
+        "bs4": "[soup.find(id=i) for i in ('product-card-1', 'product_card_1', 'ProductCard1')]"
+      },
+      "answer": "3 разных узла; регистр и дефис vs подчёркивание — разные идентификаторы"
+    }
+  ],
+  "selectors/long-list": [
+    {
+      "id": "S-36",
+      "level": 1,
+      "q": "Посчитайте все строки журнала заказов",
+      "solution": {
+        "css": "tr.order",
+        "xpath": "//tr[@class='order']",
+        "bs4": "len(soup.select('tr.order'))"
+      },
+      "answer": "240 строк"
+    },
+    {
+      "id": "S-37",
+      "level": 2,
+      "q": "Соберите идентификаторы отменённых заказов по data-status",
+      "solution": {
+        "css": "tr[data-status='cancelled']",
+        "xpath": "//tr[@data-status='cancelled']/@data-order",
+        "bs4": "[tr['data-order'] for tr in soup.select('tr[data-status=\"cancelled\"]')]"
+      },
+      "answer": "48 заказов, начинаются с ORD-1004"
+    },
+    {
+      "id": "S-38",
+      "level": 3,
+      "q": "Найдите строки, спрятанные инлайновым стилем: их не увидит Selenium без conditions",
+      "solution": {
+        "css": "tr.order[style*='display:none']",
+        "xpath": "//tr[@class='order'][contains(@style, 'display:none')]",
+        "bs4": "[tr['data-order'] for tr in soup.select('tr.order') if 'display:none' in tr.get('style', '')]"
+      },
+      "answer": "7 строк: ORD-1000, ORD-1037, ORD-1074, ORD-1111, ORD-1148, ORD-1185, ORD-1222"
+    },
+    {
+      "id": "S-39",
+      "level": 3,
+      "q": "Посчитайте заказы региона «Севск»",
+      "solution": {
+        "css": "tr[data-region='Севск']",
+        "xpath": "//tr[@data-region='Севск']",
+        "bs4": "len(soup.select('tr[data-region=\"Севск\"]'))"
+      },
+      "answer": "40 строк (каждая шестая)"
+    },
+    {
+      "id": "S-40",
+      "level": 4,
+      "q": "Посчитайте общую сумму всех позиций из data-price ячейки суммы — текст с пробелами не годится",
+      "solution": {
+        "bs4": "sum(int(td['data-price']) for td in soup.select('td.order__sum[data-price]'))",
+        "xpath": "sum(//td[@class='order__sum price']/@data-price)"
+      },
+      "answer": "6 821 670 — считать из атрибутов, не из текста «1 230 ₽»"
+    },
+    {
+      "id": "S-41",
+      "level": 4,
+      "q": "Соберите даты заказов со статусом shipped: значение берите из time[datetime]",
+      "solution": {
+        "css": "tr[data-status='shipped'] td.order__date time",
+        "xpath": "//tr[@data-status='shipped']//td[@class='order__date']/time/@datetime",
+        "bs4": "[t['datetime'] for t in soup.select('tr[data-status=\"shipped\"] td.order__date time')]"
+      },
+      "answer": "48 дат вида 2026-0X-1Y; даты циклично повторяются — не уникальны"
+    }
+  ]
+}

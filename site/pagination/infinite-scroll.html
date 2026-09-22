@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Бесконечная прокрутка · Пагинация · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Лента из 24 позиций с догрузкой по IntersectionObserver: как понять, что прокрутка дошла до конца, и как это парсить." />
+</head>
+<body data-page="pagination/infinite-scroll" data-module="pagination">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Бесконечная прокрутка: лента догружается сама</h1>
+  <p class="lede">Здесь нет ни кнопки, ни номеров страниц. Скрипт следит за нижним маркером через <code>IntersectionObserver</code> и подкладывает по шесть позиций, пока список не кончится. URL при этом не меняется вообще — обходить такую пагинацию «по адресам» невозможно.</p>
+
+  <p class="warn"><strong>Как запустить.</strong> Данные берутся из <code>../data/products.json</code> через <code>fetch</code>, поэтому откройте полигон локальным сервером: <code>node tools/serve.mjs</code>, затем <code>http://localhost:8000/pagination/infinite-scroll.html</code>. Без сервера лента останется пустой.</p>
+
+  <section class="controls">
+    <p class="status" id="feed-status" role="status">ожидание прокрутки…</p>
+    <p>Загружено <strong id="feed-shown">0</strong> из <span id="feed-total">0</span> позиций.</p>
+  </section>
+
+  <ul id="feed" class="catalog" data-mode="infinite" data-src="../data/products.json" data-page-size="6" data-item-class="feed-item" data-status="#feed-status" data-sentinel="#feed-sentinel" data-count="#feed-shown" data-total="#feed-total"></ul>
+
+  <p id="feed-sentinel" class="muted">Маркер низа экрана: как только он появляется в области видимости, подгружается следующая порция.</p>
+
+  <section id="how">
+    <h2>Признаки состояния в разметке</h2>
+    <table class="table--striped">
+      <caption>За чем следить парсеру</caption>
+      <thead><tr><th>Что</th><th>Где</th><th>Значение</th></tr></thead>
+      <tbody>
+        <tr><td>Режим</td><td><code>#feed</code></td><td><code>data-mode="infinite"</code> — тот же <code>../assets/js/dynamic.js</code>, что и на других страницах модуля, поведение выбирает этот атрибут.</td></tr>
+        <tr><td>Позиция ленты</td><td><code>li.feed-item</code></td><td>атрибуты <code>data-sku</code>, <code>data-index</code>, <code>data-category</code>, <code>data-price</code>, <code>data-batch</code>.</td></tr>
+        <tr><td>Счётчик</td><td><code>#feed-shown</code></td><td>сколько позиций отрисовано: 6, 12, 18, 24.</td></tr>
+        <tr><td>Конец ленты</td><td><code>#feed</code></td><td><code>data-empty="true"</code> — дальше сервер молчит, крутить бессмысленно. Атрибут ставит скрипт: до начала работы <code>dynamic.js</code> его нет вовсе, а во время прокрутки он равен <code>false</code>.</td></tr>
+        <tr><td>Портрет источника</td><td><code>#feed</code></td><td><code>data-total-items="24"</code>, <code>data-shown</code> — то же самое числом, удобно сравнивать со своим результатом.</td></tr>
+      </tbody>
+    </table>
+<pre><code>box = driver.find_element(By.ID, "feed")
+while box.get_attribute("data-empty") != "true":
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(1)
+items = driver.find_elements(By.CSS_SELECTOR, "li.feed-item")
+print(len(items))            # 24</code></pre>
+    <p class="note">Ловушка этого способа: позиции 13–24 отличаются от первых двенадцати только суффиксом <code>-У</code> в артикуле. Прокручивая ленту и сохраняя результат, легко записать одну позицию дважды — дедуплицируйте по <code>data-sku</code> или по <code>data-index</code>.</p>
+  </section>
+
+  <section id="parse">
+    <h2>Почему здесь не обойтись без браузера</h2>
+<pre><code>import requests
+from bs4 import BeautifulSoup
+
+html = requests.get(BASE + "/pagination/infinite-scroll.html", timeout=15).text
+soup = BeautifulSoup(html, "html.parser")
+print(len(soup.select("li.feed-item")))            # 0
+print(soup.find(id="feed")["data-mode"])           # 'infinite' — вот подсказка, куда идти
+print(requests.get(BASE + "/data/products.json", timeout=15).json()["meta"]["count"])   # 12</code></pre>
+    <p>Разница между «до» и «после» в одном предложении: браузер исполняет скрипт, <code>requests</code> — нет. Поэтому порядок действий всегда такой: сначала найти источник данных (атрибут <code>data-src</code>, вкладка Network, <code>/api/…</code>), потом решать, нужен ли вообще Selenium.</p>
+    <p class="tip">Признак конца в реальном проекте выглядит иначе: пустой массив в ответе API, отсутствие ссылки <code>rel="next"</code>, поле <code>next: null</code> или меньше N элементов в порции. Здесь для учебной простоты выбран атрибут <code>data-empty</code>.</p>
+    <p class="muted">Соседи по модулю: <a href="index.html">нумерованные страницы</a>, <a href="load-more.html">кнопка «Показать ещё»</a>, <a href="query.html">страницы в query-параметрах</a>.</p>
+  </section>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+<script src="../assets/js/dynamic.js" defer></script>
+</body>
+</html>

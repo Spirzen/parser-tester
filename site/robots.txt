@@ -1,0 +1,16 @@
+# Парсинг-тренажёр: парсить можно всё, включая этот файл.
+# Здесь нет реальных данных, поэтому ограничения носят учебный характер:
+# на них отрабатываются чтение robots.txt и «вежливый» обход.
+
+User-agent: *
+Allow: /
+Disallow: /private/
+Disallow: /*?debug=
+Crawl-delay: 1
+
+# Отдельный блок под «злого» краулер: учимся читать несколько секций
+User-agent: AggressiveBot/1.0
+Disallow: /
+
+Sitemap: https://example.github.io/parser-tester/sitemap.xml
+Rss: https://example.github.io/parser-tester/feed.xml

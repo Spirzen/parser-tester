@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Куртка штормовая «Маяк» · Scrapy · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Трёхслойная мембрана, проклеенные швы, вентиляционные молнии по бокам. Капюшон регулируется одной рукой." />
+  <link rel="up" href="index.html" />
+</head>
+<body data-page="scrapy/item-03" data-module="scrapy">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Куртка штормовая «Маяк»</h1>
+  <p class="lede">Карточка товара TB-2010 для извлечения полей в Item.</p>
+  <ul class="breadcrumbs">
+    <li><a href="index.html">Каталог</a></li>
+    <li><a href="index.html">одежда</a></li>
+    <li>Куртка штормовая «Маяк»</li>
+  </ul>
+  <section class="grid grid--2">
+    <div class="product-card" data-sku="TB-2010" data-category="одежда" data-subcategory="верхняя" data-stock="6" data-updated="2026-03-11T14:02:00Z">
+      <h2 class="product-card__title">Куртка штормовая «Маяк»</h2>
+      <p class="product-card__price"><span class="price" data-price="8990" data-currency="RUB">8 990 ₽</span> <span class="price price--old">11 490 ₽</span></p>
+      <p class="product-card__meta">Артикул <span class="sku mono">TB-2010</span> · продавец <span class="seller">Мастерская Прибой</span></p>
+      <p class="stock stock--in">в наличии</p>
+      <ul class="tag-list">
+        <li class="tag" data-tag="мембрана">мембрана</li>
+        <li class="tag" data-tag="капюшон">капюшон</li>
+        <li class="tag" data-tag="10000 мм">10000 мм</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Описание</h3>
+      <p class="product-description">Трёхслойная мембрана, проклеенные швы, вентиляционные молнии по бокам. Капюшон регулируется одной рукой.</p>
+      <dl class="spec">
+      <dt>мембрана</dt>
+      <dd>10000/8000</dd>
+      <dt>вес</dt>
+      <dd>740 г</dd>
+      <dt>размеры</dt>
+      <dd>S–XXL</dd>
+      </dl>
+    </div>
+  </section>
+  <h2>Рейтинг и отзывы</h2>
+  <table class="table--striped">
+    <thead><tr><th>Показатель</th><th>Значение</th></tr></thead>
+    <tbody>
+      <tr><td>Рейтинг</td><td><span data-rating="4.8">4.8</span> из 5</td></tr>
+      <tr><td>Отзывов</td><td><span data-reviews="214">214</span></td></tr>
+      <tr><td>Обновлено</td><td><time datetime="2026-03-11T14:02:00Z">2026-03-11T14:02:00Z</time></td></tr>
+    </tbody>
+  </table>
+  <p class="tip">Та же карточка есть в JSON: <a href="../data/products.json">../data/products.json</a> — сравните разметку и данные, найдите, что потерялось при парсинге HTML.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

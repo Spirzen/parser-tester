@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Списки и определения · HTML-разметка · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Списки вложенностью до четырёх уровней, смешанные ul и ol, спецификации dl/dt/dd, пустой список и скрытые li — что реально достанет BeautifulSoup." />
+</head>
+<body data-page="markup/lists" data-module="markup">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Списки: вложенность, порядок, пустые и скрытые</h1>
+  <p class="lede">Товары, категории, характеристики и меню сайта почти всегда лежат в списках. Здесь — четыре уровня вложенности, смешанный <code>ol</code> внутри <code>li</code>, спецификация в <code>dl</code> и два списка, которые легко потерять: пустой и скрытый.</p>
+
+  <section id="nested">
+    <h2>Дерево категорий: до четырёх уровней</h2>
+    <p>Один и тот же класс <code>tree</code> стоит на каждом вложенном <code>ul</code> — так размечают каталоги, когда шаблон копируют вместе с классом. Верхний уровень — четыре пункта, всего пунктов пятнадцать.</p>
+    <ul class="tree" data-test="category-tree">
+      <li class="branch" data-depth="1">Лагерь
+        <ul class="tree">
+          <li class="branch" data-depth="2">Палатки
+            <ul class="tree">
+              <li class="branch" data-depth="3">Двухместные
+                <ul class="tree">
+                  <li class="leaf" data-depth="4">«Бухта 2» — 15 900 ₽</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li class="branch" data-depth="2">Спальные мешки
+            <ul class="tree">
+              <li class="leaf" data-depth="3">Пуховый −7 °C — 11 400 ₽</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li class="branch" data-depth="1">Свет
+        <ul class="tree">
+          <li class="branch" data-depth="2">Налобные
+            <ul class="tree">
+              <li class="leaf" data-depth="3">«Светляк 400» — 1 990 ₽</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li class="branch" data-depth="1">Посуда
+        <ul class="tree">
+          <li class="branch" data-depth="2">Термосы</li>
+          <li class="branch" data-depth="2">Котелки</li>
+        </ul>
+      </li>
+      <li class="branch" data-depth="1">Снаряжение
+        <ul class="tree">
+          <li class="branch" data-depth="2">Рюкзаки</li>
+          <li class="branch" data-depth="2">Гермомешки</li>
+        </ul>
+      </li>
+    </ul>
+    <p class="note">Ветви «Посуда» и «Снаряжение» остановились на втором уровне: у части категорий подкатегорий нет, и пустой <code>ul</code> туда просто не добавили. Парсер, который ждёт вложенность ровно три, на них упадёт.</p>
+  </section>
+
+  <section id="mixed">
+    <h2>Смешанный список: порядок действий</h2>
+    <p>Внутри <code>ul</code> лежит <code>ol</code> — типичная «инструкция с шагами». Обход <code>ul &gt; li</code> схватит и шаги, если не ограничить глубину.</p>
+    <ul class="steps">
+      <li class="step" data-step="1">Проверить robots.txt
+        <ol class="step-inner">
+          <li>Раздел <code>/private/</code> закрыт</li>
+          <li><code>Crawl-delay</code> — две секунды</li>
+        </ol>
+      </li>
+      <li class="step" data-step="2">Запросить список
+        <ol class="step-inner">
+          <li>Первая страница без параметров</li>
+          <li>Вторая — через <code>?page=2</code></li>
+          <li>Стоп при пустом <code>rel="next"</code></li>
+        </ol>
+      </li>
+      <li class="step" data-step="3">Сохранить сырой HTML
+        <ul class="tag-list">
+          <li>кодировка utf-8</li>
+          <li>имя файла по URL</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section id="spec">
+    <h2>Спецификация в dl / dt / dd</h2>
+    <p>Список определений — самый удобный формат для характеристики товара: термин и значение идут парами. Один <code>dt</code> может иметь два <code>dd</code>, и тогда наивный цикл «прочитал dt — прочитал dd» съедает второе значение.</p>
+    <div class="grid grid--2">
+      <div class="card">
+        <h3>Складной стул «Бриз»</h3>
+        <dl class="spec" data-sku="TB-1001">
+          <dt>вес</dt>
+          <dd>1.9 кг</dd>
+          <dt>нагрузка</dt>
+          <dd>120 кг</dd>
+          <dt>размер в сложенном виде</dt>
+          <dd>48×16×12 см</dd>
+          <dt>материал</dt>
+          <dd>алюминий</dd>
+          <dd>кордура 600D</dd>
+          <dt>гарантия</dt>
+          <dd></dd>
+        </dl>
+      </div>
+      <div class="card">
+        <h3>Куртка штормовая «Маяк»</h3>
+        <dl class="spec" data-sku="TB-2010">
+          <dt>мембрана</dt>
+          <dd>10000/8000</dd>
+          <dt>вес</dt>
+          <dd>740 г</dd>
+          <dt>размеры</dt>
+          <dd>S</dd>
+          <dd>M</dd>
+          <dd>L</dd>
+          <dd>XL</dd>
+          <dd>XXL</dd>
+          <dt>условия</dt>
+          <dd class="muted">уточняются у продавца</dd>
+        </dl>
+      </div>
+    </div>
+<pre><code>def dl_to_dict(dl):
+    out, key = {}, None
+    for node in dl.contents:
+        if getattr(node, "name", None) == "dt":
+            key = node.get_text(strip=True)
+            out[key] = []
+        elif getattr(node, "name", None) == "dd" and key:
+            out[key].append(node.get_text(strip=True))   # два dd у одного dt — это нормально
+    return {k: (v[0] if len(v) == 1 else v) for k, v in out.items()}</code></pre>
+  </section>
+
+  <section id="noclass">
+    <h2>Список без класса</h2>
+    <p>Ни класса, ни <code>data-*</code>: единственный зацеп — структура. Достать его можно через родителя с осмысленным классом или по позиции среди соседей.</p>
+    <div class="card" data-test="delivery-card">
+      <h3>Условия доставки</h3>
+      <ul>
+        <li>Курьер по Тихой Бухте — 350 ₽</li>
+        <li>Почта — от 6 дней</li>
+        <li>Самовывоз со склада — бесплатно</li>
+      </ul>
+    </div>
+<pre><code>ul = soup.find("div", attrs={"data-test": "delivery-card"}).find("ul")
+items = [li.get_text(strip=True) for li in ul.find_all("li", recursive=False)]
+
+# то же селектором: любой ul без class внутри нужной карточки
+soup.select('div[data-test="delivery-card"] > ul:not([class]) > li')</code></pre>
+    <p class="warn">Селектор <code>ul:not([class])</code> в lxml у BeautifulSoup работает, а в стандартном <code>:not()</code> браузера — только с простым аргументом. Если цель — отфильтровать именно отсутствующий класс, проще проверить <code>li.parent.get("class") is None</code> уже в Python.</p>
+  </section>
+
+  <section id="traps">
+    <h2>Ловушки: пустой и скрытый списки</h2>
+    <p>Пустой <code>ul</code> остаётся в разметке, когда товаров в фильтре нет: код, ожидающий «первый элемент всегда есть», падает на <code>IndexError</code>. Скрытый пункт виден парсеру, но не виден пользователю.</p>
+    <ul class="list list--empty" data-list="out-of-stock"></ul>
+    <ul class="list list--hidden" data-list="reserve">
+      <li>Складной стул «Бриз»</li>
+      <li hidden>Картуш газовой смеси 450 мл — снят с продажи</li>
+      <li style="display:none">Фонарь налобный «Светляк 400» — скрыт стилем</li>
+      <li>Гермомешок 25 л</li>
+    </ul>
+    <p class="muted">Видимых пункта в списке <code>reserve</code> два, а в исходнике — четыре. Разница и есть цена слепого доверия первому числу.</p>
+  </section>
+
+  <section id="walk">
+    <h2>Как обходить вложенные списки</h2>
+    <h3>Три способа задать глубину</h3>
+<pre><code># 1. Только верхний уровень — 4 пункта дерева категорий
+soup.find("ul", class_="tree").find_all("li", recursive=False)
+
+# 2. Все пункты вместе: 15 штук, но get_text() у родителя включает текст потомков
+top = soup.find("ul", class_="tree").find_all("li")
+[len(x.get_text(strip=True)) for x in top]        # длинные строки — это признак «схлопнули детей»
+
+# 3. Свой текст без детей
+def own_text(li):
+    return "".join(s for s in li.find_all(string=True, recursive=False) if s.strip()).strip()
+[own_text(li) for li in soup.select("ul.tree &gt; li")]   # ['Лагерь', 'Свет', 'Посуда', 'Снаряжение']</code></pre>
+    <h3>Дерево в словарь</h3>
+<pre><code>def parse_tree(ul):
+    out = []
+    for li in ul.find_all("li", recursive=False):
+        node = {"title": own_text(li), "depth": int(li["data-depth"])}
+        child = li.find("ul", recursive=False)
+        if child:
+            node["children"] = parse_tree(child)
+        out.append(node)
+    return out
+
+tree = parse_tree(soup.find("ul", class_="tree"))
+# ровно четыре корня, у части из них нет ключа "children"</code></pre>
+    <table class="table--striped">
+      <caption>Что вернёт разные запросы на этой странице</caption>
+      <thead><tr><th>Запрос</th><th>Совпадений</th><th>Комментарий</th></tr></thead>
+      <tbody>
+        <tr><td><code>soup.find_all("ul")</code></td><td>14</td><td>все списки страницы, включая пустой и скрытый</td></tr>
+        <tr><td><code>soup.find_all("ol")</code></td><td>2</td><td>оба — шаги внутри инструкции: <code>ol</code> вложен в <code>li</code>, а не стоит отдельно</td></tr>
+        <tr><td><code>soup.find_all("li")</code></td><td>32</td><td>пункты дерева, шагов, подпунктов, доставки и reserve</td></tr>
+        <tr><td><code>soup.select("ul.tree &gt; li")</code></td><td>15</td><td>пункты дерева на любом уровне: класс <code>tree</code> есть у всех вложенных <code>ul</code></td></tr>
+        <tr><td><code>soup.select("ul.tree ul.tree &gt; li")</code></td><td>11</td><td>не верхний уровень дерева категорий</td></tr>
+        <tr><td><code>soup.find("ul").find_all("li", recursive=False)</code></td><td>4</td><td>первый <code>ul</code> на странице — это верхнее дерево</td></tr>
+        <tr><td><code>soup.find_all("ul", class_="list")</code></td><td>2</td><td>пустой и скрытый: у пустого <code>len(ul.find_all("li")) == 0</code></td></tr>
+        <tr><td><code>[li for li in soup.find_all("li") if "hidden" in li.attrs]</code></td><td>1</td><td>атрибут <code>hidden</code> без значения; <code>display:none</code> — это отдельный случай</td></tr>
+        <tr><td><code>soup.find_all("dl")</code></td><td>2</td><td>обе спецификации, у каждой есть пустой <code>dd</code> или несколько <code>dd</code> подряд</td></tr>
+      </tbody>
+    </table>
+    <p class="tip">Счётчики в таблице — по исходному HTML со скрытыми и пустыми элементами. В консоли браузера <code>document.querySelectorAll('li').length</code> вернёт столько же: скрытые узлы остаются в DOM, просто не отрисовываются.</p>
+  </section>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

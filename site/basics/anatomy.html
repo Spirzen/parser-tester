@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Анатомия HTML-документа · Основы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Как устроен HTML-документ: doctype, head, meta, link, script, комментарии и noscript — и что из этого видит парсер." />
+</head>
+<body data-page="basics/anatomy" data-module="basics">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Анатомия HTML-документа</h1>
+  <p class="lede">Ответ сервера — текст в определённом порядке. Разбираем слой за слоем: что парсер находит в <code>head</code>, что в <code>body</code> и что исчезает ещё до дерева узлов.</p>
+
+  <h2>Слои документа</h2>
+  <table class="table--striped layers">
+    <caption>Что есть в файле и кто это видит</caption>
+    <thead>
+      <tr><th>Слой</th><th>Что внутри</th><th>Как достать</th><th>Видит ли BeautifulSoup</th></tr>
+    </thead>
+    <tbody>
+      <tr data-seen="yes"><td><code>&lt;!DOCTYPE html&gt;</code></td><td>Режим рендеринга, строка объявления</td><td><code>soup.contents[0]</code>, тип <code>Doctype</code></td><td>да, но это строка, а не тег</td></tr>
+      <tr data-seen="yes"><td><code>head</code></td><td><code>meta</code>, <code>title</code>, <code>link</code>, <code>style</code>, <code>script</code></td><td><code>soup.head</code></td><td>да, это обычный узел</td></tr>
+      <tr data-seen="yes"><td><code>meta charset</code></td><td>Обещанная кодировка документа</td><td><code>soup.find("meta", charset=True)</code></td><td>да, значение атрибута</td></tr>
+      <tr data-seen="yes"><td><code>meta description</code></td><td>Краткое описание для поисковика</td><td><code>soup.find("meta", attrs={"name": "description"})</code></td><td>да</td></tr>
+      <tr data-seen="yes"><td><code>link</code></td><td>Ссылки на стили, иконки, <code>rel="next"</code></td><td><code>soup.select('link[rel="next"]')</code></td><td>да</td></tr>
+      <tr data-seen="yes"><td><code>title</code></td><td>Текст заголовка вкладки</td><td><code>soup.title.get_text()</code></td><td>да</td></tr>
+      <tr data-seen="no"><td><code>script</code> с кодом</td><td>Инструкции браузеру</td><td><code>soup.find_all("script")</code></td><td>текст тега есть, но код не выполняется</td></tr>
+      <tr data-seen="yes"><td>комментарий</td><td><code>&lt;!-- текст --&gt;</code></td><td>только тип <code>Comment</code></td><td>да, но не через <code>get_text()</code></td></tr>
+      <tr data-seen="yes"><td><code>noscript</code></td><td>Запасной контент без JavaScript</td><td><code>soup.find("noscript")</code></td><td>да, дочерние узлы остаются узлами</td></tr>
+      <tr data-seen="no"><td>DOM после скриптов</td><td>То, что дорисовал браузер</td><td>Selenium / Playwright</td><td>нет: bs4 читает исходный HTML</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Три обязательные вещи в начале файла</h2>
+  <p>Порядок тегов в <code>head</code> имеет значение: <code>meta charset</code> должен стоять первым, иначе браузер начнёт декодировать байты до того, как узнает кодировку. Для парсера порядок не важен, а важен факт наличия.</p>
+  <pre data-lang="html"><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="ru"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8" /&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1" /&gt;
+  &lt;title&gt;Каталог · «Тихая бухта»&lt;/title&gt;
+  &lt;link rel="stylesheet" href="../assets/css/main.css" /&gt;
+  &lt;meta name="description" content="Складные стулья, горелки и палатки: каталог вымышленного магазина." /&gt;
+  &lt;meta property="og:price:amount" content="15900" /&gt;
+&lt;/head&gt;</code></pre>
+  <p class="warn">Пропущенный закрывающий тег — типичная причина пустого результата: парсер «чинит» разметку и утаскивает следующий блок внутрь предыдущего, после чего <code>.card h3</code> находит заголовок не в той карточке. Сравните два разбора одного файла: <code>BeautifulSoup(html, "html.parser")</code> и <code>BeautifulSoup(html, "lxml")</code> починят ошибку по-разному.</p>
+
+  <h2>Каркас страницы-мишени как его видит curl</h2>
+  <p class="muted">Дальше — исходный текст страницы <a href="hello.html">hello.html</a> с сокращением длинных абзацев (многоточие). Именно эти байты вы получите в <code>response.content</code>, а навигацию и блок заданий подставляет сборка — их в исходном файле нет.</p>
+  <blockquote class="view-source">
+    <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="ru"&gt;
+&lt;head&gt;
+  &lt;meta charset="utf-8" /&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1" /&gt;
+  &lt;title&gt;Первая страница-мишень · Основы · Парсинг-тренажёр&lt;/title&gt;
+  &lt;link rel="stylesheet" href="../assets/css/main.css" /&gt;
+  &lt;meta name="description" content="Минимальная мишень." /&gt;
+&lt;/head&gt;
+&lt;body data-page="basics/hello" data-module="basics"&gt;
+  &lt;h1&gt;Первая страница-мишень&lt;/h1&gt;
+  &lt;p class="lede"&gt;Страница намеренно бедная...&lt;/p&gt;
+  &lt;p id="line-greeting" class="hello-line"&gt;Магазин «Тихая бухта»...&lt;/p&gt;
+  &lt;p id="line-task" class="hello-line"&gt;Ваша первая задача...&lt;/p&gt;
+  &lt;p id="line-check" class="hello-line"&gt;Проверка простая...&lt;/p&gt;
+  &lt;p class="hello-links"&gt;
+    &lt;a class="start-link" href="anatomy.html"&gt;Следующий шаг&lt;/a&gt;
+    &lt;a class="start-link" href="../data/products.json"&gt;JSON-выгрузка&lt;/a&gt;
+  &lt;/p&gt;
+  &lt;script src="../assets/js/trainer.js" defer&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    <cite>Фрагмент исходника: view-source учебной мишени basics/hello.html</cite>
+  </blockquote>
+
+  <h2>Комментарии</h2>
+  <p>Комментарий — часть документа. BeautifulSoup кладёт его в особый тип <code>Comment</code>: обычный <code>get_text()</code> его не вернёт, а <code>find_all(string=...)</code> с проверкой на <code>Comment</code> — вернёт. В lxml это узел с типом <code>Comment</code>, в XPath доступен как <code>//comment()</code>. Selenium найти комментарий не может: в DOM браузера их не ищут.</p>
+  <!-- подсказка для внимательных: этот комментарий тоже узел, его видно в bs4 через Comment и в lxml через //comment() -->
+  <p class="tip">В тексте этого абзаца спрятан узел-подсказка: <span class="muted">он не отображается на странице, но лежит в исходнике и попадается в <code>response.text</code>.</span></p>
+
+  <h2>Что делает браузер и чего не делает парсер</h2>
+  <div class="grid grid--2">
+    <div class="card">
+      <h3>Браузер</h3>
+      <ul>
+        <li>Чинит битую разметку: закрытия, вложенность, «утопленные» теги.</li>
+        <li>Выполняет <code>script</code> и перестраивает дерево.</li>
+        <li>Прячет содержимое <code>noscript</code> в текст.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Парсер</h3>
+      <ul>
+        <li><code>html.parser</code> и <code>lxml</code> чинят разметку по-разному: сравните два разбора одного файла.</li>
+        <li>Регистр тегов теряется: <code>&lt;P&gt;</code> станет <code>p</code>, а <code>DATA-SKU</code> — <code>data-sku</code>.</li>
+        <li>Ни один парсер не «догадывается» о данных, которых нет в ответе.</li>
+      </ul>
+    </div>
+  </div>
+  <noscript>
+    <p class="warn">Видите это сообщение — JavaScript выключен. Значит, содержимое тега <code>noscript</code> осталось разметкой и в DOM, и в исходнике. BeautifulSoup найдёт здесь узлы <code>p</code>, <code>code</code> и <code>strong</code>, а включённый в браузере JavaScript превратит их в обычный текст.</p>
+  </noscript>
+  <p><strong>Итог урока.</strong> Перед тем как писать селектор, посмотрите на исходный ответ: <code>curl -s адрес | head -40</code> или <a href="hello.html?debug=1">hello.html?debug=1</a> на локальном сервере. Разница между «исходник» и «DOM» объясняет большинство пустых результатов.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Шум: одинаковые классы в разных секциях · Селекторы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Четыре секции с одинаковыми .card, .item, .row и .title, шесть ссылок «Подробнее», похожие id и скрытые блоки: учимся ограничивать область поиска." />
+</head>
+<body data-page="selectors/ambiguous" data-module="selectors">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Шум: одинаковые классы в разных секциях</h1>
+  <p class="lede">Живая вёрстка так и выглядит: <code>.card</code> встречается в новостях, в заказах, в каталоге и в блоке поддержки. Побеждает тот, кто умеет ограничивать область поиска, а не тот, кто придумал более длинный селектор.</p>
+  <p class="warn">На этой странице <code>.card</code>, <code>.item</code>, <code>.row</code> и <code>.title</code> намеренно переиспользованы в пяти секциях. Перед каждым заданием решите: «в какой секции я ищу?» — и начинайте селектор с ограничителя <code>section[data-zone="…"]</code>.</p>
+
+  <h2 id="title">Один id и много классов с одним именем</h2>
+  <p class="muted">У этого заголовка есть <code>id="title"</code>, а у десятка элементов ниже — <code>class="title"</code>. Селектор <code>#title</code> найдёт один узел, <code>.title</code> — все карточки, а <code>h2#title</code> вернёт именно заголовок.</p>
+
+  <!-- подсказка: чтобы не перепутать секции, ищите от родителя — section[data-zone="orders"], а не по всему документу -->
+  <section class="zone zone-news" data-zone="news">
+    <h2>Новости</h2>
+    <div class="grid grid--3">
+      <article class="card news-item">
+        <h3 class="title">Склад перешёл на ночную приёмку</h3>
+        <p class="snippet">Остатки в каталоге обновляются один раз за смену.</p>
+        <ul class="row">
+          <li class="item" data-field="date">14.03.2026</li>
+          <li class="item" data-field="category">склад</li>
+        </ul>
+        <a class="more" href="../http/news.html">Подробнее</a>
+      </article>
+      <article class="card news-item">
+        <h3 class="title">Сезонное снижение на свет и посуда</h3>
+        <p class="snippet">Цены снижены на 10–15 %, старые остались в карточках.</p>
+        <ul class="row">
+          <li class="item" data-field="date">09.03.2026</li>
+          <li class="item" data-field="category">цена</li>
+        </ul>
+        <a class="more" href="../http/news.html#a2">Подробнее</a>
+      </article>
+      <article class="card news-item">
+        <h3 class="title">Открыли пункт выдачи в Старом Логе</h3>
+        <p class="snippet">Пятый пункт выдачи, доставка подешевела на 120 ₽.</p>
+        <ul class="row">
+          <li class="item" data-field="date">15.01.2026</li>
+          <li class="item" data-field="category">логистика</li>
+        </ul>
+        <a class="more" href="../http/news.html#a8">Подробнее</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="zone zone-orders" data-zone="orders">
+    <h2>Заказы</h2>
+    <div class="card orders-caption">
+      <h3 class="title">Три последних отправления</h3>
+      <p class="snippet">Здесь <code>.row</code> — строка таблицы, а <code>.item</code> — ячейка: то же имя, другая роль.</p>
+    </div>
+    <table class="table--striped table--compact">
+      <thead>
+        <tr><th>Номер</th><th>Статус</th><th>Действие</th></tr>
+      </thead>
+      <tbody>
+        <tr class="row"><td class="item">ORD-1004</td><td class="item" data-status="shipped">в пути</td><td class="item"><a class="more" href="../scrapy/item-01.html">Подробнее</a></td></tr>
+        <tr class="row"><td class="item">ORD-1005</td><td class="item" data-status="paid">оплачен</td><td class="item"><a class="more" href="../scrapy/item-05.html">Подробнее</a></td></tr>
+        <tr class="row is-hidden-row"><td class="item">ORD-1006</td><td class="item" data-status="cancelled">отменён</td><td class="item"><a class="more" href="../scrapy/item-09.html">Подробнее</a></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="zone zone-catalog" data-zone="catalog">
+    <h2>Каталог</h2>
+    <div class="grid grid--3">
+      <article class="card catalog-item">
+        <h3 class="title">Термос 0.75 л «Полночь»</h3>
+        <p class="product-card__price"><span class="price" data-price="3290" data-currency="RUB">3 290 ₽</span></p>
+        <div class="row">
+          <span class="item" data-field="sku">TB-5040</span>
+          <span class="item" data-field="stock">в наличии: 31</span>
+        </div>
+        <a class="more" href="../scrapy/item-09.html">Подробнее</a>
+      </article>
+      <article class="card catalog-item">
+        <h3 class="title">Гермомешок 25 л</h3>
+        <p class="product-card__price"><span class="price" data-price="1690" data-currency="RUB">1 690 ₽</span></p>
+        <div class="row">
+          <span class="item" data-field="sku">TB-6051</span>
+          <span class="item" data-field="stock">в наличии: 55</span>
+        </div>
+        <a class="more" href="../scrapy/item-12.html">Подробнее</a>
+      </article>
+      <div class="card hidden-block" data-trap="hidden-block">
+        <h3 class="title">Скрытая карточка <code>.hidden-block</code></h3>
+        <p class="snippet">В браузере её не видно, в исходнике — пожалуйста: bs4 и <code>querySelectorAll</code> её найдут.</p>
+        <a class="more" href="../scrapy/index.html">Подробнее</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="zone zone-support" data-zone="support">
+    <h2>Поддержка</h2>
+    <div class="card support-item">
+      <h3 class="title">Как вернуть товар</h3>
+      <ol class="row">
+        <li class="item">Заявка на claim@example.com</li>
+        <li class="item">Осмотр на складе Приморск-2</li>
+        <li class="item">Возврат на карту в течение 5 дней</li>
+      </ol>
+    </div>
+    <div class="card support-item" style="display:none" data-trap="inline-style">
+      <h3 class="title">Карточка, спрятанная через style="display:none"</h3>
+      <p class="snippet">Selenium без <code>visibility_of</code> её не увидит, BeautifulSoup — увидит.</p>
+    </div>
+    <p class="title" hidden data-trap="hidden-attr">Заголовок с атрибутом hidden: в DOM есть, на экране нет.</p>
+    <p class="visually-hidden">Текст, скрытый визуально: <code>.visually-hidden</code> остаётся в дереве и в <code>get_text()</code>.</p>
+  </section>
+
+  <section class="zone zone-ids" data-zone="ids">
+    <h2>Похожие id</h2>
+    <p class="muted">Три разных атрибута <code>id</code>, которые легко перепутать при копировании селектора из DevTools.</p>
+    <div id="product-card-1" class="card"><p class="item">Дефис: <code>#product-card-1</code></p></div>
+    <div id="product_card_1" class="card"><p class="item">Подчёркивание: <code>#product_card_1</code></p></div>
+    <div id="ProductCard1" class="card"><p class="item">Верхний регистр: <code>#ProductCard1</code></p></div>
+    <p class="note">В CSS имена id чувствительны к регистру символов, а в HTML-разметке <code>id</code> обязан быть уникальным: три похожих — легальные три разных узла. Одинаковые классы — обычное дело; одинаковые id — ошибка вёрстки.</p>
+  </section>
+
+  <h2>Как с этим работать</h2>
+  <ol class="advice">
+    <li>Начинайте селектор с контейнера секции, а не с имени класса: <code>[data-zone="orders"] .item</code>.</li>
+    <li>Различайте роли через атрибуты: <code>[data-field="sku"]</code> надёжнее, чем <code>.row .item:first-child</code>.</li>
+    <li>Считайте скрытое отдельно: <code>.hidden-block</code>, <code>[hidden]</code>, <code>style="display:none"</code>, <code>.is-hidden-row</code>, <code>.visually-hidden</code>.</li>
+    <li>Проверяйте уникальность текста ссылки: шесть «Подробнее» — это шесть разных адресов, и ни одна из них не «главная».</li>
+  </ol>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shadow DOM · JS-страницы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Таблица цен спрятана внутри shadowRoot кастомного элемента: почему querySelector и BeautifulSoup её не видят и как достать." />
+</head>
+<body data-page="js/shadow-dom" data-module="js">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Таблица внутри тени: &lt;tb-price-table&gt;</h1>
+  <p class="lede">Ниже — кастомный элемент, объявленный в <code>../assets/js/shadow.js</code>. Снаружи у него пустое содержимое, а вся таблица
+  живёт в его <code>shadowRoot</code>. Посмотрите «View Source» страницы: тег <code>&lt;tb-price-table&gt;</code> закрыт сразу, без единой строки внутри.</p>
+
+  <h2>Прайс-лист в тени</h2>
+  <tb-price-table id="tb-prices" data-widget="price-table"></tb-price-table>
+
+  <h2>Почему обычные приёмы не работают</h2>
+  <ul>
+    <li><code>document.querySelector('tr')</code> не заходит внутрь тени: стили и разметка изолированы, тень — отдельное дерево.</li>
+    <li><code>soup.select('tb-price-table tr')</code> вернёт пусто: в исходном HTML содержимого нет, его создаёт JS.</li>
+    <li>Selenium <code>find_element(By.CSS_SELECTOR, 'tr')</code> тоже ничего не находит внутри — CSS-селекторы не пересекают границу тени.</li>
+    <li>Playwright в обычном режиме «просвечивает» открытые тени для части селекторов, но полагаться на это в уроке не будем — смотрите способы ниже.</li>
+  </ul>
+
+  <h2>Три способа достать данные</h2>
+  <h3>1. Прочитать shadowRoot через JS-мост</h3>
+  <pre><code># Selenium: execute_script добирается до свойства shadowRoot (режим open)
+rows = driver.execute_script("""
+  return [...document.querySelector('tb-price-table')
+                 .shadowRoot.querySelectorAll('tr[part="price-row"]')]
+         .map(r => [r.dataset.sku,
+                    r.querySelector('[part="price-cell"]').dataset.price]);
+""")</code></pre>
+  <p>В Playwright то же самое через <code>page.evaluate()</code>, либо пирсингом селектора:</p>
+  <pre><code># Playwright: pierce просвечивает тень
+rows = page.locator("pierce=tr[data-sku]").all_text_contents()
+# или явно через part-атрибуты стиля (ряд part указан в каждой цепочке)
+prices = page.locator("tb-price-table::part(price-row) ::part(price-cell)")
+print(prices.count(), prices.all_inner_texts())</code></pre>
+
+  <h3>2. CSS ::part — «разрешённые окна» тени</h3>
+  <p>Элемент внутри тени помечен атрибутом <code>part</code> (<code>price-row</code>, <code>sku-cell</code>, <code>price-cell</code>).
+  Такой узел можно стилизовать и найти снаружи: <code>tb-price-table::part(price-row) ::part(price-cell)</code>.
+  Чтение <code>element.shadowRoot</code> из JS требует режима <code>open</code>, а <code>::part</code> работает при любом режиме.</p>
+
+  <h3>3. Не парсить тень вовсе</h3>
+  <p class="tip">Часто данные тени откуда-то приходят — ищите эндпоинт во вкладке Network (здесь массив <code>ROWS</code> зашит прямо в скрипт:
+  откройте <code>../assets/js/shadow.js</code> и прочитайте его как обычный текст — приём «данные видны в исходниках JS-файла» тоже работает).</p>
+
+  <table class="table--compact table--striped">
+    <thead><tr><th>Инструмент</th><th>Видит таблицу в тени?</th></tr></thead>
+    <tbody>
+      <tr><td>requests + BeautifulSoup</td><td>нет: в HTML хост пуст</td></tr>
+      <tr><td>document.querySelector</td><td>нет: граница shadow DOM непрозрачна для CSS-поиска</td></tr>
+      <tr><td>Selenium + execute_script</td><td>да, если режим open</td></tr>
+      <tr><td>Playwright pierce / ::part / evaluate</td><td>да</td></tr>
+      <tr><td>чтение исходника shadow.js</td><td>да: массив ROWS лежит в открытом коде</td></tr>
+    </tbody>
+  </table>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/shadow.js" defer></script>
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Зеркало выгрузки · Scrapy · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Эталонные данные полигона и образец JSONL: сравните вывод своего паука со справочником символ в символ." />
+</head>
+<body data-page="scrapy/export" data-module="scrapy">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Зеркало выгрузки: с чем сравнивать своего паука</h1>
+  <p class="lede">Три эталонных JSON-файла и образец правильной построчной выгрузки. Собираете каталог — прогоните паука и сверьте с
+  эталоном: поля, типы, порядок, дубли. Расхождение — это баг парсера, а не «мелочь».</p>
+
+  <h2>Эталоны</h2>
+  <div class="grid grid--3">
+    <div class="card">
+      <h3><a href="../data/products.json">../data/products.json</a></h3>
+      <p class="muted">12 карточек каталога: sku, цены, остатки, теги, характеристики. Эталон для пар к <a href="index.html">index.html</a> + <a href="item-01.html">item-01.html</a>.</p>
+    </div>
+    <div class="card">
+      <h3><a href="../data/quotes.json">../data/quotes.json</a></h3>
+      <p class="muted">20 цитат, 9 авторов и топ тегов. Эталон для <a href="quotes.html">quotes.html</a>, <a href="quotes-2.html">quotes-2.html</a> и <a href="authors.html">authors.html</a>.</p>
+    </div>
+    <div class="card">
+      <h3><a href="../data/reviews.json">../data/reviews.json</a></h3>
+      <p class="muted">30 отзывов по 6 страницам пагинации. Эталон для модуля «Пагинация».</p>
+    </div>
+  </div>
+
+  <h2>Образец JSONL: как выглядит правильная выгрузка</h2>
+  <p>Каждая строка файла <code>items.jsonl</code> — самостоятельный JSON-объект. Ни запятых между строками, ни внешнего массива:
+  так делает <code>FEEDS = {"items.jsonl": {"format": "jsonlines"}}</code>. Если ваш файл «не читается построчно» — вы выгрузили <code>json.dump(list)</code>, а не фид.</p>
+  <pre id="jsonl-sample"><code>{"sku": "TB-1001", "title": "Складной стул «Бриз»", "price": 2490, "currency": "RUB", "stock": 14, "inStock": true}
+{"sku": "TB-1002", "title": "Картуш газовой смеси 450 мл", "price": 640, "currency": "RUB", "stock": 0, "inStock": false}
+{"sku": "TB-2010", "title": "Куртка штормовая «Маяк»", "price": 8990, "currency": "RUB", "stock": 6, "inStock": true}
+{"sku": "TB-2011", "title": "Носки трекинговые, пара", "price": 690, "currency": "RUB", "stock": 88, "inStock": true}
+{"sku": "TB-3020", "title": "Фонарь налобный «Светляк 400»", "price": 1990, "currency": "RUB", "stock": 23, "inStock": true}</code></pre>
+
+  <h2>Чек-лист сверки (5 строк → 5 проверок)</h2>
+  <ol>
+    <li><strong>Число записей:</strong> <code>wc -l items.jsonl</code> против <code>meta.count</code> в эталоне (для товаров — 12).</li>
+    <li><strong>Типы:</strong> <code>"price": 2490</code>, а не <code>"2 490 ₽"</code>; строку из HTML приводите в pipeline (<code>int(re.sub(r"\D", "", text))</code>).</li>
+    <li><strong>Полнота:</strong> ни одного пустого поля там, где эталон даёт значение (<code>oldPrice</code> может быть <code>null</code> — сверяйтесь с карточкой).</li>
+    <li><strong>Дубли:</strong> <code>sort items.jsonl | uniq -d</code> пусто. Не пусто — включите дедупликацию по sku.</li>
+    <li><strong>Кодировка:</strong> кириллица читаема, а не <code>\u0422...</code>: <code>FEED_EXPORT_ENCODING = "utf-8"</code>.</li>
+  </ol>
+
+  <p class="note">Быстрый способ сверить без глаз: <code>python -m json.tool ../data/products.json</code> и построчный
+  <code>json.loads</code> вашего файла, затем сравнение множеств <code>{(p["sku"], p["price"])}</code>. Разница множеств и есть ваш баг-репорт.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

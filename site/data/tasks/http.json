@@ -1,0 +1,443 @@
+{
+  "http/index": [
+    {
+      "id": "H-01",
+      "level": 2,
+      "q": "Соберите коды состояний, при которых парсеру нужно засыпать (data-step=sleep)",
+      "solution": {
+        "css": "tr:has(td[data-step='sleep']) > td:first-child",
+        "xpath": "//tr[td[@data-step='sleep']]/td[1]",
+        "bs4": "[tr.select_one('td[data-code]').get_text(strip=True) for tr in soup.select('tr') if tr.select_one('[data-step=\"sleep\"]')]"
+      },
+      "answer": "2 кода: 429 и 503"
+    },
+    {
+      "id": "H-02",
+      "level": 2,
+      "q": "Посчитайте все разобранные коды состояния в таблице: ячейки с data-code",
+      "solution": {
+        "css": "td[data-code]",
+        "xpath": "//td[@data-code]",
+        "bs4": "[td['data-code'] for td in soup.select('td[data-code]')]"
+      },
+      "answer": "11 кодов от 200 до 503"
+    },
+    {
+      "id": "H-03",
+      "level": 2,
+      "q": "Соберите способы посмотреть заголовки: пункты нумерованного списка where-to-look",
+      "solution": {
+        "css": "ol.where-to-look > li > strong",
+        "xpath": "//ol[@class='where-to-look']/li/strong",
+        "bs4": "[s.get_text(strip=True) for s in soup.select('ol.where-to-look > li > strong')]"
+      },
+      "answer": "4 способа: DevTools, curl -i, curl -v, сам объект ответа"
+    },
+    {
+      "id": "H-04",
+      "level": 3,
+      "q": "Вытащите адреса всех локальных эндпоинтов из таблицы endpoints-table",
+      "solution": {
+        "css": ".endpoints-table [data-endpoint]",
+        "xpath": "//table[contains(@class, 'endpoints-table')]//code[@data-endpoint]",
+        "bs4": "[c['data-endpoint'] for c in soup.select('.endpoints-table [data-endpoint]')]"
+      },
+      "answer": "8 эндпоинтов; все работают только под node tools/serve.mjs"
+    },
+    {
+      "id": "H-05",
+      "level": 3,
+      "q": "Найдите строку метода OPTIONS и её объяснение: третья ячейка строки",
+      "solution": {
+        "css": "tr[data-method='OPTIONS'] td:nth-child(3)",
+        "xpath": "//tr[@data-method='OPTIONS']/td[3]",
+        "bs4": "soup.select_one('tr[data-method=\"OPTIONS\"] td:nth-child(3)').get_text(strip=True)"
+      },
+      "answer": "«интересно при кросс-доменных запросах из браузера»"
+    },
+    {
+      "id": "H-06",
+      "level": 4,
+      "q": "Соберите карточки страниц модуля HTTP: заголовок и ссылку каждой",
+      "solution": {
+        "css": ".module-pages article.page-card",
+        "xpath": "//div[@class='grid grid--3 module-pages']/article",
+        "bs4": "[(c.select_one('h3').get_text(strip=True), c.select_one('a.page-card__link')['href']) for c in soup.select('.module-pages article.page-card')]"
+      },
+      "answer": "6 карточек: headers, cookies, redirect, news, api, final"
+    }
+  ],
+  "http/headers": [
+    {
+      "id": "H-07",
+      "level": 2,
+      "q": "Посчитайте заголовки запроса в первой таблице: строки с data-header внутри req-headers",
+      "solution": {
+        "css": ".req-headers tr[data-header]",
+        "xpath": "//table[contains(@class, 'req-headers')]//tr[@data-header]",
+        "bs4": "[tr['data-header'] for tr in soup.select('.req-headers tr[data-header]')]"
+      },
+      "answer": "11 заголовков от user-agent до x-api-key"
+    },
+    {
+      "id": "H-08",
+      "level": 2,
+      "q": "Отметьте заголовки, которые ставит только браузер (data-owner=browser)",
+      "solution": {
+        "css": "tr[data-owner='browser']",
+        "xpath": "//tr[@data-owner='browser']",
+        "bs4": "[tr.select_one('code').get_text(strip=True) for tr in soup.select('tr[data-owner=\"browser\"]')]"
+      },
+      "answer": "6 строк: Accept, Accept-Language, Accept-Encoding, Referer, Cookie, Connection"
+    },
+    {
+      "id": "H-09",
+      "level": 2,
+      "q": "Соберите имена заголовков, которые requests подставляет сам (dt списка defaults)",
+      "solution": {
+        "css": "dl.requests-defaults > dt",
+        "xpath": "//dl[contains(@class, 'requests-defaults')]/dt",
+        "bs4": "[dt.get_text(strip=True) for dt in soup.select('dl.requests-defaults > dt')]"
+      },
+      "answer": "5 значений: Accept-Encoding, Accept, User-Agent, Connection, timeout"
+    },
+    {
+      "id": "H-10",
+      "level": 3,
+      "q": "Найдите строку Set-Cookie и заберите пример значения (вторая ячейка)",
+      "solution": {
+        "css": "tr[data-header='set-cookie'] td:nth-child(2) code",
+        "xpath": "//tr[@data-header='set-cookie']/td[2]/code",
+        "bs4": "soup.select_one(\"tr[data-header='set-cookie'] td:nth-child(2) code\").get_text(strip=True)"
+      },
+      "answer": "cart=wagon-7; Path=/http; HttpOnly"
+    },
+    {
+      "id": "H-11",
+      "level": 3,
+      "q": "По образцу ответа браузера (pre-блок echo) достаньте весь JSON и число секций sec-fetch",
+      "solution": {
+        "css": "pre.echo-sample code",
+        "bs4": "len([k for k in json.loads(soup.select_one('pre.echo-sample code').get_text())['headers'] if k.startswith('sec-')])"
+      },
+      "answer": "6 ключей sec-*: два sec-ch-ua и четыре sec-fetch; import json обязателен"
+    },
+    {
+      "id": "H-12",
+      "level": 4,
+      "q": "Считайте суммарно все размеченные строки обеих таблиц заголовков",
+      "solution": {
+        "css": "tr[data-header]",
+        "xpath": "//tr[@data-header]",
+        "bs4": "len(soup.select('tr[data-header]'))"
+      },
+      "answer": "22 строки: 11 запрос + 11 ответ"
+    }
+  ],
+  "http/cookies": [
+    {
+      "id": "H-13",
+      "level": 2,
+      "q": "Соберите семь атрибутов куки из таблицы cookie-attrs: значения data-attr",
+      "solution": {
+        "css": "tr[data-attr]",
+        "xpath": "//tr[@data-attr]",
+        "bs4": "[tr['data-attr'] for tr in soup.select('tr[data-attr]')]"
+      },
+      "answer": "7 штук: name-value, path, domain, httponly, secure, max-age, samesite"
+    },
+    {
+      "id": "H-14",
+      "level": 2,
+      "q": "Вытащите имена демо-кук из статичной таблицы (ячейки с data-name)",
+      "solution": {
+        "css": "td[data-name]",
+        "xpath": "//td[@data-name]",
+        "bs4": "[td['data-name'] for td in soup.select('td[data-name]')]"
+      },
+      "answer": "5 имён: session_id, cart, theme, consent, referral_code"
+    },
+    {
+      "id": "H-15",
+      "level": 3,
+      "q": "Найдите единственную куку с ограниченной областью Path=/http",
+      "solution": {
+        "css": "tr[data-path='/http']",
+        "xpath": "//tr[@data-path='/http']",
+        "bs4": "soup.select_one('tr[data-path=\"/http\"]').select_one('td[data-name]')['data-name']"
+      },
+      "answer": "referral_code; на страницах вне /http она не видна"
+    },
+    {
+      "id": "H-16",
+      "level": 3,
+      "q": "Посчитайте кнопки живого виджета куки (внутри cookie-widget)",
+      "solution": {
+        "css": ".cookie-widget button.btn",
+        "xpath": "//div[contains(@class, 'cookie-widget')]//button[contains(@class, 'btn')]",
+        "bs4": "[b.get_text(strip=True) for b in soup.select('.cookie-widget button.btn')]"
+      },
+      "answer": "3 кнопки: выдать набор, прочитать, удалить всё"
+    },
+    {
+      "id": "H-17",
+      "level": 4,
+      "q": "Убедитесь, что tbody живой таблицы пуст в исходнике: сравните число th и строк tbody у cookie-table",
+      "solution": {
+        "css": "#cookie-table > thead > tr > th",
+        "bs4": "(len(soup.select('#cookie-table thead th')), len(soup.select('#cookie-table tbody tr')))"
+      },
+      "answer": "6 колонок и 0 строк: строки дорисовывает cookies.js, requests их не увидит"
+    },
+    {
+      "id": "H-18",
+      "level": 4,
+      "q": "Найдите строку про запрет чтения из JavaScript и её заголовок-атрибут",
+      "solution": {
+        "css": "tr[data-attr='httponly'] td:first-child code",
+        "xpath": "//tr[@data-attr='httponly']/td[1]/code",
+        "bs4": "soup.select_one('tr[data-attr=\"httponly\"] code').get_text(strip=True)"
+      },
+      "answer": "HttpOnly; document.cookie её не вернёт"
+    }
+  ],
+  "http/redirect": [
+    {
+      "id": "H-19",
+      "level": 2,
+      "q": "Соберите четыре способа увести читателя: строки таблицы ways по data-way",
+      "solution": {
+        "css": "tr[data-way]",
+        "xpath": "//tr[@data-way]",
+        "bs4": "[tr['data-way'] for tr in soup.select('tr[data-way]')]"
+      },
+      "answer": "4: 301, 302, meta-refresh, js-location"
+    },
+    {
+      "id": "H-20",
+      "level": 2,
+      "q": "Прочитайте параметры текущего meta refresh из списка redirect-info: какая задержка и куда",
+      "solution": {
+        "css": "dl.redirect-info dd span.value",
+        "xpath": "//dl[contains(@class, 'redirect-info')]/dd//span[contains(@class, 'value')]",
+        "bs4": "[s.get_text(strip=True) for s in soup.select('dl.redirect-info dd span.value')]"
+      },
+      "answer": "4 секунды и final.html (плюс код 200)"
+    },
+    {
+      "id": "H-21",
+      "level": 3,
+      "q": "Достаньте адрес переезда прямо из head: тег meta http-equiv=refresh и его content",
+      "solution": {
+        "css": "meta[http-equiv='refresh']",
+        "xpath": "//meta[@http-equiv='refresh']",
+        "bs4": "soup.find('meta', attrs={'http-equiv': 'refresh'})['content']"
+      },
+      "answer": "«4;url=final.html» — requests увидит это только как текст в теле"
+    },
+    {
+      "id": "H-22",
+      "level": 3,
+      "q": "Соберите названия инструментов из таблицы «Кто что видит» (строки с data-tool)",
+      "solution": {
+        "css": "tr[data-tool] td:first-child",
+        "xpath": "//tr[@data-tool]/td[1]",
+        "bs4": "[td.get_text(strip=True) for td in soup.select('tr[data-tool] td:first-child')]"
+      },
+      "answer": "5 строк: requests, urllib, http.client, BeautifulSoup, браузер"
+    },
+    {
+      "id": "H-23",
+      "level": 4,
+      "q": "Найдите все видимые ссылки на страницу назначения в настоящей вёрстке страницы",
+      "solution": {
+        "css": "a[href='final.html']",
+        "xpath": "//a[@href='final.html']",
+        "bs4": "[a['class'][0] for a in soup.select('a[href=\"final.html\"]')]"
+      },
+      "answer": "2 ссылки: redirect-fallback в лида и redirect-final внизу"
+    }
+  ],
+  "http/final": [
+    {
+      "id": "H-24",
+      "level": 2,
+      "q": "Соберите три факта о переезде из упорядоченного списка",
+      "solution": {
+        "css": "ol.facts > li",
+        "xpath": "//ol[@class='facts']/li",
+        "bs4": "[li['data-fact'] for li in soup.select('ol.facts > li')]"
+      },
+      "answer": "3 факта: data-fact 1, 2, 3"
+    },
+    {
+      "id": "H-25",
+      "level": 2,
+      "q": "Посчитайте признаки различения редиректа в таблице arrival-check",
+      "solution": {
+        "css": "tr[data-check]",
+        "xpath": "//tr[@data-check]",
+        "bs4": "[tr['data-check'] for tr in soup.select('tr[data-check]')]"
+      },
+      "answer": "5 признаков: status, history, url, header, markup"
+    },
+    {
+      "id": "H-26",
+      "level": 3,
+      "q": "Найдите ячейки с «эталонными» значениями кода: monospaced ячейки таблицы прибытия",
+      "solution": {
+        "css": ".arrival-check td.mono",
+        "xpath": "//table[contains(@class, 'arrival-check')]//td[@class='mono']",
+        "bs4": "[td.get_text(strip=True) for td in soup.select('.arrival-check td.mono')]"
+      },
+      "answer": "2 ячейки: «301 → 200» и «200» — остальные значения в обычных td"
+    },
+    {
+      "id": "H-27",
+      "level": 3,
+      "q": "Соберите обратные ссылки страницы: на источник редиректа и в оглавление модуля",
+      "solution": {
+        "css": "p a.back-link, p a.module-link",
+        "xpath": "//a[@class='back-link' or @class='module-link']",
+        "bs4": "[a['href'] for a in soup.select('a.back-link, a.module-link')]"
+      },
+      "answer": "redirect.html и index.html"
+    },
+    {
+      "id": "H-38",
+      "level": 2,
+      "q": "Соберите хлебные крошки парами «текст → ссылка»: у последнего пункта ссылки нет, и это не ошибка парсера",
+      "solution": {
+        "css": "ul.breadcrumbs > li",
+        "xpath": "//ul[@class='breadcrumbs']/li",
+        "bs4": "[(li.get_text(strip=True), li.a['href'] if li.a else None) for li in soup.select('ul.breadcrumbs > li')]"
+      },
+      "answer": "3 пункта: HTTP → index.html, Редиректы → redirect.html, «Финальная страница» → None (текущая страница без ссылки)"
+    },
+    {
+      "id": "H-39",
+      "level": 4,
+      "q": "Найдите значение куки-маркера в исходном HTML и объясните, почему в браузере оно другое: возьмите и сам узел, и текст внутри",
+      "solution": {
+        "css": "code[data-role='marker-value']",
+        "xpath": "//code[@data-role='marker-value']/text()",
+        "bs4": "soup.select_one('code[data-role=\"marker-value\"]').get_text(strip=True)"
+      },
+      "answer": "«не установлена»: штамп времени пишет inline-скрипт через document.cookie, а requests читает файл до выполнения скрипта"
+    }
+  ],
+  "http/news": [
+    {
+      "id": "H-28",
+      "level": 1,
+      "q": "Посчитайте карточки новостей и соберите их идентификаторы из data-article",
+      "solution": {
+        "css": "article.news-card",
+        "xpath": "//article[@class='card news-card']",
+        "bs4": "[c['data-article'] for c in soup.select('article.news-card')]"
+      },
+      "answer": "8 карточек: A-01 … A-08"
+    },
+    {
+      "id": "H-29",
+      "level": 2,
+      "q": "Заберите заголовки-ссылки с якорями: текст и href каждой внутри карточек",
+      "solution": {
+        "css": ".news-card__title > a",
+        "xpath": "//h3[@class='news-card__title']/a",
+        "bs4": "[(a.get_text(strip=True), a['href']) for a in soup.select('.news-card__title > a')]"
+      },
+      "answer": "8 ссылок вида #a1 … #a8 — RSS ссылается на эти же якоря"
+    },
+    {
+      "id": "H-30",
+      "level": 2,
+      "q": "Отфильтруйте мартовские новости по атрибуту datetime",
+      "solution": {
+        "css": "time[datetime^='2026-03']",
+        "xpath": "//time[starts-with(@datetime, '2026-03')]",
+        "bs4": "[t['datetime'] for t in soup.select('time[datetime^=\"2026-03\"]')]"
+      },
+      "answer": "3 новости: 2026-03-14, 2026-03-09, 2026-03-02"
+    },
+    {
+      "id": "H-31",
+      "level": 3,
+      "q": "Соберите карточки категории «сервис» и их id-якоря",
+      "solution": {
+        "css": "article[data-category='сервис']",
+        "xpath": "//article[@data-category='сервис']",
+        "bs4": "[(c['id'], c.select_one('.news-card__title').get_text(strip=True)) for c in soup.select('article[data-category=\"сервис\"]')]"
+      },
+      "answer": "2 карточки: a4 (почта) и a6 (телефон)"
+    },
+    {
+      "id": "H-32",
+      "level": 3,
+      "q": "Сравните четыре источника ссылок: соберите значения data-source таблицы и ссылки блока «альтернативные источники» одним запросом",
+      "solution": {
+        "css": "tr[data-source], .sources a",
+        "xpath": "//tr[@data-source] | //section[contains(@class, 'sources')]//a",
+        "bs4": "([tr['data-source'] for tr in soup.select('tr[data-source]')], [a['href'] for a in soup.select('.sources a')])"
+      },
+      "answer": "4 источника и 4 внешних ссылки: feed.xml, sitemap.xml, robots.txt, articles.json"
+    }
+  ],
+  "http/api": [
+    {
+      "id": "H-33",
+      "level": 2,
+      "q": "Соберите пять файлов раздела data из таблицы: строки с data-file и их корневые ключи",
+      "solution": {
+        "css": "tr[data-file]",
+        "xpath": "//tr[@data-file]",
+        "bs4": "[(tr['data-file'], tr.select_one('[data-root-key]')['data-root-key']) for tr in soup.select('tr[data-file]')]"
+      },
+      "answer": "products, articles, reviews, quotes, site-stats"
+    },
+    {
+      "id": "H-34",
+      "level": 2,
+      "q": "Посчитайте объявленные записи в каждом JSON-файле по колонке data-count",
+      "solution": {
+        "css": "td[data-count]",
+        "xpath": "//td[@data-count]",
+        "bs4": "{tr['data-file']: int(td['data-count']) for tr in soup.select('tr[data-file]') for td in tr.select('[data-count]')}"
+      },
+      "answer": "12, 8, 30, 10 и 3 — суммы сходятся с реальными файлами"
+    },
+    {
+      "id": "H-35",
+      "level": 3,
+      "q": "Выпишите локальные эндпоинты API-страницы: ячейки с data-endpoint",
+      "solution": {
+        "css": "[data-endpoint]",
+        "xpath": "//code[@data-endpoint]",
+        "bs4": "[c['data-endpoint'] for c in soup.select('code[data-endpoint]')]"
+      },
+      "answer": "4 эндпоинта: api/products, api/product, echo, protected"
+    },
+    {
+      "id": "H-36",
+      "level": 3,
+      "q": "Найдите поля, которые теряются при парсинге HTML: строки сравнения с data-loss=yes",
+      "solution": {
+        "css": "tr[data-loss='yes'] td:first-child",
+        "xpath": "//tr[@data-loss='yes']/td[1]",
+        "bs4": "[td.get_text(strip=True) for td in soup.select('tr[data-loss=\"yes\"] td:first-child')]"
+      },
+      "answer": "5 полей: старая цена, specs, признак наличия, дата обновления, seller"
+    },
+    {
+      "id": "H-37",
+      "level": 4,
+      "q": "Сопоставьте ссылки на JSON-файлы в таблице с их корневыми ключами (ссылки ведут в ../data/)",
+      "solution": {
+        "css": ".api-files a[href^='../data/']",
+        "xpath": "//table[contains(@class, 'api-files')]//a[starts-with(@href, '../data/')]",
+        "bs4": "[a['href'] for a in soup.select(\".api-files a[href^='../data/']\")]"
+      },
+      "answer": "5 относительных ссылок: products, articles, reviews, quotes, site-stats"
+    }
+  ]
+}

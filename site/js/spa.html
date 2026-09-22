@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Мини-SPA на хэш-роутинге · JS-страницы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Три раздела рендерятся из одного JSON-эндпоинта по хэш-маршрутам: почему requests не видит #/prices и где искать данные." />
+</head>
+<body data-page="js/spa" data-module="js">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Один файл — три страницы: мини-SPA</h1>
+  <p class="lede">Навигация ниже меняет только хэш адреса (<code>#/prices</code>, <code>#/reviews</code>, <code>#/authors</code>), а содержимое перерисовывает
+  <code>../assets/js/spa.js</code> из одного эндпоинта <code>../data/site-stats.json</code>.</p>
+
+  <nav class="spa-nav" aria-label="Разделы мини-SPA">
+    <ul class="breadcrumbs">
+      <li><a href="#/prices">Цены</a></li>
+      <li><a href="#/reviews">Отзывы</a></li>
+      <li><a href="#/authors">Авторы</a></li>
+    </ul>
+  </nav>
+  <p><button type="button" id="spa-next">Далее →</button></p>
+  <p class="status" id="spa-status">SPA ещё не инициализирован</p>
+
+  <section class="spa-block">
+    <div id="spa-root">
+      <p class="muted">Если вы видите этот текст и после загрузки — включите JavaScript или откройте сайт через локальный сервер: эндпоинт отдаёт только <code>node tools/serve.mjs</code>.</p>
+    </div>
+  </section>
+
+  <h2>Куда пропадает хэш</h2>
+  <p class="warn"><strong>Хэш не уходит на сервер.</strong> Адрес <code>…/js/spa.html#/reviews</code> — это тот же самый файл <code>spa.html</code>:
+    всё, что после <code>#</code>, браузер не включает в HTTP-запрос. Поэтому <code>requests.get("…/spa.html#/reviews")</code> вернёт байт-в-байт
+    тот же HTML, что и без хэша, — ни таблиц, ни списков раздела там нет. Маршрут «живёт» только в браузере.</p>
+
+  <p class="note">Проверьте прямо сейчас: откройте <a href="spa.html">эту страницу</a> с хэшем <code>#/reviews</code> и нажмите F5 (прямой заход).
+    Контент раздела «Отзывы» появится — скрипт читает <code>location.hash</code> при старте. А <code>curl "spa.html#/reviews"</code> и
+    <code>curl "spa.html"</code> дадут один и тот же ответ: для HTTP-клиента различия не существует.</p>
+
+  <h2>Что искать во вкладке Network</h2>
+  <ol>
+    <li>Фильтр <strong>Fetch/XHR</strong> → при загрузке виден один запрос: <code>data/site-stats.json</code>.</li>
+    <li>Переключение маршрутов новых запросов не создаёт — SPA читает кэш: данные уже получены.</li>
+    <li>Правой кнопкой по запросу → <strong>Copy → Copy as cURL</strong> — это и есть весь «API» страницы.</li>
+  </ol>
+
+  <pre><code>import requests
+
+# вместо трёх кликов браузером — один запрос к найденному эндпоинту
+stats = requests.get(BASE + "/data/site-stats.json", timeout=10).json()
+for row in stats["sections"]["prices"]["rows"]:
+    print(row["sku"], row["price"])</code></pre>
+
+  <p class="tip">Вывод: для SPA сначала кликаем руками и смотрим сеть, потом парсим JSON напрямую. Браузер (Selenium/Playwright) остаётся
+    для случаев, когда эндпоинта нет — данные вычисляются на клиенте или закрыты токеном, который умеет выдавать только страница.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/spa.js" defer></script>
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

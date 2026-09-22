@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>404 · Страница не найдена · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <meta name="robots" content="noindex" />
+</head>
+<body data-page="404">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Ошибка 404: страницы нет</h1>
+  <p class="lede">Эта страница отдаётся сервером для любого несуществующего пути — удобно отрабатывать
+  обработку ошибок парсера: проверять <code>response.status_code</code>, а не только наличие текста.</p>
+
+  <section class="note">
+    <h2 style="margin-top:0">Как использовать</h2>
+    <ul>
+      <li>Запросите заведомо несуществующий адрес: <a href="basics/etogostranicy-net.html">basics/etogostranicy-net.html</a>.</li>
+      <li><code>requests</code> не считает 404 ошибкой: поднимайте её сами через <code>raise_for_status()</code>.</li>
+      <li>На GitHub Pages локальный предпросмотр может вернуть свой 404 — проверяйте статус на живом сайте.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Что проверить в парсере</h2>
+    <table class="table--striped">
+      <thead><tr><th>Ситуация</th><th>Признак</th><th>Что делать</th></tr></thead>
+      <tbody>
+        <tr><td>404</td><td><code>resp.status_code == 404</code></td><td>пропустить URL, записать в лог «мёртвая ссылка»</td></tr>
+        <tr><td>403 / 429</td><td>заголовки <code>Retry-After</code></td><td>усыпать, снизить скорость, сменить план запросов</td></tr>
+        <tr><td>200, но заглушка</td><td>текст «не найдено» в <code>&lt;body&gt;</code></td><td>проверять содержимое, а не только код ответа</td></tr>
+        <tr><td>200, пустой DOM</td><td>данные дорисовывает JS</td><td>Selenium / Playwright или поиск настоящего JSON API</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <p><a href="index.html">На главную тренажёра</a> · <a href="http/index.html">Модуль HTTP</a></p>
+</main>
+<!-- inject:footer -->
+</body>
+</html>

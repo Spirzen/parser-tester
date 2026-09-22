@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Служебный вход · Закрытый раздел · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Учебный раздел, запрещённый в robots.txt: наглядная проверка для пауков с ROBOTSTXT_OBEY=True." />
+</head>
+<body data-page="private/index" data-module="private">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Закрытый раздел: сюда краулерам нельзя</h1>
+  <p class="warn"><strong>Внимание: это учебная витрина запрета.</strong> Весь раздел <code>/private/</code> закрыт строкой
+  <code>Disallow: /private/</code> в <a href="../robots.txt">robots.txt</a>. Страницы существуют, лежат рядом со всеми и открываются по прямой
+  ссылке — но вежливый паук сюда не заглянет.</p>
+
+  <p class="lede">Страница добавлена специально для проверки: выключите <code>ROBOTSTXT_OBEY</code> в настройках своего Scrapy-паука — и он
+  упрётся в запрещённые URL с предупреждением в логе; включите — и запросов к этим адресам не будет вовсе.</p>
+
+  <h2>Что здесь лежит</h2>
+  <ul>
+    <li><a href="note.html">note.html</a> — «служебная записка» с прайсом для внутреннего пользования;</li>
+    <li>ни одной реальной тайны: все данные вымышлены, как и на всём полигоне.</li>
+  </ul>
+
+  <h2>Как проверить своего паука</h2>
+  <pre><code># settings.py вежливого краулера
+ROBOTSTXT_OBEY = True
+
+# scrapy crawl мойпаук -s ROBOTSTXT_OBEY=False -a start=https://…/private/index.html
+# с False — страница скачается (урок «технически возможно»),
+# с True  — Scrapy прочитает Disallow: /private/ и отбросит запрос ещё до сети.</code></pre>
+
+  <p class="note">Как отличить запрет от ошибки: при <code>ROBOTSTXT_OBEY=True</code> в логе видно
+  <code>Offsite/Forbidden robots.txt middleware</code>-предупреждение и запрос не уходит. Паука без obey-настройки ничего не останавливает —
+  это ответственность парсерщика, а не сервера.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

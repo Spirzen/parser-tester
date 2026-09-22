@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ленивая прокрутка · JS-страницы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Контент догружается по IntersectionObserver: часть данных появляется только после прокрутки, но эндпоинты видны в атрибутах заранее." />
+</head>
+<body data-page="js/hidden-lazy" data-module="js">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Данные «выезжают» по прокрутке</h1>
+  <p class="lede">Три карточки ниже пусты, пока не попадут в поле зрения: <code>IntersectionObserver</code> из
+  <code>../assets/js/lazy-table.js</code> заметит это, сходит по адресу из атрибута <code>data-src</code> и впишет сводку.
+  Прокрутите страницу — и вернитесь прочитать этот абзац заново уже с знанием, где были данные.</p>
+
+  <section class="note">
+    <p style="margin:0"><strong>Главная подсказка модуля:</strong> эндпоинт часто виден ещё до загрузки. В исходном HTML карточки уже содержат
+    <code>data-src="../data/products.json"</code> и тому подобные атрибуты — BeautifulSoup достанет список всех «ленивых» URL,
+    и никакой прокрутки не потребуется.</p>
+  </section>
+
+  <div class="spacer" style="min-height:70vh;display:grid;place-items:center">
+    <p class="muted">↓ здесь ничего нет — прокрутите вниз до карточек ↓</p>
+  </div>
+
+  <div class="grid grid--3" id="lazy-feed">
+    <article class="card lazy-card" data-src="../data/products.json" data-endpoint="каталог" data-loaded="false">
+      <h3>Каталог товаров</h3>
+      <p class="lazy-status status">ожидает прокрутки…</p>
+    </article>
+    <article class="card lazy-card" data-src="../data/quotes.json" data-endpoint="цитаты" data-loaded="false">
+      <h3>Лента цитат</h3>
+      <p class="lazy-status status">ожидает прокрутки…</p>
+    </article>
+    <article class="card lazy-card" data-src="../data/reviews.json" data-endpoint="отзывы" data-loaded="false">
+      <h3>Лента отзывов</h3>
+      <p class="lazy-status status">ожидает прокрутки…</p>
+    </article>
+  </div>
+  <p><button type="button" id="load-rest" class="ghost">Догрузить всё без прокрутки</button></p>
+
+  <h2>Как читается без браузера</h2>
+  <pre><code>from bs4 import BeautifulSoup
+
+soup = BeautifulSoup(html, "html.parser")          # один запрос, ноль прокруток
+endpoints = [c["data-src"] for c in soup.select(".lazy-card[data-src]")]
+# ['../data/products.json', '../data/quotes.json', '../data/reviews.json']
+
+# если атрибута нет, а загрузка хитрая — см. ниже приём «перехватить ответ»</code></pre>
+
+  <pre><code># Playwright: дождаться загрузки конкретной карточки по классу is-loaded
+card = page.locator(".lazy-card", has_text="Лента отзывов")
+card.scroll_into_view_if_needed()
+card.wait_for()                                    # узел виден
+page.wait_for_selector(".lazy-card.is-loaded")     # IntersectionObserver отработал</code></pre>
+
+  <pre><code># Selenium: прокрутка к элементу + ожидание class="lazy-card is-loaded"
+driver.execute_script("arguments[0].scrollIntoView()", target)
+WebDriverWait(driver, 5).until(
+    EC.presence_of_element_located((By.CSS_SELECTOR, ".lazy-card.is-loaded"))
+)</code></pre>
+
+  <p class="warn"><strong>Два разных урока в одной странице.</strong> 1) догружается по прокрутке только <em>отрисовка</em>: сами JSON доступны
+  серверу статичны и берутся напрямую; 2) если бы данных в атрибутах не было, честный путь — ждать появления узлов в DOM (браузер)
+  или перехватить запрос (<code>page.on("response")</code> / вкладка Network).</p>
+
+  <p class="muted">После прокрутки в карточках появится текст вида «эндпоинт … отдаёт N записей» — сверьте N с реальными файлами
+  <a href="../data/products.json">products.json</a>, <a href="../data/quotes.json">quotes.json</a>,
+  <a href="../data/reviews.json">reviews.json</a>.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/lazy-table.js" defer></script>
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

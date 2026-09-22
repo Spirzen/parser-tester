@@ -1,0 +1,231 @@
+{
+  "markup/index": [
+    {
+      "id": "M-01",
+      "level": 1,
+      "q": "Посчитайте пояснительные карточки модуля и отдельно те из них, что без рамки.",
+      "solution": {
+        "css": ".card",
+        "xpath": "//*[contains(concat(' ', normalize-space(@class), ' '), ' card ')]",
+        "bs4": "len(soup.select('.card')), len(soup.select('.card--plain'))"
+      },
+      "answer": "карточек 7, из них .card--plain — 2 (модификатор не отдельный класс, а часть class)"
+    },
+    {
+      "id": "M-02",
+      "level": 1,
+      "q": "Соберите оглавление страницы: сначала h1, затем все h2 в порядке документа.",
+      "solution": {
+        "css": "h2",
+        "xpath": "//h2",
+        "bs4": "[h.get_text(strip=True) for h in soup.select('h2')]"
+      },
+      "answer": "h1 ровно 1, h2 — 4, h3 — 8; обход select('h2') уже идёт в порядке документов"
+    },
+    {
+      "id": "M-03",
+      "level": 2,
+      "q": "Таблицы на странице различаются модификатором класса. Найдите все варианты table--… и проверьте, что у каждой есть caption.",
+      "solution": {
+        "css": "[class*='table--']",
+        "xpath": "//table[contains(@class,'table--')]",
+        "bs4": "len(soup.select(\"table[class*='table--']\")), len(soup.select('caption'))"
+      },
+      "answer": "таблиц с модификатором 3, и у всех трёх есть caption — всего caption на странице 3"
+    },
+    {
+      "id": "M-04",
+      "level": 2,
+      "q": "Образец карточки лежит в #doc-sample: найдите в нём цену и продавца, не выходя за пределы блока.",
+      "solution": {
+        "css": "#doc-sample .price",
+        "xpath": "//*[@id='doc-sample']//*[contains(@class,'price')]",
+        "bs4": "d = soup.select_one('#doc-sample'); (d.select_one('.price').get_text(strip=True), d.select_one('.sample-seller').get_text(strip=True), len(d.find_all(True)))"
+      },
+      "answer": "цена 2 490 ₽, продавец «Тихая бухта»; всего внутри образца 11 узлов — это живая разметка, а не текст"
+    }
+  ],
+  "markup/headings": [
+    {
+      "id": "M-05",
+      "level": 1,
+      "q": "Посчитайте заголовки каждого уровня и убедитесь, что порядок не лесенка.",
+      "solution": {
+        "css": "h4",
+        "xpath": "//h4",
+        "bs4": "{f'h{i}': len(soup.select(f'h{i}')) for i in range(1, 7)}"
+      },
+      "answer": "h1 1 · h2 7 · h3 9 · h4 8 · h5 3 · h6 3"
+    },
+    {
+      "id": "M-06",
+      "level": 2,
+      "q": "Часть заголовков размечена data-level. Найдите те, где атрибут противоречит тегу.",
+      "solution": {
+        "css": "[data-level]",
+        "xpath": "//*[@data-level]",
+        "bs4": "[h.name for h in soup.select('[data-level]') if h.name != 'h' + h['data-level']]"
+      },
+      "answer": "с data-level 6 заголовков, расходятся 2: h3 с data-level=4 и h4 с data-level=3 — верить надо тегу"
+    },
+    {
+      "id": "M-07",
+      "level": 2,
+      "q": "Соседи по заголовкам: чем отличается h2 + h3 от h2 ~ h3 на этой странице?",
+      "solution": {
+        "css": "h2 ~ h3",
+        "xpath": "//h3[preceding-sibling::h2]",
+        "bs4": "len(soup.select('h2 + h3')), len(soup.select('h2 ~ h3'))"
+      },
+      "answer": "+ (непосредственный сосед) — 1, ~ (любой последующий sibling) — 5; между h2 и h3 часто встаёт <p>"
+    },
+    {
+      "id": "M-08",
+      "level": 3,
+      "q": "Скрытые блоки с заголовками: BeautifulSoup их вернёт, а видимы ли они в браузере? Соберите тексты скрытых блоков и заголовок, которому они принадлежат.",
+      "solution": {
+        "css": ".hidden-block",
+        "xpath": "//*[contains(@class,'hidden-block')]",
+        "bs4": "[h.find_previous(['h2','h3']).get_text(strip=True) for h in soup.select('.hidden-block')]"
+      },
+      "answer": "два блока: «Размерная сетка» и «Наши вакансии» — текст есть в HTML, requests его достанет"
+    }
+  ],
+  "markup/lists": [
+    {
+      "id": "M-09",
+      "level": 1,
+      "q": "Дерево категорий: заберите только верхний уровень и не захватите вложенные пункты.",
+      "solution": {
+        "css": "ul.tree > li",
+        "xpath": "//ul[contains(@class,'tree')]/li",
+        "bs4": "[li.get_text(strip=True) for li in soup.select_one('ul.tree').find_all('li', recursive=False)]"
+      },
+      "answer": "сверху 4 пункта — Лагерь, Свет, Посуда, Снаряжение; всего же li внутри дерева 15"
+    },
+    {
+      "id": "M-10",
+      "level": 2,
+      "q": "Отделите вложенные пункты от верхних: посчитайте li внутри li и пункты на втором уровне.",
+      "solution": {
+        "css": "ul ul li",
+        "xpath": "//li//li",
+        "bs4": "len(soup.select('li li')), len(soup.select('ul ul li'))"
+      },
+      "answer": "li внутри li — 18 (часть вложенных doubly считается из-за ul в ul), чистых «внучат» через ul ul li — 13"
+    },
+    {
+      "id": "M-11",
+      "level": 2,
+      "q": "Характеристики в dl: соберите словарь и найдите пункт, где пару нечего поставить.",
+      "solution": {
+        "css": "dl.spec",
+        "xpath": "//dl[contains(@class,'spec')]/dt",
+        "bs4": "d = soup.select_one('dl.spec'); (len(d.find_all('dt')), len(d.find_all('dd')))"
+      },
+      "answer": "dt 5, dd 6: последний dd пустой, и zip молча «съест» лишний термин — сравнивайте длины dt и dd"
+    },
+    {
+      "id": "M-12",
+      "level": 3,
+      "q": "Листья дерева помечены отдельно от веток. Соберите названия листьев и путь до каждого.",
+      "solution": {
+        "css": ".leaf",
+        "xpath": "//*[contains(@class,'leaf')]",
+        "bs4": "[(li.get_text(strip=True), [p.name for p in li.parents][:3]) for li in soup.select('.leaf')]"
+      },
+      "answer": "листов 3, веток 12; у листа родительская цепочка li → ul → li, поэтому select('li li') их и захватывает"
+    }
+  ],
+  "markup/tables": [
+    {
+      "id": "M-13",
+      "level": 1,
+      "q": "Найдите таблицы без thead: именно их обычно и теряют парсеры, ищущие «шапку».",
+      "solution": {
+        "css": "table:not(:has(thead))",
+        "xpath": "//table[not(thead)]",
+        "bs4": "[t['id'] for t in soup.select('table') if not t.find('thead')]"
+      },
+      "answer": "таблиц 8, без thead две: price-log и order-lines-2 — их и теряют скрипты, завязанные на шапку"
+    },
+    {
+      "id": "M-14",
+      "level": 2,
+      "q": "Вложенные таблицы: сравните количество tr во внешней таблице с количеством её собственных строк.",
+      "solution": {
+        "css": "#orders-nested > tbody > tr",
+        "xpath": "//*[@id='orders-nested']/tbody/tr",
+        "bs4": "outer = soup.select_one('#orders-nested'); (len(outer.find_all('tr')), len(outer.select(':scope > tbody > tr')))"
+      },
+      "answer": "всего tr внутри 11, собственных 3 — остальное принадлежит вложенным order-lines и order-lines-2"
+    },
+    {
+      "id": "M-15",
+      "level": 2,
+      "q": "Столбец сумм помечен классом sum: соберите его и сравните с итогом из tfoot.",
+      "solution": {
+        "css": "td.sum",
+        "xpath": "//td[contains(@class,'sum')]",
+        "bs4": "sum(int(t.get_text(strip=True).replace(' ', '')) for t in soup.select('td.sum'))"
+      },
+      "answer": "строк sum 5 (34 860 + 53 940 + 45 770 + 101 990 + 92 950 = 329 510), итог tfoot 329 510 — совпал"
+    },
+    {
+      "id": "M-16",
+      "level": 3,
+      "q": "В виджете цен данных в ячейках нет: они лежат в атрибутах строк. Соберите артикул и цену одной строкой.",
+      "solution": {
+        "css": "#attr-table tr[data-price]",
+        "xpath": "//*[@id='attr-table']//tr[@data-price]",
+        "bs4": "[(r['data-sku'], r['data-price']) for r in soup.select('#attr-table tr[data-price]')]"
+      },
+      "answer": "таких строк 4; классический случай «парсить атрибуты, а не текст»"
+    },
+    {
+      "id": "M-17",
+      "level": 3,
+      "q": "Выгрузка из учётной системы: сколько строк не совпадают с шапкой по числу колонок?",
+      "solution": {
+        "css": "#shifted-table > tbody > tr",
+        "xpath": "count(//*[@id='shifted-table']/tbody/tr)",
+        "bs4": "[len(r.find_all('td')) for r in soup.select('#shifted-table > tbody > tr')]"
+      },
+      "answer": "строк 6, длин [5, 6, 4, 8, 4, 5] — эталон 5 колонок, не совпали 4 строки; парсить надо по индексу с проверкой длины"
+    }
+  ],
+  "markup/broken": [
+    {
+      "id": "M-18",
+      "level": 1,
+      "q": "Между маркерами broken:start и broken:end — одинаковые вложенные div. Сколько их находит select?",
+      "solution": {
+        "css": "div.product-row",
+        "xpath": "//div[contains(@class,'product-row')]",
+        "bs4": "len(soup.select('div.product-row'))"
+      },
+      "answer": "2 (один внутри другого); родитель и потомок с одним классом — select('div.product-row div.product-row') вернёт 1"
+    },
+    {
+      "id": "M-19",
+      "level": 2,
+      "q": "Ссылка без кавычек атрибута и незакрытые абзацы: найдите «сироту» и посчитайте абзацы в битом фрагменте.",
+      "solution": {
+        "css": "a[href='orphan.html']",
+        "xpath": "//a[@href='orphan.html']",
+        "bs4": "soup.select_one(\"a[href='orphan.html']\").get_text(strip=True)"
+      },
+      "answer": "ссылка находится как ни в чём не бывало: парсер починил href=orphan.html; в битом фрагменте 3 абзаца, два из них не закрыты"
+    },
+    {
+      "id": "M-20",
+      "level": 3,
+      "q": "Один и тот же битый фрагмент через html.parser и lxml: сравните число узлов.",
+      "solution": {
+        "regex": "re.search(r'<!--\\s*broken:start\\s*-->([\\s\\S]*?)<!--\\s*broken:end\\s*-->', html).group(1)",
+        "bs4": "[(p, len(BeautifulSoup(frag, p).find_all(True))) for p in ('html.parser', 'lxml')]"
+      },
+      "answer": "html.parser — 20 узлов, lxml — 22: lxml закрывает <p> перед блочным тегом, html.parser их вкладывает"
+    }
+  ]
+}

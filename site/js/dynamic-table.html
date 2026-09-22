@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Динамическая таблица · JS-страницы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Таблица остатков появляется через 1,5 секунды после загрузки: тренируем явные и неявные ожидания Selenium и Playwright." />
+</head>
+<body data-page="js/dynamic-table" data-module="js">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Таблица, которой нет в HTML</h1>
+  <p class="lede">Страница приходит с пустым <code>&lt;tbody&gt;</code>: строки создаёт <code>../assets/js/lazy-table.js</code> через 1,5 секунды. Кнопка «Обновить данные» перерисовывает таблицу с другими числами.</p>
+
+  <p class="status" id="status">индикатор ещё не запущен…</p>
+  <p><button type="button" id="refresh-btn">Обновить данные</button></p>
+
+  <table class="table--striped">
+    <caption>Остатки на складе «Бухта-1» (рисуются скриптом)</caption>
+    <thead><tr><th>Артикул</th><th>Товар</th><th>Количество</th><th>Последняя приёмка</th></tr></thead>
+    <tbody id="stock-body"><!-- пусто до работы скрипта — это и есть урок --></tbody>
+  </table>
+
+  <h2>Что видит парсер</h2>
+  <table class="table--compact table--striped">
+    <thead><tr><th>Инструмент</th><th>Результат на этой странице</th></tr></thead>
+    <tbody>
+      <tr><td><code>requests.get(...) + BeautifulSoup</code></td><td><code>select('tr.row-stock')</code> вернёт <code>[]</code> — в HTML строк нет никогда</td></tr>
+      <tr><td><code>curl</code> / «View Source»</td><td>тот же пустой <code>tbody</code></td></tr>
+      <tr><td>Selenium без ожидания</td><td><code>NoSuchElement</code>: запрос уходит раньше, чем скрипт дорисовал строки</td></tr>
+      <tr><td>Selenium + <code>WebDriverWait</code></td><td>6 строк с <code>data-sku</code> и <code>data-qty</code></td></tr>
+      <tr><td>Playwright</td><td>локатор сам дожидается появления <code>tr.row-stock</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Ожидания: явные и неявные</h2>
+  <pre><code>from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+driver = webdriver.Chrome()
+driver.get(url)                                  # страница получена, JS ещё не отработал
+
+# неявное: «подожди до 5 с, пока узел вообще появится в DOM» — действует на любой поиск
+driver.implicitly_wait(5)
+
+# явное: ждём конкретное условие — все 6 строк стали видимыми
+rows = WebDriverWait(driver, 5).until(
+    EC.visibility_of_all_elements_located((By.CSS_SELECTOR, "tr.row-stock"))
+)
+data = {r.get_attribute("data-sku"): int(r.get_attribute("data-qty")) for r in rows}</code></pre>
+
+  <pre><code># Playwright: автоожидание «из коробки»
+page.goto(url)
+page.wait_for_selector("tr.row-stock")          # то же самое, короче
+pairs = page.eval_on_selector_all(
+    "tr.row-stock",
+    "rs => rs.map(r => [r.dataset.sku, +r.dataset.qty])",
+)</code></pre>
+
+  <p class="warn"><strong>Ловушка обновления.</strong> Кнопка «Обновить данные» запускает обновление таблицы и меняет <code>data-qty</code>. Если прочитать таблицу до клика и после —
+    цифры разойдутся, и это не баг парсера, а гонка. Привяжите чтение к смене индикатора: после клика дождитесь, пока <code>#status</code> содержит
+    «данные обновлены», а первичную отрисовку — «данные готовы» (<code>EC.text_to_be_present_in_element</code> / <code>wait_for_function</code>).</p>
+
+  <p class="note">Разница <code>presence_of</code> и <code>visibility_of</code>: первый ждёт появления узла в DOM, второй — ещё и видимости
+    (не <code>display:none</code>, ненулевые размеры). Скрытый блок <code>.hidden-block</code> из других модулей через <code>visibility_of</code> не дождаться — только через <code>presence_of</code>.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/lazy-table.js" defer></script>
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

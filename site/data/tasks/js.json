@@ -1,0 +1,107 @@
+{
+  "js/index": [
+    {
+      "id": "J-01",
+      "level": 1,
+      "q": "Откройте js/dynamic-table.html через requests + BeautifulSoup: select('tr.row-stock') возвращает []. Почему, что лежит в HTML вместо строк и как это проверить одной командой curl?",
+      "solution": {
+        "html": "В серверном HTML — пустой <tbody id=\"stock-body\">; строки создаёт ../assets/js/lazy-table.js через createElement спустя 1500 мс после DOMContentLoaded",
+        "requests": "requests.get(url).text.count('row-stock') == 0  # ни одного вхождения — строк в HTML нет никогда",
+        "curl": "curl -s '<…>/js/dynamic-table.html' | grep -c 'row-stock'  # ответ 0"
+      },
+      "answer": "Данных в HTML нет: их рисует JavaScript"
+    }
+  ],
+  "js/dynamic-table": [
+    {
+      "id": "J-02",
+      "level": 3,
+      "q": "Дождитесь, пока таблица отрисует все 6 строк tr.row-stock, и соберите словарь sku → qty средствами Selenium; затем то же самое — Playwright.",
+      "solution": {
+        "selenium": "WebDriverWait(driver, 5).until(EC.visibility_of_all_elements_located((By.CSS_SELECTOR, 'tr.row-stock'))); {r.get_attribute('data-sku'): int(r.get_attribute('data-qty')) for r in driver.find_elements(By.CSS_SELECTOR, 'tr.row-stock')}",
+        "playwright": "page.wait_for_selector('tr.row-stock'); page.eval_on_selector_all('tr.row-stock', \"rs => Object.fromEntries(rs.map(r => [r.dataset.sku, +r.dataset.qty]))\")",
+        "js-bridge": "driver.execute_script(\"return [...document.querySelectorAll('tr.row-stock')].map(r => r.dataset.sku + ':' + r.dataset.qty)\")"
+      },
+      "answer": "6 пар; стартовая TB-3020 → 23"
+    },
+    {
+      "id": "J-03",
+      "level": 3,
+      "q": "Нажмите «Обновить данные» и дождитесь окончания перерисовки по индикатору #status (слово «обновлено»), а не по sleep(). Затем прочитайте новые значения data-qty.",
+      "solution": {
+        "selenium": "driver.find_element(By.ID, 'refresh-stock').click(); WebDriverWait(driver, 5).until(EC.text_to_be_present_in_element((By.ID, 'status'), 'данные обновлены')); rows = driver.find_elements(By.CSS_SELECTOR, 'tr.row-stock')",
+        "playwright": "page.click('#refresh-stock'); page.wait_for_function(\"document.getElementById('status').textContent.includes('данные обновлены')\")",
+        "антипаттерн": "time.sleep(3) — работает только на быстрой машине и всё равно гонит: числа меняются в момент клика"
+      },
+      "answer": "Индикатор «данные обновлены» — сигнал к чтению; после клика числа data-qty отличаются от стартовых"
+    }
+  ],
+  "js/spa": [
+    {
+      "id": "J-04",
+      "level": 4,
+      "q": "Что вернёт curl для адреса spa.html#/reviews? Найдите настоящий эндпоинт и получите раздел «Отзывы» без браузера.",
+      "solution": {
+        "curl": "curl -s '<…>/js/spa.html#/reviews' — то же содержимое, что и без хэша: фрагмент #/reviews на сервер не передаётся (его вырезает браузер до отправки запроса)",
+        "requests": "stats = requests.get(BASE + '/data/site-stats.json').json(); items = stats['sections']['reviews']['items']",
+        "playwright": "page.goto(url + '#/reviews'); page.locator('.spa-item').count()  # автоожидание маршрута; wait_for_url не нужен — адрес меняется без навигации",
+        "network": "DevTools → Network → Fetch/XHR: виден ровно один запрос data/site-stats.json"
+      },
+      "answer": "Один JSON заменяет три клика: sections.reviews.items"
+    }
+  ],
+  "js/shadow-dom": [
+    {
+      "id": "J-05",
+      "level": 4,
+      "q": "Достаньте цены из таблицы, спрятанной в shadowRoot элемента <tb-price-table>: почему не работают soup.select и обычный querySelector, и какие три обхода существуют?",
+      "solution": {
+        "bs4": "None: в исходном HTML у хоста пустое содержимое (<tb-price-table ...></tb-price-table>), таблицу создаёт shadow.js в рантайме",
+        "selenium": "driver.execute_script(\"return [...document.querySelector('tb-price-table').shadowRoot.querySelectorAll('tr[part=price-row]')].map(r => r.dataset.sku + ':' + r.querySelector('[part=price-cell]').dataset.price)\")",
+        "playwright-pierce": "page.locator('pierce=tr[data-sku]').evaluate_all(\"rs => rs.map(r => r.dataset.sku)\")",
+        "playwright-part": "page.locator(\"tb-price-table::part(price-row) ::part(price-cell)\").all_inner_texts()"
+      },
+      "answer": "4 строки; максимальная цена 15900 (режим тени open — иначе только ::part)"
+    }
+  ],
+  "js/iframe-outer": [
+    {
+      "id": "J-06",
+      "level": 3,
+      "q": "Соберите строки таблицы из iframe id=\"stock-frame\", не перепутав их с двойниками .row-stock на самой странице.",
+      "solution": {
+        "selenium": "driver.switch_to.frame('stock-frame'); rows = driver.find_elements(By.CSS_SELECTOR, 'tr.row-stock'); driver.switch_to.default_content()",
+        "playwright": "page.frame_locator('#stock-frame').locator('tr.row-stock').evaluate_all(\"rs => rs.map(r => [r.dataset.sku, r.dataset.qty])\")",
+        "проверка": "все data-sku внутри фрейма начинаются с TB-FR-; у двойников снаружи — TB-OU-"
+      },
+      "answer": "Во фрейме 3 строки (TB-FR-01…03); снаружи — три двойника TB-OU-*"
+    }
+  ],
+  "js/iframe-inner": [
+    {
+      "id": "J-07",
+      "level": 2,
+      "q": "Без Selenium получите содержимое этого документа со стороны внешней страницы: найдите src фрейма и сходите по нему HTTP-запросом. Как то же сделать пауком Scrapy?",
+      "solution": {
+        "requests": "src = soup_outer.find('iframe')['src']; inner = requests.get(urljoin(outer_url, src)); rows = BeautifulSoup(inner.text, 'html.parser').select('tr.row-stock[data-sku]')",
+        "scrapy": "response.follow(response.css('iframe#stock-frame::attr(src)').get(), callback=self.parse_inner)  # follow сам разрешит относительный путь; BASE_URL — только если страницы-источника нет",
+        "urljoin": "urljoin('https://…/js/iframe-outer.html', 'iframe-inner.html') → 'https://…/js/iframe-inner.html'"
+      },
+      "answer": "TB-FR-01:7, TB-FR-02:2, TB-FR-03:5"
+    }
+  ],
+  "js/hidden-lazy": [
+    {
+      "id": "J-08",
+      "level": 3,
+      "q": "Не прокручивая страницу, перечислите все отложенные эндпоинты: что видно в HTML до всякого IntersectionObserver? Затем дождитесь фактической догрузки карточек в браузере.",
+      "solution": {
+        "bs4": "[c['data-src'] for c in soup.select('.lazy-card[data-src]')] — список адресов доступен сразу",
+        "requests": "для каждого data-src — requests.get(urljoin(page_url, src)).json() и длина первого массива в ответе",
+        "playwright": "page.locator('.lazy-card').nth(2).scroll_into_view_if_needed(); page.wait_for_selector(\".lazy-card.is-loaded\")",
+        "selenium": "driver.execute_script('arguments[0].scrollIntoView()', card); WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CSS_SELECTOR, \".lazy-card.is-loaded\")))"
+      },
+      "answer": "../data/products.json, ../data/quotes.json, ../data/reviews.json"
+    }
+  ]
+}

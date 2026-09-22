@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Лента новостей и RSS · HTTP · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Восемь новостей «Тихой бухты» карточками и два машиночитаемых источника ссылок рядом: feed.xml и sitemap.xml. Урок про то, где брать URL без обхода страниц." />
+</head>
+<body data-page="http/news" data-module="http">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Лента новостей: восемь карточек и два XML-источника</h1>
+  <p class="lede">Прежде чем парсить карусель на главной, проверьте, нет ли рядом ленты или карты сайта: это готовые ссылки, даты и категории, раз в сто приятнее в разборе.</p>
+  <ul class="breadcrumbs">
+    <li><a href="index.html">HTTP</a></li>
+    <li>Новости</li>
+  </ul>
+
+  <section class="sources note" id="istochniki">
+    <p><strong>Альтернативные источники ссылок.</strong> <a href="../feed.xml">../feed.xml</a> — RSS с заголовками, датами и ссылками; <a href="../sitemap.xml">../sitemap.xml</a> — карта всех страниц полигона; <a href="../robots.txt">../robots.txt</a> — строки <code>Sitemap:</code> и <code>Rss:</code> с абсолютными адресами; <a href="../data/articles.json">../data/articles.json</a> — тот же массив в JSON. Ссылки в ленте ведут на якоря этой страницы: <code>http/news.html#a3</code>.</p>
+  </section>
+
+  <h2>Все новости</h2>
+  <div class="grid grid--2 news-grid">
+    <article class="card news-card" id="a1" data-article="A-01" data-category="склад" data-date="2026-03-14">
+      <h3 class="news-card__title"><a class="news-card__anchor" href="#a1">Склад в Приморске-2 перешёл на ночную приёмку</a></h3>
+      <p class="news-card__meta"><time datetime="2026-03-14">14 марта 2026</time> · <span class="badge">склад</span> · <span class="mono">A-01</span></p>
+      <p class="news-card__summary">Приёмка товаров идёт с 22:00 до 06:00, поэтому остатки в каталоге обновляются один раз за смену.</p>
+      <a class="news-card__link" href="../data/articles.json">Запись в JSON-выгрузке</a>
+    </article>
+    <article class="card news-card" id="a2" data-article="A-02" data-category="цена" data-date="2026-03-09">
+      <h3 class="news-card__title"><a class="news-card__anchor" href="#a2">Сезонное снижение на свет и посуда</a></h3>
+      <p class="news-card__meta"><time datetime="2026-03-09">9 марта 2026</time> · <span class="badge">цена</span> · <span class="mono">A-02</span></p>
+      <p class="news-card__summary">Цены на налобные фонари и термосы снижены на 10–15 %, старые цены остались в карточках зачёркнутыми.</p>
+      <a class="news-card__link" href="../data/articles.json">Запись в JSON-выгрузке</a>
+    </article>
+    <article class="card news-card" id="a3" data-article="A-03" data-category="логистика" data-date="2026-03-02">
+      <h3 class="news-card__title"><a class="news-card__anchor" href="#a3">Изменили график отгрузки палаток</a></h3>
+      <p class="news-card__meta"><time datetime="2026-03-02">2 марта 2026</time> · <span class="badge">логистика</span> · <span class="mono">A-03</span></p>
+      <p class="news-card__summary">Крупногабаритные отправления уходят двумя партиями: во вторник и пятницу, номер отслеживания приходит позже счёта.</p>
+      <a class="news-card__link" href="../data/articles.json">Запись в JSON-выгрузке</a>
+    </article>
+    <article class="card news-card" id="a4" data-article="A-04" data-category="сервис" data-date="2026-02-24">
+      <h3 class="news-card__title"><a class="news-card__anchor" href="#a4">Почта для гарантийных обращений обновлена</a></h3>
+      <p class="news-card__meta"><time datetime="2026-02-24">24 февраля 2026</time> · <span class="badge">сервис</span> · <span class="mono">A-04</span></p>
+      <p class="news-card__summary">Гарантийные письма принимаем только на claim@tikhaya-bukhta.example.com, старые адреса больше не работают.</p>
+      <a class="news-card__link" href="../data/articles.json">Запись в JSON-выгрузке</a>
+    </article>
+    <article class="card news-card" id="a5" data-article="A-05" data-category="склад" data-date="2026-02-16">
+      <h3 class="news-card__title"><a class="news-card__anchor" href="#a5">Титановые котелки приехали раньше срока</a></h3>
+      <p class="news-card__meta"><time datetime="2026-02-16">16 февраля 2026</time> · <span class="badge">склад</span> · <span class="mono">A-05</span></p>
+      <p class="news-card__summary">Партия 700 мл поступила на склад Озёрного, карточка товара обновлена автоматически из файла поставщика.</p>
+      <a class="news-card__link" href="../data/articles.json">Запись в JSON-выгрузке</a>
+    </article>
+    <article class="card news-card" id="a6" data-article="A-06" data-category="сервис" data-date="2026-02-05">
+      <h3 class="news-card__title"><a class="news-card__anchor" href="#a6">Телефон колл-центра переведён на очередь</a></h3>
+      <p class="news-card__meta"><time datetime="2026-02-05">5 февраля 2026</time> · <span class="badge">сервис</span> · <span class="mono">A-06</span></p>
+      <p class="news-card__summary">Дозвон теперь через автоочередь: номер +7 000 120-45-67 работает, но оператор отвечает не сразу.</p>
+      <a class="news-card__link" href="../data/articles.json">Запись в JSON-выгрузке</a>
+    </article>
+    <article class="card news-card" id="a7" data-article="A-07" data-category="цена" data-date="2026-01-28">
+      <h3 class="news-card__title"><a class="news-card__anchor" href="#a7">Валютная оговорка в прайсе исчезла</a></h3>
+      <p class="news-card__meta"><time datetime="2026-01-28">28 января 2026</time> · <span class="badge">цена</span> · <span class="mono">A-07</span></p>
+      <p class="news-card__summary">Все цены в каталоге зафиксированы в рублях, колонка валюты в выгрузке оставили для совместимости.</p>
+      <a class="news-card__link" href="../data/articles.json">Запись в JSON-выгрузке</a>
+    </article>
+    <article class="card news-card" id="a8" data-article="A-08" data-category="логистика" data-date="2026-01-15">
+      <h3 class="news-card__title"><a class="news-card__anchor" href="#a8">Открыли пункт выдачи в Старом Логе</a></h3>
+      <p class="news-card__meta"><time datetime="2026-01-15">15 января 2026</time> · <span class="badge">логистика</span> · <span class="mono">A-08</span></p>
+      <p class="news-card__summary">Пятый пункт выдачи работает с 10:00 до 20:00, доставки в Старый Лог подешевели на 120 ₽.</p>
+      <a class="news-card__link" href="../data/articles.json">Запись в JSON-выгрузке</a>
+    </article>
+  </div>
+
+  <h2>Почему лента лучше карусели</h2>
+  <table class="table--striped source-compare">
+    <thead>
+      <tr><th>Источник</th><th>Что даёт</th><th>Риски</th></tr>
+    </thead>
+    <tbody>
+      <tr data-source="rss"><td><code>../feed.xml</code></td><td>заголовок, ссылку, дату публикации, категорию — в XML без вёрстки</td><td>лента короткая: обычно 10–20 последних записей</td></tr>
+      <tr data-source="sitemap"><td><code>../sitemap.xml</code></td><td>полный список адресов страниц</td><td>нет дат изменения, если их не заполняли</td></tr>
+      <tr data-source="json"><td><code>../data/articles.json</code></td><td>тот же массив со стабильными ключами</td><td>файл могут перестать обновлять вместе с редизайном</td></tr>
+      <tr data-source="html"><td>эта страница</td><td>всё, что видно человеку, включая подвал и баннеры</td><td>разметка меняется чаще данных: правьте селекторы</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Разбор ленты</h2>
+  <pre data-lang="xml"><code>&lt;rss version="2.0"&gt;
+  &lt;channel&gt;
+    &lt;title&gt;Парсинг-тренажёр — Тихая бухта&lt;/title&gt;
+    &lt;item&gt;
+      &lt;title&gt;Изменили график отгрузки палаток&lt;/title&gt;
+      &lt;link&gt;/http/news.html#a3&lt;/link&gt;
+      &lt;guid isPermaLink="false"&gt;A-03&lt;/guid&gt;
+      &lt;pubDate&gt;Mon, 02 Mar 2026 09:00:00 GMT&lt;/pubDate&gt;
+      &lt;category&gt;логистика&lt;/category&gt;
+    &lt;/item&gt;
+  &lt;/channel&gt;
+&lt;/rss&gt;</code></pre>
+  <pre data-lang="python"><code>import requests
+from bs4 import BeautifulSoup
+
+feed = requests.get("http://localhost:8000/feed.xml", timeout=10)
+soup = BeautifulSoup(feed.content, "xml")        # парсер "xml" требует lxml
+items = [{"title": i.title.get_text(strip=True),
+          "link": i.link.get_text(strip=True),
+          "date": i.pubDate.get_text(strip=True)} for i in soup.find_all("item")]
+print(len(items), items[0])</code></pre>
+  <p class="tip">Обратите внимание: <code>item/link</code> в RSS — текст, а в HTML-разметке страницы <code>&lt;a&gt;</code> — атрибут <code>href</code>. Один и тот же адрес в двух форматах достаётся по-разному.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Таблицы и CSV · HTML-разметка · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Пять таблиц разной степени честности: thead и без, colspan и rowspan, вложенная таблица, данные в атрибутах, разъехавшиеся строки и CSV-подобный блок для сравнения." />
+</head>
+<body data-page="markup/tables" data-module="markup">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Таблицы: от честной разметки до разъехавшихся строк</h1>
+  <p class="lede">Таблица — самый обманчивый формат. Внешне все строки выглядят одинаково, а внутри <code>rowspan</code> съедает ячейку, <code>colspan</code> сдвигает колонки, вложенная таблица добавляет лишних <code>tr</code>, а строки расходятся с шапкой. Здесь пять таких случаев и CSV рядом.</p>
+
+  <section id="stock">
+    <h2>1. Большая таблица остатков</h2>
+    <p>Полный набор конструкций: <code>caption</code>, двухуровневая <code>thead</code> с <code>colspan</code> и <code>rowspan</code>, <code>tbody</code> со слиянием первой колонки и <code>tfoot</code> с итогами.</p>
+    <table class="table--striped" id="stock-table" data-test="stock">
+      <caption>Наличие на складах «Тихой бухты» на 14 марта 2026 года</caption>
+      <thead>
+        <tr>
+          <th rowspan="2" scope="col">Склад</th>
+          <th colspan="3">Товар</th>
+          <th rowspan="2" scope="col">Остаток, шт</th>
+          <th rowspan="2" scope="col">Цена, ₽</th>
+          <th rowspan="2" scope="col">Сумма, ₽</th>
+        </tr>
+        <tr>
+          <th scope="col">Название</th>
+          <th scope="col">Артикул</th>
+          <th scope="col">Категория</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td rowspan="3">Пирс</td>
+          <td>Складной стул «Бриз»</td>
+          <td class="mono">TB-1001</td>
+          <td>мебель</td>
+          <td>14</td>
+          <td>2 490</td>
+          <td class="sum">34 860</td>
+        </tr>
+        <tr>
+          <td>Куртка штормовая «Маяк»</td>
+          <td class="mono">TB-2010</td>
+          <td>одежда</td>
+          <td>6</td>
+          <td>8 990</td>
+          <td class="sum">53 940</td>
+        </tr>
+        <tr>
+          <td>Фонарь налобный «Светляк 400»</td>
+          <td class="mono">TB-3020</td>
+          <td>свет</td>
+          <td>23</td>
+          <td>1 990</td>
+          <td class="sum">45 770</td>
+        </tr>
+        <tr class="is-hidden-row">
+          <td colspan="4">Отложено в резерв: складной стул «Бриз», куртка «Маяк»</td>
+          <td>2</td>
+          <td colspan="2">5 980 ₽</td>
+        </tr>
+        <tr>
+          <td rowspan="2">Сарай</td>
+          <td>Термос 0.75 л «Полночь»</td>
+          <td class="mono">TB-5040</td>
+          <td>посуда</td>
+          <td>31</td>
+          <td>3 290</td>
+          <td class="sum">101 990</td>
+        </tr>
+        <tr>
+          <td>Гермомешок 25 л</td>
+          <td class="mono">TB-6051</td>
+          <td>снаряжение</td>
+          <td>55</td>
+          <td>1 690</td>
+          <td class="sum">92 950</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="5">Итого без резерва</td>
+          <td>129</td>
+          <td>329 510</td>
+        </tr>
+      </tfoot>
+    </table>
+<pre><code>table = soup.find("table", id="stock-table")
+head = [th.get_text(strip=True)
+        for th in table.thead.find("tr").find_all(["th", "td"], recursive=False)]
+# ["Склад", "Товар", "Остаток, шт", "Цена, ₽", "Сумма, ₽"] — это верхняя шапка, а не список колонок
+
+rows = []
+current_wh = None
+for tr in table.tbody.find_all("tr", recursive=False):
+    cells, i = tr.find_all(["td", "th"], recursive=False), 0
+    if cells[0].get("rowspan"):                 # первая колонка есть не в каждой строке
+        current_wh = cells[0].get_text(strip=True)
+        cells = cells[1:]
+    rows.append({"warehouse": current_wh, "cells": [c.get_text(strip=True) for c in cells]})</code></pre>
+    <p class="warn">Строка «Отложено в резерв» скрыта классом <code>is-hidden-row</code> (<code>display:none</code>): в <code>tfoot</code> она не учтена, а BeautifulSoup её вернёт. Сверяйте сумму <code>329 510 ₽</code> с итогом по <code>td.sum</code> — так находят скрытые строки.</p>
+  </section>
+
+  <section id="nothead">
+    <h2>2. Таблица без thead</h2>
+    <p>Шапки нет: первая строка набрана обычными <code>td</code>, как и данные. Отличить её можно только по содержимому — «Дата» не похожа на дату.</p>
+    <table class="table--compact" id="price-log">
+      <tr>
+        <td>Дата</td><td>Цена, ₽</td><td>Склад</td><td>Комментарий</td>
+      </tr>
+      <tr>
+        <td>2026-01-14</td><td>2 490</td><td>Пирс</td><td>стартовая цена</td>
+      </tr>
+      <tr>
+        <td>2026-02-03</td><td>2 290</td><td>Пирс</td><td>распродажа остатков</td>
+      </tr>
+      <tr>
+        <td>2026-02-20</td><td>2 490</td><td>Сарай</td><th>цена возвращена</th>
+      </tr>
+      <tr>
+        <td>2026-03-08</td><td>2 190</td><td>Сарай</td><td>март, вручную</td>
+      </tr>
+      <tr>
+        <td>2026-03-14</td><td>2 390</td><td>Пирс</td><td>последняя запись</td>
+      </tr>
+    </table>
+<pre><code>table = soup.find("table", id="price-log")
+rows = table.find_all("tr")
+first = [c.get_text(strip=True) for c in rows[0].find_all(["td", "th"])]
+is_header = not any(re.match(r"^\d{4}-\d{2}-\d{2}$", c) for c in first)   # True
+data = rows[1:] if is_header else rows
+# в этой же таблице одна ячейка набрана тегом th в четвёртой колонке — четвёртый случай:
+# th встречается не только в шапке</code></pre>
+  </section>
+
+  <section id="nested">
+    <h2>3. Вложенная таблица</h2>
+    <p>Внутри <code>td</code> лежит вторая таблица — позиции заказа. <code>find_all("tr")</code> без ограничения глубины смешивает строки родителя и строки ребёнка.</p>
+    <table class="table--striped" id="orders-nested">
+      <caption>Заказы со склада «Пирс»</caption>
+      <thead>
+        <tr><th>Заказ</th><th>Покупатель</th><th>Позиции</th><th>Статус</th></tr>
+      </thead>
+      <tbody>
+        <tr data-order="ORD-1001">
+          <td>ORD-1001</td>
+          <td>Илья Соловьёв</td>
+          <td>
+            <table class="table--compact" id="order-lines">
+              <thead>
+                <tr><th>Артикул</th><th>Товар</th><th>Кол-во</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="mono">TB-1001</td><td>Складной стул «Бриз»</td><td>2</td></tr>
+                <tr><td class="mono">TB-5040</td><td>Термос 0.75 л «Полночь»</td><td>1</td></tr>
+                <tr><td class="mono">TB-6051</td><td>Гермомешок 25 л</td><td>3</td></tr>
+              </tbody>
+            </table>
+          </td>
+          <td><span class="badge" data-status="shipped">отгружен</span></td>
+        </tr>
+        <tr data-order="ORD-1002">
+          <td>ORD-1002</td>
+          <td>Марина Ким</td>
+          <td><p class="muted">Одна позиция, без вложенной таблицы</p></td>
+          <td><span class="badge" data-status="new">новый</span></td>
+        </tr>
+        <tr data-order="ORD-1003">
+          <td>ORD-1003</td>
+          <td>Фёдор Лыжин</td>
+          <td>
+            <table class="table--compact" id="order-lines-2">
+              <tbody>
+                <tr><td class="mono">TB-2010</td><td>Куртка штормовая «Маяк»</td><td>1</td></tr>
+                <tr><td class="mono">TB-3020</td><td>Фонарь налобный «Светляк 400»</td><td>2</td></tr>
+              </tbody>
+            </table>
+          </td>
+          <td><span class="badge" data-status="cancelled">отменён</span></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr><td colspan="3">Всего заказов</td><td id="orders-total">3</td></tr>
+      </tfoot>
+    </table>
+<pre><code>outer = soup.find("table", id="orders-nested")
+len(outer.find_all("tr"))                     # 11: две шапки и все вложенные строки
+len(outer.tbody.find_all("tr", recursive=False))            # 3 заказа
+for tr in outer.tbody.find_all("tr", recursive=False):
+    lines = tr.find("table")                  # вложенная таблица внутри td
+    qty = [td.get_text(strip=True) for td in lines.tbody.find_all("tr")] if lines else []
+    print(tr["data-order"], qty)</code></pre>
+    <p class="note">У второго заказа вложенной таблицы нет: вместо неё абзац с текстом. Проверяйте <code>if lines:</code> — иначе <code>NoneType</code> на середине цикла.</p>
+  </section>
+
+  <section id="attrs">
+    <h2>4. Данные в атрибутах, а не в тексте</h2>
+    <p>Ячейки показывают человеку короткую подпись, а настоящее значение сидит в <code>data-*</code>. Такой приём любит клиентский JavaScript: текст перерисовывают, значения читают из атрибутов.</p>
+    <table class="table--compact" id="attr-table" data-test="price-widget">
+      <caption>Виджет цен (данные в атрибутах строк)</caption>
+      <thead><tr><th>Товар</th><th>Цена</th><th>Наличие</th><th>Обновлено</th></tr></thead>
+      <tbody>
+        <tr data-sku="TB-1001" data-price="2490" data-currency="RUB" data-stock="14" data-updated="2026-03-02">
+          <td class="mono">TB-1001</td><td>2,5 тыс ₽</td><td>есть</td><td>2 дня назад</td>
+        </tr>
+        <tr data-sku="TB-2010" data-price="8990" data-currency="RUB" data-stock="6" data-updated="2026-03-11">
+          <td class="mono">TB-2010</td><td>9 тыс ₽</td><td>мало</td><td>3 дня назад</td>
+        </tr>
+        <tr data-sku="TB-1002" data-price="640" data-currency="RUB" data-stock="0" data-updated="2026-02-19">
+          <td class="mono">TB-1002</td><td>640 ₽</td><td>нет</td><td>давно</td>
+        </tr>
+        <tr data-sku="TB-4030" data-price="15900" data-currency="RUB" data-stock="3" data-updated="2026-03-13" data-promo="весна">
+          <td class="mono">TB-4030</td><td>16 тыс ₽</td><td>3 шт</td><td>вчера</td>
+        </tr>
+      </tbody>
+    </table>
+<pre><code>rows = [
+    {"sku": tr["data-sku"], "price": int(tr["data-price"]),
+     "stock": int(tr["data-stock"]), "updated": tr.get("data-updated"),
+     "promo": tr.get("data-promo")}                      # get() — ключа может не быть
+    for tr in soup.select("#attr-table tbody tr")
+]</code></pre>
+    <p class="tip">Значений в атрибутах четыре: <code>data-promo</code> есть только у последней строки. При <code>tr["data-promo"]</code> парсер упадёт на трёх из четырёх — берите <code>tr.get("data-promo")</code>.</p>
+  </section>
+
+  <section id="shifted">
+    <h2>5. «Разъехавшаяся» таблица</h2>
+    <p>В шапке пять колонок, а в строках — три, пять, шесть и семь ячеек: экспорт из учётной системы, где часть колонок склеилась, часть добавилась. Это учебный образец того, почему нельзя полагаться на индекс колонки.</p>
+    <table class="table--compact" id="shifted-table">
+      <caption>Оборот за квартал (выгрузка из учётной системы)</caption>
+      <thead>
+        <tr><th>Дата</th><th>Товар</th><th>Артикул</th><th>Кол-во</th><th>Сумма, ₽</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2026-01-18</td><td>Складной стул «Бриз»</td><td class="mono">TB-1001</td><td>4</td><td>9 960</td>
+        </tr>
+        <tr>
+          <td>2026-01-22</td><td>Куртка штормовая «Маяк», размер L</td><td class="mono">TB-2010</td><td>1</td><td>8 990</td><td>доставка включена</td>
+        </tr>
+        <tr>
+          <td>2026-02-05</td><td class="mono">TB-3020</td><td>5</td><td>9 950</td>
+        </tr>
+        <tr>
+          <td>2026-02-11</td><td>Термос 0.75 л «Полночь»</td><td class="mono">TB-5040</td><td>2</td><td>6 580</td><td>акция</td><td>склад «Сарай»</td><td>менеджер Ким</td>
+        </tr>
+        <tr data-cols="4">
+          <td>2026-02-27</td><td>Гермомешок 25 л · склад «Пирс»</td><td colspan="2">1 · 1 690</td><td>возврат не оформлен</td>
+        </tr>
+        <tr>
+          <td>2026-03-04</td><td>Палатка двухместная «Бухта 2»</td><td class="mono">TB-4030</td><td>1</td><td>15 900</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr><td colspan="4">Оборот</td><td>53 070</td></tr>
+      </tfoot>
+    </table>
+<pre><code>head = [th.get_text(strip=True) for th in soup.select("#shifted-table thead th")]
+n = len(head)                                        # 5
+
+def to_record(tr, head):
+    cells = [td.get_text(strip=True) for td in tr.find_all(["td", "th"], recursive=False)]
+    rec = {}
+    for i, value in enumerate(cells):
+        key = head[i] if i &lt; n else f"extra_{i - n + 1}"   # лишнее не теряем
+        rec[key] = value
+    if len(cells) &lt; n:                                 # короткий ряд: сдвигаем с конца?
+        rec["_short"] = True                           # нет: только помечаем и разбираем отдельно
+    return rec
+
+records = [to_record(tr, head) for tr in soup.select("#shifted-table tbody tr")]</code></pre>
+    <p class="warn">Правило устойчивого парсинга: сопоставляем колонку по заголовку, а не по позиции, и держим «хвосты» в отдельном поле. Строки с <code>colspan</code> при этом всё равно врут — у строки от 27 февраля ячейка <code>colspan="2"</code> скрывает сразу две колонки, и по индексу туда попадёт «1 · 1 690». Для таких выгрузок надёжнее читать исходный CSV или JSON, а не HTML.</p>
+  </section>
+
+  <section id="csv">
+    <h2>Тот же оборот в виде CSV</h2>
+    <p>Разделитель — точка с запятой, десятичная запятая, значения в кавычках могут содержать перенос строки. Сравните объём кода и число ошибок с разбором таблицы выше.</p>
+<pre id="turnover-csv" data-delimiter=";" class="mono"><code>дата;товар;арт;кол-во;сумма
+2026-01-18;"стул складной ""Бриз""";TB-1001;4;9960,00
+2026-01-22;"куртка ""Маяк"", размер L";TB-2010;1;8990,00
+2026-02-05;"фонарь ""Светляк 400»";TB-3020;5;9950,00
+2026-02-11;"термос ""Полночь""";TB-5040;2;6580,00
+2026-02-27;"гермомешок 25 л";TB-6051;1;1690,00
+2026-03-04;"палатка ""Бухта 2""";TB-4030;1;15900,00</code></pre>
+<pre><code>import csv, io
+
+text = soup.find(id="turnover-csv").get_text()          # кавычки и переводы строки как есть
+rows = list(csv.reader(io.StringIO(text), delimiter=";", quotechar='"'))
+total = sum(int(r[4].replace(",", ".")) for r in rows[1:])   # 53070 — как в tfoot таблицы</code></pre>
+  </section>
+
+  <section id="check">
+    <h2>Самопроверка</h2>
+    <p>Числа считаются по исходному HTML, включая скрытую строку резерва и вложенные таблицы.</p>
+    <table class="table--striped">
+      <caption>Сколько узлов на этой странице</caption>
+      <thead><tr><th>Запрос</th><th>Совпадений</th><th>Что это за узлы</th></tr></thead>
+      <tbody>
+        <tr><td><code>soup.find_all("table")</code></td><td>8</td><td>пять учебных таблиц, две вложенные в раздел 3 и эта таблица самопроверки</td></tr>
+        <tr><td><code>soup.find_all("tr")</code></td><td>48</td><td>все строки вместе с шапками, подвалами, вложенными таблицами и самими собой — счётчик зависит и от этого блока</td></tr>
+        <tr><td><code>soup.find_all("caption")</code></td><td>5</td><td>подписей нет у таблицы цен и у «без thead»; пятая подпись — у этой таблицы</td></tr>
+        <tr><td><code>soup.select("#stock-table tbody tr")</code></td><td>6</td><td>пять товарных строк и одна скрытая строка резерва</td></tr>
+        <tr><td><code>soup.select("#stock-table td.sum")</code></td><td>5</td><td>их сумма — 329 510, ровно как в <code>tfoot</code></td></tr>
+        <tr><td><code>soup.select("#orders-nested > tbody > tr")</code></td><td>3</td><td>заказы; строки вложенных таблиц не попадают</td></tr>
+        <tr><td><code>soup.select("#shifted-table tbody tr")</code></td><td>6</td><td>по 5, 6, 4, 8, 4 и 5 ячеек в строках</td></tr>
+        <tr><td><code>soup.find_all(attrs={"data-sku": True})</code></td><td>4</td><td>строки виджета цен: значение только в атрибутах</td></tr>
+      </tbody>
+    </table>
+    <p class="muted">Соседние материалы: <a href="../data/products.json">../data/products.json</a> — тот же ассортимент в формате, который парсится без единой эвристики.</p>
+  </section>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

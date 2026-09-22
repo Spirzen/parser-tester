@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Вход в кабинет · Формы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="POST-форма входа: csrf-токен, скрытые поля, disabled и readonly, автозаполнение и разговор про куки сессии." />
+</head>
+<body data-page="forms/login" data-module="forms">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Форма входа: POST, токен и куки</h1>
+  <p class="lede">Вход — это всегда два запроса: сначала GET страницы с формой, чтобы забрать токен и куку, затем POST с логином, паролем и теми же скрытыми полями. Здесь можно разобрать оба шага, потому что отправлять форму некуда: на GitHub Pages сервера нет.</p>
+
+  <p class="note"><strong>Куда смотрит <code>action="#"</code>.</strong> Полигон живёт на GitHub Pages как чистая статика, поэтому адрес формы намеренно пустой — POST-запроса не будет. На локальном сервере (<code>node tools/serve.mjs</code>) есть учебный эндпоинт <code>/http/echo</code>: он возвращает JSON с присланными полями, заголовками и куками. Подставьте <code>action="/http/echo"</code> руками — и увидите тело собственного запроса.</p>
+
+  <form id="login-form" method="post" action="#" accept-charset="utf-8"
+        data-csrf-token="a1b2c3d4e5f6" data-endpoint="/http/echo" data-session="demo-session-42">
+    <div class="field">
+      <label for="login">Логин</label>
+      <input type="text" id="login" name="login" autocomplete="username" placeholder="ivan.petrov" required
+             data-required="true" minlength="3" />
+      <p class="hint">Атрибут <code>required</code> работает только в браузере: <code>requests</code> его не видит и отправит пустоту, если вы не проверили сами.</p>
+    </div>
+
+    <div class="field">
+      <label for="password">Пароль</label>
+      <input type="password" id="password" name="password" autocomplete="current-password" required minlength="6" />
+      <p class="hint">Парольное поле читается из разметки так же, как любое другое, — значение в <code>name</code> держится в <code>type="password"</code>.</p>
+    </div>
+
+    <input type="hidden" name="csrf_token" value="a1b2c3d4e5f6" id="csrf-field" />
+    <input type="hidden" name="redirect" value="/forms/results.html" id="after-login" />
+    <input type="hidden" name="ts" value="2026-03-14T09:00:00Z" />
+
+    <div class="field">
+      <label><input type="checkbox" name="remember" value="yes" /> запомнить на этом устройстве</label>
+    </div>
+
+    <div class="field">
+      <label for="role">Роль</label>
+      <input type="text" id="role" name="role" value="client" disabled />
+      <p class="hint">Отключённое поле: пользователь не меняет, браузер не отправляет, в <code>request_body</code> его не будет.</p>
+    </div>
+
+    <div class="field">
+      <label for="partner">Партнёр</label>
+      <input type="text" id="partner" name="partner" value="Тихая бухта" readonly />
+      <p class="hint">Поле <code>readonly</code>, в отличие от <code>disabled</code>, уходит в запрос с тем значением, что лежит в <code>value</code>.</p>
+    </div>
+
+    <div class="field">
+      <label for="otp">Код из письма</label>
+      <input type="text" id="otp" name="otp" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" placeholder="000000" />
+      <p class="hint">Значение приходит письмом и в HTML его нет: такие поля парсят не из формы, а из почты или SMS-шлюза — на полигоне их нет вовсе.</p>
+    </div>
+
+    <button type="submit" class="btn">Войти</button>
+  </form>
+
+  <section id="csrf">
+    <h2>Откуда брать токен</h2>
+    <p>Токен лежит в разметке до отправки, а его копия — ещё и в атрибуте формы. Тренируем внимательность: значение в <code>data-csrf-token</code> у <code>form</code> обязано совпадать с <code>value</code> скрытого поля.</p>
+<pre><code>import requests
+
+session = requests.Session()                      # куки живут в сессии, а не в одном запросе
+session.headers.update({'User-Agent': 'trainer/1.0 (+учебный проект)'})
+
+page = session.get('http://localhost:8000/forms/login.html', timeout=15)
+form = BeautifulSoup(page.text, 'html.parser').find('form', id='login-form')
+token = form.find('input', {'name': 'csrf_token'})['value']          # то же, что form['data-csrf-token']
+
+resp = session.post('http://localhost:8000/http/echo', data={
+    'csrf_token': token,
+    'redirect': form.find('input', {'name': 'redirect'})['value'],
+    'login': 'ivan.petrov',
+    'password': 'учебный-пароль',
+    'remember': 'yes',
+    'partner': form.find('input', {'name': 'partner'})['value'],
+}, timeout=15)
+print(resp.status_code, resp.json()['fields'])</code></pre>
+    <table class="table--striped">
+      <caption>Что уходит в POST на этой форме</caption>
+      <thead><tr><th>Поле</th><th>name</th><th>type</th><th>Поедет в запрос?</th></tr></thead>
+      <tbody>
+        <tr><td>Логин</td><td class="mono">login</td><td class="mono">text</td><td>да, если заполнено</td></tr>
+        <tr><td>Пароль</td><td class="mono">password</td><td class="mono">password</td><td>да</td></tr>
+        <tr><td>Токен</td><td class="mono">csrf_token</td><td class="mono">hidden</td><td>да — берём значение из HTML</td></tr>
+        <tr><td>Куда вести после входа</td><td class="mono">redirect</td><td class="mono">hidden</td><td>да</td></tr>
+        <tr><td>Метка времени</td><td class="mono">ts</td><td class="mono">hidden</td><td>да, сайты часто проверяют её вместе с токеном</td></tr>
+        <tr><td>Запомнить</td><td class="mono">remember</td><td class="mono">checkbox</td><td>только если отмечено: тогда <code>remember=yes</code></td></tr>
+        <tr><td>Роль</td><td class="mono">role</td><td class="mono">text + disabled</td><td>нет</td></tr>
+        <tr><td>Партнёр</td><td class="mono">partner</td><td class="mono">text + readonly</td><td>да, со значением <code>Тихая бухта</code></td></tr>
+        <tr><td>Код из письма</td><td class="mono">otp</td><td class="mono">text</td><td>да, если введён; в HTML значения нет</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="cookies">
+    <h2>Про Session и Cookie</h2>
+    <ul class="tree">
+      <li><strong>Куку выдаёт сервер</strong> в ответе заголовком <code>Set-Cookie</code>; браузер сохраняет её и подставляет в каждый следующий запрос того же домена.</li>
+      <li><strong>Токен — часть тела запроса</strong>, а не заголовка транспорта: он лежит в HTML формы и при POST уезжает в <code>request_body</code>. Сервер сверяет токен из куки и токен из формы.</li>
+      <li><strong>Один <code>requests.get</code> сессии не заменяет</strong>: без <code>requests.Session()</code> кука <code>session_id</code> до следующего запроса не доживёт, и авторизованный ответ вы получите 401.</li>
+      <li><strong>HttpOnly куку не прочитать из JavaScript</strong> и не вытащить из HTML — её видно только в заголовках ответа (<code>resp.cookies</code>).</li>
+      <li><strong>Признак успешного входа</strong> — не текст «Добро пожаловать», а редирект (302 + <code>Location</code>), новая кука в <code>Set-Cookie</code> или изменение набора прав в API-ответе.</li>
+    </ul>
+<pre><code>session.cookies.set('theme', 'dark', domain='localhost')     # подставляем свою куку
+resp = session.get('http://localhost:8000/http/cookies', timeout=15)   # эндпоинт отдаёт три Set-Cookie
+print(resp.cookies)                                          # session_id, cart, theme
+print(session.get('http://localhost:8000/forms/results.html', timeout=15).cookies)</code></pre>
+    <p class="tip">На реальном сайте проверьте себя так: откройте DevTools → Network, вызвите <code>Copy as cURL</code>, сравните заголовок <code>Cookie</code>, тело <code>--data-raw</code> и то, что собрал ваш <code>session.post</code>. Совпадение до байта — признак того, что вы ничего не забыли.</p>
+    <p class="muted">Другие страницы модуля: <a href="index.html">разбор форм без браузера</a>, <a href="search.html">GET-поиск</a>, <a href="results.html">страница результатов</a>, <a href="multi.html">большая анкета</a>.</p>
+  </section>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

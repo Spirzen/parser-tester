@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Экзамен: 12 заданий · Экзамен · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Итоговая проверка: двенадцать заданий по одной странице-полигону с локальной автопроверкой ответов." />
+</head>
+<body data-page="exam/index" data-module="exam">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Экзамен: извлеките двенадцать ответов из одной страницы</h1>
+  <p class="lede">Все данные для заданий живут на <a href="arena.html">странице-полигоне arena.html</a>. Формулировки ниже говорят, <em>что</em>
+  искать, но не говорят, <em>где</em>: навигацию по разметке вы строите сами. Ответы проверяются локально — никуда не отправляются.</p>
+
+  <section class="note">
+    <p style="margin:0"><strong>Правила.</strong> 1) Откройте полигон и сохраните его HTML (Ctrl+S) или держите открытым в браузере.
+    2) Каждый ответ — короткая строка: число без разделителей тысяч или текст слово в слово. 3) Регистр, лишние пробелы и «2 490» против «2490»
+    автопроверка прощает; опечатки в тексте — нет. 4) Эталон лежит в <a href="../data/exam-answers.json">data/exam-answers.json</a> в base64 —
+    глазами ответы не считаются. 5) Подсказка не раскрывает ответ. 6) 12 из 12 — «сдано».</p>
+  </section>
+
+  <p class="status" id="exam-load-status">Эталон ещё не загружен…</p>
+  <p class="status" id="exam-score">Верно: 0 из 12</p>
+
+  <div class="exam-check" id="exam-check">
+
+    <div class="task exam-item" data-task="E-01">
+      <p class="exam-item__q"><span class="task__id">E-01</span> Сколько товарных карточек в блоке «Витрина» на полигоне?</p>
+      <div class="field-row">
+        <input type="text" data-exam-answer aria-label="Ответ E-01" placeholder="число" />
+        <button type="button" data-check>Проверить</button>
+        <button type="button" class="ghost" data-hint>Подсказка</button>
+      </div>
+      <p class="status" data-result></p>
+      <p class="hint" data-hint-text hidden></p>
+    </div>
+
+    <div class="task exam-item" data-task="E-02">
+      <p class="exam-item__q"><span class="task__id">E-02</span> Самая низкая цена в блоке «Витрина»: число из <code>data-price</code> без «₽».</p>
+      <div class="field-row">
+        <input type="text" data-exam-answer aria-label="Ответ E-02" placeholder="число" />
+        <button type="button" data-check>Проверить</button>
+        <button type="button" class="ghost" data-hint>Подсказка</button>
+      </div>
+      <p class="status" data-result></p>
+      <p class="hint" data-hint-text hidden></p>
+    </div>
+
+    <div class="task exam-item" data-task="E-03">
+      <p class="exam-item__q"><span class="task__id">E-03</span> Сумма всех <code>data-price</code> карточек блока «Витрина».</p>
+      <div class="field-row">
+        <input type="text" data-exam-answer aria-label="Ответ E-03" placeholder="число" />
+        <button type="button" data-check>Проверить</button>
+        <button type="button" class="ghost" data-hint>Подсказка</button>
+      </div>
+      <p class="status" data-result></p>
+      <p class="hint" data-hint-text hidden></p>
+    </div>
+
+    <div class="task exam-item" data-task="E-04">
+      <p class="exam-item__q"><span class="task__id">E-04</span> Просуммируйте <code>data-qty</code> строк tbody складской таблицы; итог из <code>tfoot</code> не переносите.</p>
+      <div class="field-row">
+        <input type="text" data-exam-answer aria-label="Ответ E-04" placeholder="число" />
+        <button type="button" data-check>Проверить</button>
+        <button type="button" class="ghost" data-hint>Подсказка</button>
+      </div>
+      <p class="status" data-result></p>
+      <p class="hint" data-hint-text hidden></p>
+    </div>
+
+    <div class="task exam-item" data-task="E-05">
+      <p class="exam-item__q"><span class="task__id">E-05</span> В ветке «Такелаж» классификатора ровно один пункт третьего уровня вложенности — запишите его дословно.</p>
+      <div class="field-row">
+        <input type="text" data-exam-answer aria-label="Ответ E-05" placeholder="текст" />
+        <button type="button" data-check>Проверить</button>
+        <button type="button" class="ghost" data-hint>Подсказка</button>
+      </div>
+      <p class="status" data-result></p>
+      <p class="hint" data-hint-text hidden></p>
+    </div>
+
+    <div class="task exam-item" data-task="E-06">
+      <p class="exam-item__q"><span class="task__id">E-06</span> Серийный номер барометра из блока «Прибор» — то, что лежит в атрибуте секции.</p>
+      <div class="field-row">
+        <input type="text" data-exam-answer aria-label="Ответ E-06" placeholder="напр. XXX-00-00" />
+        <button type="button" data-check>Проверить</button>
+        <button type="button" class="ghost" data-hint>Подсказка</button>
+      </div>
+      <p class="status" data-result></p>
+      <p class="hint" data-hint-text hidden></p>
+    </div>
+
+    <div class="task exam-item" data-task="E-07">
+      <p class="exam-item__q"><span class="task__id">E-07</span> На полигоне есть блок, скрытый в браузере, но отлично читаемый из HTML. Запишите его текст.</p>
+      <div class="field-row">
+        <input type="text" data-exam-answer aria-label="Ответ E-07" placeholder="текст" />
+        <button type="button" data-check>Проверить</button>
+        <button type="button" class="ghost" data-hint>Подсказка</button>
+      </div>
+      <p class="status" data-result></p>
+      <p class="hint" data-hint-text hidden></p>
+    </div>
+
+    <div class="task exam-item" data-task="E-08">
+      <p class="exam-item__q"><span class="task__id">E-08</span> Значение скрытого поля формы заявки, в имени которого есть «hash».</p>
+      <div class="field-row">
+        <input type="text" data-exam-answer aria-label="Ответ E-08" placeholder="значение" />
+        <button type="button" data-check>Проверить</button>
+        <button type="button" class="ghost" data-hint>Подсказка</button>
+      </div>
+      <p class="status" data-result></p>
+      <p class="hint" data-hint-text hidden></p>
+    </div>
+
+    <div class="task exam-item" data-task="E-09">
+      <p class="exam-item__q"><span class="task__id">E-09</span> Теги цитаты Инги Приморской на полигоне — списком через запятую, порядок как в разметке.</p>
+      <div class="field-row">
+        <input type="text" data-exam-answer aria-label="Ответ E-09" placeholder="тег1, тег2, тег3" />
+        <button type="button" data-check>Проверить</button>
+        <button type="button" class="ghost" data-hint>Подсказка</button>
+      </div>
+      <p class="status" data-result></p>
+      <p class="hint" data-hint-text hidden></p>
+    </div>
+
+    <div class="task exam-item" data-task="E-10">
+      <p class="exam-item__q"><span class="task__id">E-10</span> Пагинация полигона — заглушка. В файл с каким именем ведёт ссылка <code>rel="next"</code>?</p>
+      <div class="field-row">
+        <input type="text" data-exam-answer aria-label="Ответ E-10" placeholder="имя файла" />
+        <button type="button" data-check>Проверить</button>
+        <button type="button" class="ghost" data-hint>Подсказка</button>
+      </div>
+      <p class="status" data-result></p>
+      <p class="hint" data-hint-text hidden></p>
+    </div>
+
+    <div class="task exam-item" data-task="E-11">
+      <p class="exam-item__q"><span class="task__id">E-11</span> Итоговая цена со скидкой (<code>data-price</code> элемента с id «final-price»); числа из комментариев-приманок не считаются.</p>
+      <div class="field-row">
+        <input type="text" data-exam-answer aria-label="Ответ E-11" placeholder="число" />
+        <button type="button" data-check>Проверить</button>
+        <button type="button" class="ghost" data-hint>Подсказка</button>
+      </div>
+      <p class="status" data-result></p>
+      <p class="hint" data-hint-text hidden></p>
+    </div>
+
+    <div class="task exam-item" data-task="E-12">
+      <p class="exam-item__q"><span class="task__id">E-12</span> Карточек промо-акции на полигоне три, и у всех одинаковый <code>data-id</code>. Запишите текст той, что вторая по порядку в DOM.</p>
+      <div class="field-row">
+        <input type="text" data-exam-answer aria-label="Ответ E-12" placeholder="текст" />
+        <button type="button" data-check>Проверить</button>
+        <button type="button" class="ghost" data-hint>Подсказка</button>
+      </div>
+      <p class="status" data-result></p>
+      <p class="hint" data-hint-text hidden></p>
+    </div>
+
+  </div>
+
+  <h2>Как сдавать</h2>
+  <pre><code>import re, urllib.request
+from bs4 import BeautifulSoup
+
+html = urllib.request.urlopen(BASE + "/exam/arena.html").read().decode("utf-8")
+soup = BeautifulSoup(html, "html.parser")
+
+cards = soup.select("section#showcase .card[data-price]")          # E-01, E-02, E-03
+prices = [int(c["data-price"]) for c in cards]
+print(len(prices), min(prices), sum(prices))</code></pre>
+  <p class="muted">Фрагмент выше решает ровно три задания из двенадцати — и не подсказывает ничего про остальные.</p>
+
+  <noscript><p class="warn">Автопроверка требует JavaScript: без него задания можно решить только «на бумаге» — сверкой с эталонным JSON.</p></noscript>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/exam.js" defer></script>
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

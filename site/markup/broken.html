@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Битая разметка и три парсера · HTML-разметка · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Образец намеренно битого HTML и разбор: как его видят html.parser, lxml и html5lib, и почему результаты отличаются." />
+</head>
+<body data-page="markup/broken" data-module="markup">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Битая разметка: один файл, три дерева</h1>
+  <p class="lede">Реальный HTML редко бывает валидным: незакрытые абзацы, лишние закрывающие теги, атрибуты без кавычек, CDATA и текст вне тегов. Парсеры чинят это по-разному — и на одном и том же файле вы получаете разное количество узлов.</p>
+
+  <section id="rules">
+    <h2>Как устроен этот урок</h2>
+    <p>Вся битая разметка на странице собрана в одном месте — между комментариями <code>broken:start</code> и <code>broken:end</code>. Это правило сборки тренажёра: чек-лист ищет именно эти маркеры, а всё остальное на странице обязано быть валидным.</p>
+    <ol>
+      <li>Читайте разделы «Одна строка — три парсера» и «Что делает каждый парсер».</li>
+      <li>Скачайте страницу: <code>requests.get(url).text</code> или <code>curl -s … &gt; broken.html</code>.</li>
+      <li>Разбейте один и тот же файл тремя парсерами и сравните счётчики.</li>
+      <li>Откройте страницу в браузере и посмотрите, куда переехал блок «Задания»: незакрытая таблица в конце раздела утягивает за собой разметку, а браузер переносит её «наружу».</li>
+    </ol>
+    <p class="warn">Эффект на этой странице ожидаемый: незакрытые <code>&lt;p&gt;</code>, <code>&lt;div&gt;</code> и <code>&lt;table&gt;</code> в живом образце меняют порядок блоков в браузере. Ровно это и есть предмет урока.</p>
+  </section>
+
+  <section id="threeparsers">
+    <h2>Одна строка — три парсера</h2>
+    <p>Таблица построена на реальных замерах: каждая строка — фрагмент из живого образца ниже, разобранная <code>html.parser</code> и <code>lxml</code> из BeautifulSoup 4.15. Колонка «браузер / html5lib» описывает правило стандарта HTML5, по которому работает <code>html5lib</code>.</p>
+    <table class="table--striped">
+      <caption>Что возвращают парсеры на одном и том же тексте</caption>
+      <thead>
+        <tr><th>Фрагмент</th><th>html.parser</th><th>lxml</th><th>html5lib / браузер</th><th>Вывод для парсера</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>&lt;p&gt;раз&lt;p&gt;два</code></td>
+          <td>второй <code>p</code> — внутри первого: <code>select('p p')</code> = 1</td>
+          <td>два соседних <code>p</code>: <code>select('p p')</code> = 0</td>
+          <td>как lxml: <code>&lt;p&gt;</code> закрывается перед новым блочным тегом</td>
+          <td>не считайте абзацы вложенными: проверяйте <code>p.parent.name</code></td>
+        </tr>
+        <tr>
+          <td><code>&lt;ul&gt;&lt;li&gt;один&lt;li&gt;два&lt;/ul&gt;</code></td>
+          <td><code>li</code> внутри <code>li</code>, у верхнего <code>get_text()</code> = «одиндва»</td>
+          <td>два соседних <code>li</code>, тексты не сливаются</td>
+          <td>как lxml</td>
+          <td><code>find_all('li')</code> даёт 2 у обоих, а <code>select('ul &gt; li')</code> — по-разному</td>
+        </tr>
+        <tr>
+          <td><code>&lt;table&gt;&lt;tr&gt;&lt;td&gt;1&lt;td&gt;2&lt;tr&gt;&lt;td&gt;3&lt;td&gt;4&lt;/table&gt;</code></td>
+          <td><code>select('tr &gt; td')</code> = 2, <code>select('td td')</code> = 3 — ячейки вложены друг в друга</td>
+          <td><code>select('tr &gt; td')</code> = 4, вложенных <code>td</code> нет</td>
+          <td>как lxml плюс служебный <code>tbody</code> в дереве</td>
+          <td><code>select('tbody tr')</code> вернёт 0 у обоих: <code>tbody</code> в исходнике нет</td>
+        </tr>
+        <tr>
+          <td><code>&lt;B&gt;жирный&lt;/B&gt;</code></td>
+          <td>имя тега нормализовано: <code>soup.find('b')</code> нашёл, <code>soup.find('B')</code> — <code>None</code></td>
+          <td>то же самое</td>
+          <td><code>tagName === 'B'</code>, а <code>querySelector('b')</code> работает</td>
+          <td>регистр ломает не bs4, а <code>re.findall(r'&lt;b', html)</code>: 0 совпадений без <code>re.I</code></td>
+        </tr>
+        <tr>
+          <td><code>title=Стол и стул</code> (атрибут без кавычек)</td>
+          <td><code>title</code> = «Стол», а «и» и «стул» превращаются в два пустых атрибута</td>
+          <td><code>title</code> = «Стол», лишние слова просто теряются</td>
+          <td>как lxml</td>
+          <td>значение с пробелом без кавычек не сохранить: проверяйте <code>attrs</code> целиком</td>
+        </tr>
+        <tr>
+          <td><code>&lt;![CDATA[ служебный блок: price=2490 ]]&gt;</code></td>
+          <td>узел <code>CData</code> остаётся в дереве, <code>get_text()</code> его отдаёт</td>
+          <td>блок исчезает целиком</td>
+          <td>в HTML это «неверный» комментарий: текст виден в дереве как комментарий</td>
+          <td>число 2490 у вас в данных есть только с <code>html.parser</code></td>
+        </tr>
+        <tr>
+          <td>лишний <code>&lt;/div&gt;</code></td>
+          <td>тег проигнорирован, дерево не пострадало; обёрток <code>html</code>/<code>body</code> нет</td>
+          <td>тег проигнорирован, но <code>soup.html</code> и <code>soup.body</code> появляются всегда</td>
+          <td>как lxml, с учётом правил вставки в <code>body</code></td>
+          <td><code>soup.body.find(...)</code> с <code>html.parser</code> вернёт <code>NoneType</code></td>
+        </tr>
+        <tr>
+          <td><code>&amp;nbsp; &amp;mdash; &amp;#1077;</code></td>
+          <td>после разбора: <code>'\xa0X\xa0 — е'</code></td>
+          <td>то же значение</td>
+          <td>то же значение</td>
+          <td>сущности одинаково разворачиваются; в regex по исходной строке остаётся литеральный <code>&amp;nbsp;</code></td>
+        </tr>
+        <tr>
+          <td>текст вне тегов после незакрытой таблицы</td>
+          <td>прилипает к последней открытой ячейке <code>td</code></td>
+          <td>то же: текст оказывается внутри <code>td</code> второй строки</td>
+          <td>браузер выносит текст «фостер-парентингом» перед таблицей</td>
+          <td>ищите мусор через <code>isinstance(node, NavigableString)</code>, а не по позиции</td>
+        </tr>
+      </tbody>
+    </table>
+<pre><code>import re
+import requests
+from bs4 import BeautifulSoup
+
+html = requests.get(url, timeout=15).text
+frag = re.search(r"&lt;!--\s*broken:start\s*--&gt;([\s\S]*?)&lt;!--\s*broken:end\s*--&gt;", html).group(1)
+
+for parser in ("html.parser", "lxml", "html5lib"):
+    soup = BeautifulSoup(frag, parser)
+    print(parser,
+          len(soup.find_all("p")), len(soup.select("p p")),
+          len(soup.select("ul &gt; li")), len(soup.select("tr &gt; td")),
+          len(soup.find_all("td")), len(soup.select("tbody")))
+
+# замеры BeautifulSoup 4.15 на фрагменте этой страницы:
+# html.parser  3 1 1 2 4 0
+# lxml         3 0 2 4 4 0
+# html5lib     ставится отдельно (pip install html5lib) и повторяет браузер:
+#              p p не вложен, ul > li = 2, и в дереве появляется служебный tbody</code></pre>
+  </section>
+
+  <section id="who">
+    <h2>Что делает каждый парсер</h2>
+    <dl class="kv">
+      <dt>html.parser</dt>
+      <dd>Входит в стандартную библиотеку Python, зависимостей не требует. Разбирает «как написано»: незакрытые теги остаются открытыми и съедают соседей, лишний закрывающий тег игнорируется, обёртку <code>&lt;html&gt;&lt;body&gt;</code> не добавляет. Быстрый и предсказуемый на плохой разметке — его результаты легче объяснять на уроке, но дерево может быть «кривым».</dd>
+      <dt>lxml</dt>
+      <dd>Библиотека на C (<code>pip install lxml</code>), самая быстрая. Агрессивно лечит разметку: закрывает <code>p</code>, <code>li</code>, <code>td</code>, добавляет <code>html</code> и <code>body</code>, умеет <code> soup.select("//xpath")</code> и полноценный <code>:not()</code>. Часть мусора (CDATA) выбрасывает молча — данные теряются без ошибки.</dd>
+      <dt>html5lib</dt>
+      <dd><code>pip install html5lib</code>. Парсит по стандарту HTML5, то есть строит то же дерево, что браузер. Медленнее всех и ставится отдельно, зато спорные случаи (незакрытая таблица, вложение блочных тегов) решаются так, как их увидит пользователь. Используйте как «эталон», когда расходятся первые два.</dd>
+    </dl>
+    <p class="note">Правило выбора: начинайте с <code>html.parser</code> (не нужен компилятор, результат одинаков на всех машинах), переходите на <code>lxml</code> ради скорости и XPath, а <code>html5lib</code> держите для сверки «как в браузере». Один и тот же парсер должен быть указан во всех скриптах проекта: смена парсера меняет количество найденных узлов, а это выглядит как «сайт изменился».</p>
+  </section>
+
+  <section id="defense">
+    <h2>Устойчивый парсинг: что делать с битым</h2>
+<pre><code>def cells(tr, expected):
+    """Возвращает ровно expected значений: недостающие — None, лишние — в '_extra'."""
+    raw = [td.get_text(strip=True) for td in tr.find_all(["td", "th"], recursive=False)]
+    rec = dict(zip(expected, raw[:expected]))
+    for i in range(len(raw), expected):
+        rec[expected[i]] = None
+    if len(raw) &gt; expected:
+        rec["_extra"] = raw[expected:]
+    return rec
+
+# 1. Область поиска, а не весь документ: незакрытая таблица делает <p> родителем <ul>
+container = soup.find("div", class_="product-row", recursive=False) or soup
+
+# 2. Проверяем, а не надеемся: None, пустой список и 'NoneType' — три разных бага
+price = (soup.find("span", attrs={"data-price": True}) or {}).get("data-price")
+
+# 3. Текст узла без детей
+def own(node):
+    return "".join(s.strip() for s in node.find_all(string=True, recursive=False)
+                   if not isinstance(s, (Comment, CData)) and s.strip())
+
+# 4. Сущности и пробелы: nbsp ломает сравнение строк
+clean = lambda t: t.replace("\xa0", " ").strip()
+
+# 5. Один и тот же файл — двумя парсерами, различия пишем в лог
+a = len(BeautifulSoup(html, "html.parser").find_all("td"))
+b = len(BeautifulSoup(html, "lxml").find_all("td"))
+assert a == b, f"разметка расходится: {a} против {b}"</code></pre>
+    <p class="tip">Отдельный приём для «текста вне тегов»: пройдитесь по <code>soup.find_all(string=True)</code> и отфильтруйте <code>NavigableString</code>, длина которых больше двух, а родитель — <code>td</code> или <code>table</code>. Так находят строки, которые парсер прилепил куда попало.</p>
+  </section>
+
+  <section id="listing">
+    <h2>Живой образец: листинг</h2>
+    <p>Ниже — тот же фрагмент в исходном виде (экранирован, чтобы браузер его показал, а не разобрал). Дальше, в конце страницы, он же лежит настоящим HTML — между маркерами сборки.</p>
+<pre><code>&lt;div class="product-row"&gt;
+  &lt;div class="product-row"&gt;                     <span class="muted"># одинаковые вложенные теги</span>
+    &lt;p&gt;Товар: складной стул «Бриз»               <span class="muted"># незакрытый p</span>
+    &lt;p class=unclosed-attr&gt;Артикул&amp;nbsp;TB-1001 &amp;mdash; в наличии
+    &lt;B&gt;Хит продаж&lt;/B&gt;                           <span class="muted"># верхний регистр тега</span>
+    &lt;br&gt;
+    Цена: &lt;span data-price=2490&gt;2 490 &amp;#1077;.&lt;/span&gt;   <span class="muted"># атрибут без кавычек + сущности</span>
+    &lt;![CDATA[ служебный блок: price=2490; currency=RUB ]]&gt;
+    &lt;!-- комментарий с текстом, который тоже узел --&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;                                          <span class="muted"># лишний закрывающий div</span>
+&lt;div class="unclosed-wrapper"&gt;                  <span class="muted"># этот div не закрыт никогда</span>
+&lt;p&gt;Этот абзац не закрыт
+&lt;ul&gt;&lt;li&gt;первый пункт&lt;li&gt;второй пункт&lt;/ul&gt;
+&lt;table id="ghost-table"&gt;
+&lt;tr&gt;&lt;td&gt;Ячейка 1&lt;td&gt;Ячейка 2
+&lt;tr&gt;&lt;td&gt;Ячейка 3&lt;td&gt;Ячейка 4
+текст вне тегов, который парсер приписывает ближайшему открытому узлу
+&lt;a href=orphan.html&gt;ссылка без кавычек&lt;/a&gt;      <span class="muted"># закрывающего &lt;/table&gt; нет</span></code></pre>
+  </section>
+
+  <h2>Живой образец: настоящая битая разметка</h2>
+  <p class="muted">Дальше идёт разобранный выше фрагмент без экранирования. Проверьте на нём свои скрипты: соберите цены, пункты списка и ячейки таблицы, а затем сравните <code>html.parser</code> и <code>lxml</code>.</p>
+<!-- broken:start -->
+<div class="product-row">
+  <div class="product-row">
+    <p>Товар: складной стул «Бриз»
+    <p class=unclosed-attr>Артикул&nbsp;TB-1001 &mdash; в наличии
+    <B>Хит продаж</B>
+    <br>
+    Цена: <span data-price=2490>2 490 &#1077;.</span>
+    <![CDATA[ служебный блок: price=2490; currency=RUB ]]>
+    <!-- комментарий с текстом, который тоже узел -->
+  </div>
+</div>
+</div>
+<div class="unclosed-wrapper">
+<p>Этот абзац не закрыт
+<ul><li>первый пункт<li>второй пункт</ul>
+<table id="ghost-table">
+<tr><td>Ячейка 1<td>Ячейка 2
+<tr><td>Ячейка 3<td>Ячейка 4
+текст вне тегов, который парсер приписывает ближайшему открытому узлу
+<a href=orphan.html>ссылка без кавычек</a>
+<!-- broken:end -->
+  <p class="tip">Что искать в своём разборе: сколько <code>p</code> нашлось и есть ли среди них вложенные; сколько <code>li</code> вернул <code>select('ul &gt; li')</code>; попадают ли ячейки в <code>select('tr &gt; td')</code>; где осела строка «текст вне тегов»; видит ли ваш код число <code>2490</code> из CDATA; и что произойдёт со <code>soup.body</code>.</p>
+  <p class="muted">Предыдущие разделы модуля: <a href="headings.html">заголовки</a>, <a href="lists.html">списки</a>, <a href="tables.html">таблицы</a>; карта дерева — на <a href="index.html">главной странице модуля</a>.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+name: Деплой на GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "tools/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+environment:
+  name: github-pages
+  url: ${{ steps.deploy.outputs.page_url }}
+
+jobs:
+  deploy:
+    name: Публикация dist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - id: pages
+        uses: actions/configure-pages@v5
+      - name: Сборка с адресом публикации
+        env:
+          SITE_BASE_URL: ${{ steps.pages.outputs.base_url }}
+        run: |
+          node tools/generate.mjs --verify
+          node tools/build.mjs
+          node tools/check.mjs
+      - name: Проверка относительных путей при публикации в подпапку
+        run: |
+          test -f dist/index.html
+          test -f dist/404.html
+          test -f dist/.nojekyll
+          grep -q "Sitemap: $SITE_BASE_URL/sitemap.xml" dist/robots.txt
+          ! grep -Eq '(src|href)="/[^/]' dist/index.html
+        env:
+          SITE_BASE_URL: ${{ steps.pages.outputs.base_url }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deploy
+        uses: actions/deploy-pages@v4

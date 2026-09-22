@@ -1,0 +1,32 @@
+# Альтернативный хостинг: Netlify. GitHub Pages использует .github/workflows/deploy.yml.
+# Нужен, если на уроках захотите настоящие HTTP-редиректы и свои заголовки ответов.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Настоящий 301: парсер видит его в заголовке Location, а не в meta refresh.
+[[redirects]]
+  from = "/old/catalog.html"
+  to = "/selectors/products.html"
+  status = 301
+
+[[redirects]]
+  from = "/promo/2024"
+  to = "/pagination/index.html"
+  status = 302
+  force = true
+
+# Заголовки для урока про CORS и content-type у «JSON API».
+[[headers]]
+  for = "/data/*.json"
+  [headers.values]
+    Content-Type = "application/json; charset=utf-8"
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=60"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Trainer-Mode = "practice-only"

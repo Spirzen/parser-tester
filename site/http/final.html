@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Финальная страница · HTTP · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Цель учебных редиректов: три факта о переезде страниц и кука-маркер, которая появляется только после визита браузера." />
+</head>
+<body data-page="http/final" data-module="http">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Финальная страница</h1>
+  <p class="lede">Сюда ведут <code>/http/redirect-301</code>, <code>/http/redirect-302</code> и <code>meta refresh</code> этой страницы. Разные маршруты — одна цель: проверить, где вы оказались на самом деле.</p>
+  <ul class="breadcrumbs">
+    <li><a href="index.html">HTTP</a></li>
+    <li><a href="redirect.html">Редиректы</a></li>
+    <li>Финальная страница</li>
+  </ul>
+
+  <h2>Три факта о переезде</h2>
+  <ol class="facts">
+    <li class="fact" data-fact="1">HTTP-редирект живёт в заголовках: сервер отдал <code>301</code> и <code>Location</code>, а тело могло быть пустым. Парсер узнаёт итоговый адрес из <code>response.url</code>, а весь маршрут — из списка <code>response.history</code>.</li>
+    <li class="fact" data-fact="2"><code>meta refresh</code> живёт в разметке: ответ остаётся <code>200</code>, поэтому <code>requests</code> и <code>BeautifulSoup</code> видят исходную страницу, а не эту.</li>
+    <li class="fact" data-fact="3">Адрес в строке браузера — не доказательство: <code>history.replaceState</code> меняет его без нового запроса, и по нему нельзя судить о содержимом ответа.</li>
+  </ol>
+
+  <h2>Кука-маркер</h2>
+  <div class="card" id="marker-card" data-marker="final">
+    <p>Этот блок записывает куку <code>final_reached</code> в момент просмотра. Значение в таблице ниже появляется только после выполнения скрипта.</p>
+    <p class="status">Кука-маркер: <code class="mono" data-role="marker-value">не установлена</code></p>
+    <p class="hint">Проверка: откройте <a href="cookies.html">http/cookies.html</a> — кука <code>final_reached</code> встанет в общий список, потому что у неё <code>Path=/</code>.</p>
+  </div>
+  <p class="warn">В исходном HTML этого файла значение куки — «не установлена». Ни <code>requests</code>, ни <code>urllib</code>, ни <code>BeautifulSoup</code> не увидят вклада браузера: они читают файл, а не выполняют скрипт. Это и есть граница между «собрать HTML» и «собрать DOM».</p>
+
+  <h2>Как убедиться, что маршрут был редиректом</h2>
+  <table class="table--striped arrival-check">
+    <thead>
+      <tr><th>Признак</th><th>HTTP 301/302</th><th>Meta refresh</th></tr>
+    </thead>
+    <tbody>
+      <tr data-check="status"><td>код ответа</td><td class="mono">301 → 200</td><td class="mono">200</td></tr>
+      <tr data-check="history"><td><code>r.history</code></td><td>не пустой</td><td>пустой список</td></tr>
+      <tr data-check="url"><td><code>r.url</code></td><td>адрес этой страницы</td><td>адрес исходной страницы</td></tr>
+      <tr data-check="header"><td>заголовок <code>Location</code></td><td>есть</td><td>нет</td></tr>
+      <tr data-check="markup"><td>тег <code>meta http-equiv</code></td><td>не обязателен</td><td>есть в <code>head</code></td></tr>
+    </tbody>
+  </table>
+  <p><a class="back-link" href="redirect.html">Вернуться к странице-источнику</a> · <a class="module-link" href="index.html">К обзору модуля HTTP</a></p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+<script>
+  (function () {
+    var out = document.querySelector('[data-role="marker-value"]');
+    if (!out) return;
+    var stamp = new Date().toISOString();
+    document.cookie = 'final_reached=' + encodeURIComponent(stamp) + '; Path=/; Max-Age=3600; SameSite=Lax';
+    var found = document.cookie.match(/final_reached=([^;]*)/);
+    out.textContent = found ? decodeURIComponent(found[1]) : 'document.cookie недоступен: откройте страницу через node tools/serve.mjs';
+  })();
+</script>
+</body>
+</html>

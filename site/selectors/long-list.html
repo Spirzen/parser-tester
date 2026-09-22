@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Большой список заказов · Селекторы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="240 строк таблицы для тренировки работы с объёмом и скрытыми элементами." />
+</head>
+<body data-page="selectors/long-list" data-module="selectors">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Журнал заказов: 240 строк</h1>
+  <p class="lede">Тренировка на объёме: считать, фильтровать, не терять скрытые строки и не выгружать всё подряд.</p>
+  <p class="warn">Часть строк скрыта через <code>style="display:none"</code>: BeautifulSoup их найдёт, Selenium без <code>visibility_of</code> — нет. Это учебная ловушка, держите её в голове при сверке counts.</p>
+  <table class="table--striped table--compact orders">
+    <caption>Заказы за квартал</caption>
+    <thead><tr><th>Номер</th><th>Дата</th><th>Товар</th><th>Артикул</th><th>Кол-во</th><th>Сумма</th></tr></thead>
+    <tbody>
+      <tr class="order" data-order="ORD-1000" data-region="Севск" data-status="new" style="display:none">
+        <td class="order__id">ORD-1000</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="2560">2 560 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1001" data-region="Тихая Бухта" data-status="paid">
+        <td class="order__id">ORD-1001</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="91200">91 200 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1002" data-region="Верхние Ключи" data-status="shipped">
+        <td class="order__id">ORD-1002</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="7500">7 500 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1003" data-region="Озёрный" data-status="done">
+        <td class="order__id">ORD-1003</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="79500">79 500 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1004" data-region="Приморск-2" data-status="cancelled">
+        <td class="order__id">ORD-1004</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Складной стул «Бриз»</td>
+        <td class="order__sku mono">TB-1001</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="17430">17 430 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1005" data-region="Старый Лог" data-status="new">
+        <td class="order__id">ORD-1005</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="4830">4 830 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1006" data-region="Севск" data-status="paid">
+        <td class="order__id">ORD-1006</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="8990">8 990 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1007" data-region="Тихая Бухта" data-status="shipped">
+        <td class="order__id">ORD-1007</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="71920">71 920 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1008" data-region="Верхние Ключи" data-status="done">
+        <td class="order__id">ORD-1008</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Складной стул «Бриз»</td>
+        <td class="order__sku mono">TB-1001</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="22410">22 410 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1009" data-region="Озёрный" data-status="cancelled">
+        <td class="order__id">ORD-1009</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="79500">79 500 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1010" data-region="Приморск-2" data-status="new">
+        <td class="order__id">ORD-1010</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="640">640 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1011" data-region="Старый Лог" data-status="paid">
+        <td class="order__id">ORD-1011</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="58800">58 800 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1012" data-region="Севск" data-status="shipped">
+        <td class="order__id">ORD-1012</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="91200">91 200 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1013" data-region="Тихая Бухта" data-status="done">
+        <td class="order__id">ORD-1013</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="63600">63 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1014" data-region="Верхние Ключи" data-status="cancelled">
+        <td class="order__id">ORD-1014</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="15920">15 920 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1015" data-region="Озёрный" data-status="new">
+        <td class="order__id">ORD-1015</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">3</td>
+        <td class="order__sum price" data-price="26970">26 970 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1016" data-region="Приморск-2" data-status="paid">
+        <td class="order__id">ORD-1016</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="4480">4 480 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1017" data-region="Старый Лог" data-status="shipped">
+        <td class="order__id">ORD-1017</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="49000">49 000 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1018" data-region="Севск" data-status="done">
+        <td class="order__id">ORD-1018</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="1250">1 250 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1019" data-region="Тихая Бухта" data-status="cancelled">
+        <td class="order__id">ORD-1019</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="79500">79 500 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1020" data-region="Верхние Ключи" data-status="new">
+        <td class="order__id">ORD-1020</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="15900">15 900 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1021" data-region="Озёрный" data-status="paid">
+        <td class="order__id">ORD-1021</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Складной стул «Бриз»</td>
+        <td class="order__sku mono">TB-1001</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="14940">14 940 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1022" data-region="Приморск-2" data-status="shipped">
+        <td class="order__id">ORD-1022</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="23030">23 030 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1023" data-region="Старый Лог" data-status="done">
+        <td class="order__id">ORD-1023</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="9950">9 950 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1024" data-region="Севск" data-status="cancelled">
+        <td class="order__id">ORD-1024</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="16450">16 450 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1025" data-region="Тихая Бухта" data-status="new">
+        <td class="order__id">ORD-1025</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="3450">3 450 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1026" data-region="Верхние Ключи" data-status="paid">
+        <td class="order__id">ORD-1026</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="57000">57 000 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1027" data-region="Озёрный" data-status="shipped">
+        <td class="order__id">ORD-1027</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="690">690 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1028" data-region="Приморск-2" data-status="done">
+        <td class="order__id">ORD-1028</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="39200">39 200 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1029" data-region="Старый Лог" data-status="cancelled">
+        <td class="order__id">ORD-1029</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="143100">143 100 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1030" data-region="Севск" data-status="new">
+        <td class="order__id">ORD-1030</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="4140">4 140 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1031" data-region="Тихая Бухта" data-status="paid">
+        <td class="order__id">ORD-1031</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">3</td>
+        <td class="order__sum price" data-price="5070">5 070 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1032" data-region="Верхние Ключи" data-status="shipped">
+        <td class="order__id">ORD-1032</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="13520">13 520 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1033" data-region="Озёрный" data-status="done">
+        <td class="order__id">ORD-1033</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="5520">5 520 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1034" data-region="Приморск-2" data-status="cancelled">
+        <td class="order__id">ORD-1034</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="11830">11 830 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1035" data-region="Старый Лог" data-status="new">
+        <td class="order__id">ORD-1035</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="68600">68 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1036" data-region="Севск" data-status="paid">
+        <td class="order__id">ORD-1036</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">3</td>
+        <td class="order__sum price" data-price="1920">1 920 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1037" data-region="Тихая Бухта" data-status="shipped" style="display:none">
+        <td class="order__id">ORD-1037</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="57000">57 000 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1038" data-region="Верхние Ключи" data-status="done">
+        <td class="order__id">ORD-1038</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">3</td>
+        <td class="order__sum price" data-price="47700">47 700 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1039" data-region="Озёрный" data-status="cancelled">
+        <td class="order__id">ORD-1039</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="143100">143 100 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1040" data-region="Приморск-2" data-status="new">
+        <td class="order__id">ORD-1040</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="11940">11 940 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1041" data-region="Старый Лог" data-status="paid">
+        <td class="order__id">ORD-1041</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="2500">2 500 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1042" data-region="Севск" data-status="shipped">
+        <td class="order__id">ORD-1042</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Котелок титановый 700 мл</td>
+        <td class="order__sku mono">TB-5041</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="16500">16 500 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1043" data-region="Тихая Бухта" data-status="done">
+        <td class="order__id">ORD-1043</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="68600">68 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1044" data-region="Верхние Ключи" data-status="cancelled">
+        <td class="order__id">ORD-1044</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="17910">17 910 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1045" data-region="Озёрный" data-status="new">
+        <td class="order__id">ORD-1045</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="4480">4 480 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1046" data-region="Приморск-2" data-status="paid">
+        <td class="order__id">ORD-1046</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="3450">3 450 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1047" data-region="Старый Лог" data-status="shipped">
+        <td class="order__id">ORD-1047</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Котелок титановый 700 мл</td>
+        <td class="order__sku mono">TB-5041</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="2750">2 750 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1048" data-region="Севск" data-status="done">
+        <td class="order__id">ORD-1048</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="11250">11 250 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1049" data-region="Тихая Бухта" data-status="cancelled">
+        <td class="order__id">ORD-1049</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="15210">15 210 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1050" data-region="Верхние Ключи" data-status="new">
+        <td class="order__id">ORD-1050</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="45600">45 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1051" data-region="Озёрный" data-status="paid">
+        <td class="order__id">ORD-1051</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="39200">39 200 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1052" data-region="Приморск-2" data-status="shipped">
+        <td class="order__id">ORD-1052</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="13520">13 520 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1053" data-region="Старый Лог" data-status="done">
+        <td class="order__id">ORD-1053</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="95400">95 400 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1054" data-region="Севск" data-status="cancelled">
+        <td class="order__id">ORD-1054</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="15920">15 920 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1055" data-region="Тихая Бухта" data-status="new">
+        <td class="order__id">ORD-1055</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="11940">11 940 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1056" data-region="Верхние Ключи" data-status="paid">
+        <td class="order__id">ORD-1056</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Котелок титановый 700 мл</td>
+        <td class="order__sku mono">TB-5041</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="16500">16 500 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1057" data-region="Озёрный" data-status="shipped">
+        <td class="order__id">ORD-1057</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Котелок титановый 700 мл</td>
+        <td class="order__sku mono">TB-5041</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="16500">16 500 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1058" data-region="Приморск-2" data-status="done">
+        <td class="order__id">ORD-1058</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="6250">6 250 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1059" data-region="Старый Лог" data-status="cancelled">
+        <td class="order__id">ORD-1059</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Котелок титановый 700 мл</td>
+        <td class="order__sku mono">TB-5041</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="22000">22 000 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1060" data-region="Севск" data-status="new">
+        <td class="order__id">ORD-1060</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="80910">80 910 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1061" data-region="Тихая Бухта" data-status="paid">
+        <td class="order__id">ORD-1061</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Складной стул «Бриз»</td>
+        <td class="order__sku mono">TB-1001</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="17430">17 430 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1062" data-region="Верхние Ключи" data-status="shipped">
+        <td class="order__id">ORD-1062</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="26320">26 320 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1063" data-region="Озёрный" data-status="done">
+        <td class="order__id">ORD-1063</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">3</td>
+        <td class="order__sum price" data-price="5070">5 070 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1064" data-region="Приморск-2" data-status="cancelled">
+        <td class="order__id">ORD-1064</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">3</td>
+        <td class="order__sum price" data-price="34200">34 200 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1065" data-region="Старый Лог" data-status="new">
+        <td class="order__id">ORD-1065</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="17910">17 910 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1066" data-region="Севск" data-status="paid">
+        <td class="order__id">ORD-1066</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="95400">95 400 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1067" data-region="Тихая Бухта" data-status="shipped">
+        <td class="order__id">ORD-1067</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Складной стул «Бриз»</td>
+        <td class="order__sku mono">TB-1001</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="19920">19 920 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1068" data-region="Верхние Ключи" data-status="done">
+        <td class="order__id">ORD-1068</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="11940">11 940 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1069" data-region="Озёрный" data-status="cancelled">
+        <td class="order__id">ORD-1069</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="5000">5 000 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1070" data-region="Приморск-2" data-status="new">
+        <td class="order__id">ORD-1070</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="57000">57 000 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1071" data-region="Старый Лог" data-status="paid">
+        <td class="order__id">ORD-1071</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="102600">102 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1072" data-region="Севск" data-status="shipped">
+        <td class="order__id">ORD-1072</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="5520">5 520 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1073" data-region="Тихая Бухта" data-status="done">
+        <td class="order__id">ORD-1073</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="29610">29 610 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1074" data-region="Верхние Ключи" data-status="cancelled" style="display:none">
+        <td class="order__id">ORD-1074</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Складной стул «Бриз»</td>
+        <td class="order__sku mono">TB-1001</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="4980">4 980 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1075" data-region="Озёрный" data-status="new">
+        <td class="order__id">ORD-1075</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="58800">58 800 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1076" data-region="Приморск-2" data-status="paid">
+        <td class="order__id">ORD-1076</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="63600">63 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1077" data-region="Старый Лог" data-status="shipped">
+        <td class="order__id">ORD-1077</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="3290">3 290 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1078" data-region="Севск" data-status="done">
+        <td class="order__id">ORD-1078</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Складной стул «Бриз»</td>
+        <td class="order__sku mono">TB-1001</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="14940">14 940 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1079" data-region="Тихая Бухта" data-status="cancelled">
+        <td class="order__id">ORD-1079</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="9950">9 950 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1080" data-region="Верхние Ключи" data-status="new">
+        <td class="order__id">ORD-1080</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="29610">29 610 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1081" data-region="Озёрный" data-status="paid">
+        <td class="order__id">ORD-1081</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Складной стул «Бриз»</td>
+        <td class="order__sku mono">TB-1001</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="19920">19 920 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1082" data-region="Приморск-2" data-status="shipped">
+        <td class="order__id">ORD-1082</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="80910">80 910 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1083" data-region="Старый Лог" data-status="done">
+        <td class="order__id">ORD-1083</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="3450">3 450 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1084" data-region="Севск" data-status="cancelled">
+        <td class="order__id">ORD-1084</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="79800">79 800 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1085" data-region="Тихая Бухта" data-status="new">
+        <td class="order__id">ORD-1085</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Котелок титановый 700 мл</td>
+        <td class="order__sku mono">TB-5041</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="11000">11 000 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1086" data-region="Верхние Ключи" data-status="paid">
+        <td class="order__id">ORD-1086</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="4480">4 480 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1087" data-region="Озёрный" data-status="shipped">
+        <td class="order__id">ORD-1087</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="5520">5 520 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1088" data-region="Приморск-2" data-status="done">
+        <td class="order__id">ORD-1088</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">3</td>
+        <td class="order__sum price" data-price="26970">26 970 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1089" data-region="Старый Лог" data-status="cancelled">
+        <td class="order__id">ORD-1089</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="1380">1 380 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1090" data-region="Севск" data-status="new">
+        <td class="order__id">ORD-1090</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="4140">4 140 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1091" data-region="Тихая Бухта" data-status="paid">
+        <td class="order__id">ORD-1091</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="102600">102 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1092" data-region="Верхние Ключи" data-status="shipped">
+        <td class="order__id">ORD-1092</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="3980">3 980 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1093" data-region="Озёрный" data-status="done">
+        <td class="order__id">ORD-1093</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="1250">1 250 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1094" data-region="Приморск-2" data-status="cancelled">
+        <td class="order__id">ORD-1094</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="4830">4 830 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1095" data-region="Старый Лог" data-status="new">
+        <td class="order__id">ORD-1095</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Складной стул «Бриз»</td>
+        <td class="order__sku mono">TB-1001</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="4980">4 980 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1096" data-region="Севск" data-status="paid">
+        <td class="order__id">ORD-1096</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="29610">29 610 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1097" data-region="Тихая Бухта" data-status="shipped">
+        <td class="order__id">ORD-1097</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="13520">13 520 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1098" data-region="Верхние Ключи" data-status="done">
+        <td class="order__id">ORD-1098</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="13520">13 520 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1099" data-region="Озёрный" data-status="cancelled">
+        <td class="order__id">ORD-1099</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Котелок титановый 700 мл</td>
+        <td class="order__sku mono">TB-5041</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="11000">11 000 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1100" data-region="Приморск-2" data-status="new">
+        <td class="order__id">ORD-1100</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="5520">5 520 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1101" data-region="Старый Лог" data-status="paid">
+        <td class="order__id">ORD-1101</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="26320">26 320 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1102" data-region="Севск" data-status="shipped">
+        <td class="order__id">ORD-1102</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="35960">35 960 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1103" data-region="Тихая Бухта" data-status="done">
+        <td class="order__id">ORD-1103</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="79500">79 500 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1104" data-region="Верхние Ключи" data-status="cancelled">
+        <td class="order__id">ORD-1104</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="8450">8 450 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1105" data-region="Озёрный" data-status="new">
+        <td class="order__id">ORD-1105</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="78400">78 400 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1106" data-region="Приморск-2" data-status="paid">
+        <td class="order__id">ORD-1106</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="5120">5 120 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1107" data-region="Старый Лог" data-status="shipped">
+        <td class="order__id">ORD-1107</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="8990">8 990 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1108" data-region="Севск" data-status="done">
+        <td class="order__id">ORD-1108</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="29610">29 610 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1109" data-region="Тихая Бухта" data-status="cancelled">
+        <td class="order__id">ORD-1109</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="3980">3 980 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1110" data-region="Верхние Ключи" data-status="new">
+        <td class="order__id">ORD-1110</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="79500">79 500 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1111" data-region="Озёрный" data-status="paid" style="display:none">
+        <td class="order__id">ORD-1111</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="80910">80 910 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1112" data-region="Приморск-2" data-status="shipped">
+        <td class="order__id">ORD-1112</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="79500">79 500 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1113" data-region="Старый Лог" data-status="done">
+        <td class="order__id">ORD-1113</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="5760">5 760 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1114" data-region="Севск" data-status="cancelled">
+        <td class="order__id">ORD-1114</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="3200">3 200 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1115" data-region="Тихая Бухта" data-status="new">
+        <td class="order__id">ORD-1115</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">3</td>
+        <td class="order__sum price" data-price="1920">1 920 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1116" data-region="Верхние Ключи" data-status="paid">
+        <td class="order__id">ORD-1116</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="1280">1 280 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1117" data-region="Озёрный" data-status="shipped">
+        <td class="order__id">ORD-1117</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="1990">1 990 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1118" data-region="Приморск-2" data-status="done">
+        <td class="order__id">ORD-1118</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="17910">17 910 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1119" data-region="Старый Лог" data-status="cancelled">
+        <td class="order__id">ORD-1119</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Котелок титановый 700 мл</td>
+        <td class="order__sku mono">TB-5041</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="2750">2 750 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1120" data-region="Севск" data-status="new">
+        <td class="order__id">ORD-1120</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="127200">127 200 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1121" data-region="Тихая Бухта" data-status="paid">
+        <td class="order__id">ORD-1121</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="1990">1 990 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1122" data-region="Верхние Ключи" data-status="shipped">
+        <td class="order__id">ORD-1122</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="2500">2 500 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1123" data-region="Озёрный" data-status="done">
+        <td class="order__id">ORD-1123</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="13160">13 160 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1124" data-region="Приморск-2" data-status="cancelled">
+        <td class="order__id">ORD-1124</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="53940">53 940 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1125" data-region="Старый Лог" data-status="new">
+        <td class="order__id">ORD-1125</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="8750">8 750 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1126" data-region="Севск" data-status="paid">
+        <td class="order__id">ORD-1126</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="15920">15 920 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1127" data-region="Тихая Бухта" data-status="shipped">
+        <td class="order__id">ORD-1127</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="15920">15 920 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1128" data-region="Верхние Ключи" data-status="done">
+        <td class="order__id">ORD-1128</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Складной стул «Бриз»</td>
+        <td class="order__sku mono">TB-1001</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="12450">12 450 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1129" data-region="Озёрный" data-status="cancelled">
+        <td class="order__id">ORD-1129</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="13520">13 520 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1130" data-region="Приморск-2" data-status="new">
+        <td class="order__id">ORD-1130</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="3450">3 450 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1131" data-region="Старый Лог" data-status="paid">
+        <td class="order__id">ORD-1131</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="53940">53 940 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1132" data-region="Севск" data-status="shipped">
+        <td class="order__id">ORD-1132</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="45600">45 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1133" data-region="Тихая Бухта" data-status="done">
+        <td class="order__id">ORD-1133</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="16450">16 450 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1134" data-region="Верхние Ключи" data-status="cancelled">
+        <td class="order__id">ORD-1134</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="6210">6 210 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1135" data-region="Озёрный" data-status="new">
+        <td class="order__id">ORD-1135</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="1990">1 990 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1136" data-region="Приморск-2" data-status="paid">
+        <td class="order__id">ORD-1136</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="19600">19 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1137" data-region="Старый Лог" data-status="shipped">
+        <td class="order__id">ORD-1137</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">3</td>
+        <td class="order__sum price" data-price="3750">3 750 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1138" data-region="Севск" data-status="done">
+        <td class="order__id">ORD-1138</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="6580">6 580 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1139" data-region="Тихая Бухта" data-status="cancelled">
+        <td class="order__id">ORD-1139</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="49000">49 000 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1140" data-region="Верхние Ключи" data-status="new">
+        <td class="order__id">ORD-1140</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="16450">16 450 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1141" data-region="Озёрный" data-status="paid">
+        <td class="order__id">ORD-1141</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="23030">23 030 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1142" data-region="Приморск-2" data-status="shipped">
+        <td class="order__id">ORD-1142</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="2560">2 560 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1143" data-region="Старый Лог" data-status="done">
+        <td class="order__id">ORD-1143</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Складной стул «Бриз»</td>
+        <td class="order__sku mono">TB-1001</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="9960">9 960 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1144" data-region="Севск" data-status="cancelled">
+        <td class="order__id">ORD-1144</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="45600">45 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1145" data-region="Тихая Бухта" data-status="new">
+        <td class="order__id">ORD-1145</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="1380">1 380 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1146" data-region="Верхние Ключи" data-status="paid">
+        <td class="order__id">ORD-1146</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="17980">17 980 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1147" data-region="Озёрный" data-status="shipped">
+        <td class="order__id">ORD-1147</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="8750">8 750 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1148" data-region="Приморск-2" data-status="done" style="display:none">
+        <td class="order__id">ORD-1148</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="3380">3 380 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1149" data-region="Старый Лог" data-status="cancelled">
+        <td class="order__id">ORD-1149</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">3</td>
+        <td class="order__sum price" data-price="29400">29 400 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1150" data-region="Севск" data-status="new">
+        <td class="order__id">ORD-1150</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="690">690 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1151" data-region="Тихая Бухта" data-status="paid">
+        <td class="order__id">ORD-1151</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Котелок титановый 700 мл</td>
+        <td class="order__sku mono">TB-5041</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="5500">5 500 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1152" data-region="Верхние Ключи" data-status="shipped">
+        <td class="order__id">ORD-1152</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="11830">11 830 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1153" data-region="Озёрный" data-status="done">
+        <td class="order__id">ORD-1153</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="4480">4 480 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1154" data-region="Приморск-2" data-status="cancelled">
+        <td class="order__id">ORD-1154</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="690">690 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1155" data-region="Старый Лог" data-status="new">
+        <td class="order__id">ORD-1155</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="3290">3 290 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1156" data-region="Севск" data-status="paid">
+        <td class="order__id">ORD-1156</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="3200">3 200 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1157" data-region="Тихая Бухта" data-status="shipped">
+        <td class="order__id">ORD-1157</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="9800">9 800 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1158" data-region="Верхние Ключи" data-status="done">
+        <td class="order__id">ORD-1158</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="143100">143 100 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1159" data-region="Озёрный" data-status="cancelled">
+        <td class="order__id">ORD-1159</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="29610">29 610 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1160" data-region="Приморск-2" data-status="new">
+        <td class="order__id">ORD-1160</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Складной стул «Бриз»</td>
+        <td class="order__sku mono">TB-1001</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="19920">19 920 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1161" data-region="Старый Лог" data-status="paid">
+        <td class="order__id">ORD-1161</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="10000">10 000 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1162" data-region="Севск" data-status="shipped">
+        <td class="order__id">ORD-1162</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="53940">53 940 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1163" data-region="Тихая Бухта" data-status="done">
+        <td class="order__id">ORD-1163</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="111300">111 300 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1164" data-region="Верхние Ключи" data-status="cancelled">
+        <td class="order__id">ORD-1164</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="16450">16 450 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1165" data-region="Озёрный" data-status="new">
+        <td class="order__id">ORD-1165</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="78400">78 400 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1166" data-region="Приморск-2" data-status="paid">
+        <td class="order__id">ORD-1166</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="7960">7 960 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1167" data-region="Старый Лог" data-status="shipped">
+        <td class="order__id">ORD-1167</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="31800">31 800 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1168" data-region="Севск" data-status="done">
+        <td class="order__id">ORD-1168</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="80910">80 910 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1169" data-region="Тихая Бухта" data-status="cancelled">
+        <td class="order__id">ORD-1169</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="1690">1 690 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1170" data-region="Верхние Ключи" data-status="new">
+        <td class="order__id">ORD-1170</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="15210">15 210 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1171" data-region="Озёрный" data-status="paid">
+        <td class="order__id">ORD-1171</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">3</td>
+        <td class="order__sum price" data-price="1920">1 920 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1172" data-region="Приморск-2" data-status="shipped">
+        <td class="order__id">ORD-1172</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="690">690 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1173" data-region="Старый Лог" data-status="done">
+        <td class="order__id">ORD-1173</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Складной стул «Бриз»</td>
+        <td class="order__sku mono">TB-1001</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="22410">22 410 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1174" data-region="Севск" data-status="cancelled">
+        <td class="order__id">ORD-1174</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Складной стул «Бриз»</td>
+        <td class="order__sku mono">TB-1001</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="9960">9 960 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1175" data-region="Тихая Бухта" data-status="new">
+        <td class="order__id">ORD-1175</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="19600">19 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1176" data-region="Верхние Ключи" data-status="paid">
+        <td class="order__id">ORD-1176</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="35960">35 960 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1177" data-region="Озёрный" data-status="shipped">
+        <td class="order__id">ORD-1177</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="102600">102 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1178" data-region="Приморск-2" data-status="done">
+        <td class="order__id">ORD-1178</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="13160">13 160 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1179" data-region="Старый Лог" data-status="cancelled">
+        <td class="order__id">ORD-1179</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">3</td>
+        <td class="order__sum price" data-price="2070">2 070 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1180" data-region="Севск" data-status="new">
+        <td class="order__id">ORD-1180</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="11250">11 250 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1181" data-region="Тихая Бухта" data-status="paid">
+        <td class="order__id">ORD-1181</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="3840">3 840 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1182" data-region="Верхние Ключи" data-status="shipped">
+        <td class="order__id">ORD-1182</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="15210">15 210 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1183" data-region="Озёрный" data-status="done">
+        <td class="order__id">ORD-1183</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="26320">26 320 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1184" data-region="Приморск-2" data-status="cancelled">
+        <td class="order__id">ORD-1184</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="11250">11 250 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1185" data-region="Старый Лог" data-status="new" style="display:none">
+        <td class="order__id">ORD-1185</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="7960">7 960 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1186" data-region="Севск" data-status="paid">
+        <td class="order__id">ORD-1186</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="19740">19 740 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1187" data-region="Тихая Бухта" data-status="shipped">
+        <td class="order__id">ORD-1187</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="16450">16 450 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1188" data-region="Верхние Ключи" data-status="done">
+        <td class="order__id">ORD-1188</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="58800">58 800 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1189" data-region="Озёрный" data-status="cancelled">
+        <td class="order__id">ORD-1189</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">3</td>
+        <td class="order__sum price" data-price="29400">29 400 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1190" data-region="Приморск-2" data-status="new">
+        <td class="order__id">ORD-1190</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="690">690 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1191" data-region="Старый Лог" data-status="paid">
+        <td class="order__id">ORD-1191</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="13520">13 520 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1192" data-region="Севск" data-status="shipped">
+        <td class="order__id">ORD-1192</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="11940">11 940 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1193" data-region="Тихая Бухта" data-status="done">
+        <td class="order__id">ORD-1193</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="11400">11 400 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1194" data-region="Верхние Ключи" data-status="cancelled">
+        <td class="order__id">ORD-1194</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="8450">8 450 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1195" data-region="Озёрный" data-status="new">
+        <td class="order__id">ORD-1195</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="1990">1 990 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1196" data-region="Приморск-2" data-status="paid">
+        <td class="order__id">ORD-1196</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="11250">11 250 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1197" data-region="Старый Лог" data-status="shipped">
+        <td class="order__id">ORD-1197</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="3290">3 290 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1198" data-region="Севск" data-status="done">
+        <td class="order__id">ORD-1198</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="78400">78 400 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1199" data-region="Тихая Бухта" data-status="cancelled">
+        <td class="order__id">ORD-1199</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="11940">11 940 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1200" data-region="Верхние Ключи" data-status="new">
+        <td class="order__id">ORD-1200</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="19600">19 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1201" data-region="Озёрный" data-status="paid">
+        <td class="order__id">ORD-1201</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="4480">4 480 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1202" data-region="Приморск-2" data-status="shipped">
+        <td class="order__id">ORD-1202</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="58800">58 800 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1203" data-region="Старый Лог" data-status="done">
+        <td class="order__id">ORD-1203</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="15920">15 920 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1204" data-region="Севск" data-status="cancelled">
+        <td class="order__id">ORD-1204</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="68600">68 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1205" data-region="Тихая Бухта" data-status="new">
+        <td class="order__id">ORD-1205</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="9950">9 950 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1206" data-region="Верхние Ключи" data-status="paid">
+        <td class="order__id">ORD-1206</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="111300">111 300 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1207" data-region="Озёрный" data-status="shipped">
+        <td class="order__id">ORD-1207</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="6250">6 250 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1208" data-region="Приморск-2" data-status="done">
+        <td class="order__id">ORD-1208</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="19740">19 740 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1209" data-region="Старый Лог" data-status="cancelled">
+        <td class="order__id">ORD-1209</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="88200">88 200 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1210" data-region="Севск" data-status="new">
+        <td class="order__id">ORD-1210</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Складной стул «Бриз»</td>
+        <td class="order__sku mono">TB-1001</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="2490">2 490 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1211" data-region="Тихая Бухта" data-status="paid">
+        <td class="order__id">ORD-1211</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="8990">8 990 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1212" data-region="Верхние Ключи" data-status="shipped">
+        <td class="order__id">ORD-1212</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="62930">62 930 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1213" data-region="Озёрный" data-status="done">
+        <td class="order__id">ORD-1213</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="13930">13 930 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1214" data-region="Приморск-2" data-status="cancelled">
+        <td class="order__id">ORD-1214</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="49000">49 000 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1215" data-region="Старый Лог" data-status="new">
+        <td class="order__id">ORD-1215</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Котелок титановый 700 мл</td>
+        <td class="order__sku mono">TB-5041</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="16500">16 500 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1216" data-region="Севск" data-status="paid">
+        <td class="order__id">ORD-1216</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="6760">6 760 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1217" data-region="Тихая Бухта" data-status="shipped">
+        <td class="order__id">ORD-1217</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="62930">62 930 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1218" data-region="Верхние Ключи" data-status="done">
+        <td class="order__id">ORD-1218</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Гирлянда кемпинговая 10 м</td>
+        <td class="order__sku mono">TB-3021</td>
+        <td class="order__qty">3</td>
+        <td class="order__sum price" data-price="3750">3 750 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1219" data-region="Озёрный" data-status="cancelled">
+        <td class="order__id">ORD-1219</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="4480">4 480 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1220" data-region="Приморск-2" data-status="new">
+        <td class="order__id">ORD-1220</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="88200">88 200 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1221" data-region="Старый Лог" data-status="paid">
+        <td class="order__id">ORD-1221</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="95400">95 400 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1222" data-region="Севск" data-status="shipped" style="display:none">
+        <td class="order__id">ORD-1222</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="45600">45 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1223" data-region="Тихая Бухта" data-status="done">
+        <td class="order__id">ORD-1223</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="102600">102 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1224" data-region="Верхние Ключи" data-status="cancelled">
+        <td class="order__id">ORD-1224</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Рюкзак забросный 65 л</td>
+        <td class="order__sku mono">TB-6050</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="49000">49 000 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1225" data-region="Озёрный" data-status="new">
+        <td class="order__id">ORD-1225</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Котелок титановый 700 мл</td>
+        <td class="order__sku mono">TB-5041</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="16500">16 500 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1226" data-region="Приморск-2" data-status="paid">
+        <td class="order__id">ORD-1226</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="5120">5 120 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1227" data-region="Старый Лог" data-status="shipped">
+        <td class="order__id">ORD-1227</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="13160">13 160 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1228" data-region="Севск" data-status="done">
+        <td class="order__id">ORD-1228</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Гермомешок 25 л</td>
+        <td class="order__sku mono">TB-6051</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="11830">11 830 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1229" data-region="Тихая Бухта" data-status="cancelled">
+        <td class="order__id">ORD-1229</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Картуш газовой смеси 450 мл</td>
+        <td class="order__sku mono">TB-1002</td>
+        <td class="order__qty">5</td>
+        <td class="order__sum price" data-price="3200">3 200 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1230" data-region="Верхние Ключи" data-status="new">
+        <td class="order__id">ORD-1230</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Котелок титановый 700 мл</td>
+        <td class="order__sku mono">TB-5041</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="2750">2 750 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1231" data-region="Озёрный" data-status="paid">
+        <td class="order__id">ORD-1231</td>
+        <td class="order__date"><time datetime="2026-01-16">2026-01-16</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">1</td>
+        <td class="order__sum price" data-price="690">690 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1232" data-region="Приморск-2" data-status="shipped">
+        <td class="order__id">ORD-1232</td>
+        <td class="order__date"><time datetime="2026-02-17">2026-02-17</time></td>
+        <td class="order__product">Палатка двухместная «Бухта 2»</td>
+        <td class="order__sku mono">TB-4030</td>
+        <td class="order__qty">4</td>
+        <td class="order__sum price" data-price="63600">63 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1233" data-region="Старый Лог" data-status="done">
+        <td class="order__id">ORD-1233</td>
+        <td class="order__date"><time datetime="2026-03-18">2026-03-18</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="62930">62 930 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1234" data-region="Севск" data-status="cancelled">
+        <td class="order__id">ORD-1234</td>
+        <td class="order__date"><time datetime="2026-01-10">2026-01-10</time></td>
+        <td class="order__product">Термос 0.75 л «Полночь»</td>
+        <td class="order__sku mono">TB-5040</td>
+        <td class="order__qty">6</td>
+        <td class="order__sum price" data-price="19740">19 740 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1235" data-region="Тихая Бухта" data-status="new">
+        <td class="order__id">ORD-1235</td>
+        <td class="order__date"><time datetime="2026-02-11">2026-02-11</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">7</td>
+        <td class="order__sum price" data-price="62930">62 930 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1236" data-region="Верхние Ключи" data-status="paid">
+        <td class="order__id">ORD-1236</td>
+        <td class="order__date"><time datetime="2026-03-12">2026-03-12</time></td>
+        <td class="order__product">Фонарь налобный «Светляк 400»</td>
+        <td class="order__sku mono">TB-3020</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="15920">15 920 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1237" data-region="Озёрный" data-status="shipped">
+        <td class="order__id">ORD-1237</td>
+        <td class="order__date"><time datetime="2026-01-13">2026-01-13</time></td>
+        <td class="order__product">Спальник пуховый −7 °C</td>
+        <td class="order__sku mono">TB-4031</td>
+        <td class="order__qty">9</td>
+        <td class="order__sum price" data-price="102600">102 600 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1238" data-region="Приморск-2" data-status="done">
+        <td class="order__id">ORD-1238</td>
+        <td class="order__date"><time datetime="2026-02-14">2026-02-14</time></td>
+        <td class="order__product">Носки трекинговые, пара</td>
+        <td class="order__sku mono">TB-2011</td>
+        <td class="order__qty">8</td>
+        <td class="order__sum price" data-price="5520">5 520 ₽</td>
+      </tr>
+      <tr class="order" data-order="ORD-1239" data-region="Старый Лог" data-status="cancelled">
+        <td class="order__id">ORD-1239</td>
+        <td class="order__date"><time datetime="2026-03-15">2026-03-15</time></td>
+        <td class="order__product">Куртка штормовая «Маяк»</td>
+        <td class="order__sku mono">TB-2010</td>
+        <td class="order__qty">2</td>
+        <td class="order__sum price" data-price="17980">17 980 ₽</td>
+      </tr>
+    </tbody>
+    <tfoot><tr><td colspan="5">Итого позиций</td><td id="orders-total">240</td></tr></tfoot>
+  </table>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Формы без браузера: method, action и поля · Формы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Как парсер отправляет форму, не открывая браузера: method и action, сбор name/value из разметки, GET через params, POST через data и json, откуда брать скрытые поля и как разбирать Copy as cURL." />
+</head>
+<body data-page="forms/index" data-module="forms">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Что парсер делает вместо нажатия кнопки</h1>
+  <p class="lede">Браузер по клику собирает значения полей, кодирует их и шлёт на адрес из <code>action</code> тем методом, что указан в <code>method</code>. У <code>requests</code> ровно те же три шага, только их нужно написать руками: прочитать форму, собрать словарь полей, выбрать между <code>params=</code> и <code>data=</code>.</p>
+
+  <p class="note"><strong>Два режима жизни полигона.</strong> На GitHub Pages это чистая статика: форма никуда не отправляется, там нет сервера. На локальном сервере (<code>node tools/serve.mjs</code>) появляется учебный эндпоинт <code>POST /http/echo</code> — он возвращает JSON с присланными полями, заголовками и типом содержимого. Все примеры ниже написаны под локальный сервер и на нём проверяются.</p>
+
+  <section id="anatomy">
+    <h2>Анатомия формы: три вещи, которые нужно знать</h2>
+    <ol class="tree">
+      <li><code>method</code> — <code>get</code> (поля уедут в строку запроса) или <code>post</code> (уедут в тело). Если атрибута нет, браузер использует GET.</li>
+      <li><code>action</code> — адрес приёма. Здесь он <em>относительный</em>: <code>results.html</code> означает «рядом с этой страницей». Абсолютный путь вида <code>/search</code> нужно клеить к домену, а <code>#</code> означает «никуда».</li>
+      <li>Поля — только те элементы, у которых есть <code>name</code>. У элемента без <code>name</code> значения в запросе не будет, каким бы он красивым ни был.</li>
+    </ol>
+
+    <form id="demo-get-form" method="get" action="results.html">
+      <div class="field-row">
+        <div class="field">
+          <label for="demo-q">Что ищем</label>
+          <input type="text" id="demo-q" name="q" value="фонарь" />
+        </div>
+        <div class="field">
+          <label for="demo-cat">Категория</label>
+          <select id="demo-cat" name="category">
+            <option value="light">Свет</option>
+            <option value="camp" selected>Лагерь</option>
+            <option value="textile">Текстиль</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn">Показать, что получится в адресе</button>
+    </form>
+    <p class="hint">Нажмите кнопку — в адресной строке появится готовая строка запроса. Это и есть то, что соберёт <code>requests.get(url, params=fields)</code>.</p>
+  </section>
+
+  <section id="collect">
+    <h2>Один раз collect_fields — дальше любые формы</h2>
+    <p>Функция ниже повторяет логику браузера: берёт <code>name</code>, пропускает отключённые поля, у чекбоксов и радиокнопок смотрит на <code>checked</code>, у <code>select</code> ищет <code>selected</code>, а содержимое <code>textarea</code> читает между тегами. Возвращает она <strong>список пар</strong>, а не словарь: имена имеют право повторяться (<code>tags[]</code>, <code>warehouse</code> из нескольких складов), а словарь хранит только последнее значение.</p>
+<pre><code>def option_value(option):
+    """Значение опции: value="" -&gt; пустая строка, без value -&gt; текст опции."""
+    return option['value'] if option.has_attr('value') else option.get_text(strip=True)
+
+def collect_fields(form):
+    """Список пар (name, значение) ровно в том порядке, в каком их видит браузер."""
+    pairs = []
+    for el in form.find_all(['input', 'textarea', 'select', 'button']):
+        name = el.get('name')
+        if not name or el.has_attr('disabled'):
+            continue                                  # нет имени или поле отключено -&gt; в запроса нет
+        typ = (el.get('type') or el.name).lower()
+        if typ in ('submit', 'reset', 'button', 'image'):
+            continue                                  # кнопка едет только если нажата именно она
+        if typ == 'file':
+            continue                                  # файлы -&gt; отдельным files=, см. multi.html
+        if typ in ('checkbox', 'radio'):
+            if el.has_attr('checked'):
+                pairs.append((name, el.get('value', 'on')))
+            continue                                  # неотмеченное поле не едет вообще
+        if el.name == 'textarea':
+            pairs.append((name, el.get_text()))
+            continue
+        if el.name == 'select':
+            options = el.find_all('option')
+            chosen = [option_value(o) for o in options if o.has_attr('selected')]
+            if el.has_attr('multiple'):
+                pairs.extend((name, v) for v in chosen)   # ничего не выбрано -&gt; ключа в запросе нет
+            elif options:
+                if not chosen:                            # браузер считает выбранной первую опцию
+                    chosen = [option_value(options[0])]
+                pairs.append((name, chosen[0]))
+            continue
+        pairs.append((name, el.get('value', '')))
+    return pairs
+
+def set_value(pairs, name, value):
+    """Меняет первое вхождение поля: так выглядит «пользователь набрал текст»."""
+    return [(n, value if n == name else v) for n, v in pairs]</code></pre>
+    <p>Дальше развилка на одну строку — в <code>params=</code> или в <code>data=</code>.</p>
+<pre><code>BASE = 'http://localhost:8000'
+session = requests.Session()
+page = session.get(f'{BASE}/forms/search.html', timeout=15)
+form = BeautifulSoup(page.text, 'html.parser').find('form', id='search-form')
+
+pairs = set_value(collect_fields(form), 'q', 'горелка')
+url = requests.compat.urljoin(page.url, form.get('action', '#'))   # action относительный
+
+if (form.get('method') or 'get').lower() == 'get':
+    resp = session.get(url, params=pairs, timeout=15)               # пары -&gt; строка запроса
+else:
+    resp = session.post(url, data=pairs, timeout=15)                # пары -&gt; тело запроса
+print(resp.url, resp.request.body)</code></pre>
+  </section>
+
+  <section id="methods">
+    <h2>GET, POST и JSON: три способа передать те же самые поля</h2>
+    <table class="table--striped">
+      <caption>Куда попадает один и тот же словарь полей</caption>
+      <thead>
+        <tr><th>Вызов</th><th>Что в запросе</th><th>Зачем на реальном сайте</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">session.get(url, params={'q': 'свет'})</td><td><code>?q=%D1%81%D0%B2%D0%B5%D1%82</code> в адресе, тело пустое</td><td>Поиск и фильтры: адрес можно сохранить и повторить без библиотеки</td></tr>
+        <tr><td class="mono">session.post(url, data={'q': 'свет'})</td><td>Тело <code>q=%D1%81%D0%B2%D0%B5%D1%82</code>, заголовок <code>Content-Type: application/x-www-form-urlencoded</code></td><td>Классическая HTML-форма с <code>method="post"</code></td></tr>
+        <tr><td class="mono">session.post(url, json={'q': 'свет'})</td><td>Тело <code>{"q": "свет"}</code>, заголовок <code>application/json</code></td><td>Форма «отдаётся» JavaScript-ом, а сервер принимает JSON</td></tr>
+        <tr><td class="mono">files={'photo': fh}</td><td>Тело <code>multipart/form-data</code> с границами</td><td>Загрузка файла из <code>&lt;input type="file"&gt;</code></td></tr>
+      </tbody>
+    </table>
+    <p class="tip">Проверить себя легко: отправьте поле через <code>data=</code> на <code>POST /http/echo</code> и посмотрите в ответ на <code>content_type</code> и <code>fields</code>. Подставите <code>json=</code> вместо <code>data=</code> — <code>fields</code> останется тем же словарём, а <code>content_type</code> поменяется. Именно по этому заголовку сервер решает, как разбирать тело.</p>
+  </section>
+
+  <section id="hidden">
+    <h2>Откуда брать скрытые и служебные поля</h2>
+    <table class="table">
+      <caption>Пять мест, где живёт то, что обязательно в запросе</caption>
+      <thead>
+        <tr><th>Что в разметке</th><th>Где искать</th><th>Как часто обновляется</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>input type="hidden"</code> с именем <code>csrf_token</code>, <code>authenticity_token</code>, <code>_token</code>, <code>fbclid</code></td><td>Прямо в теле формы, значение в <code>value</code></td><td>На каждую загрузку страницы — значит POST без предварительного GET не работает</td></tr>
+        <tr><td>Токен в атрибутах: <code>data-csrf-token</code>, <code>data-nonce</code></td><td>У <code>form</code> или у кнопки отправки</td><td>Там же; удобно сверять с полем, чтобы понять, какое значение настоящее</td></tr>
+        <tr><td>Кука сессии</td><td>Заголовок <code>Set-Cookie</code> в GET-ответе — в HTML её нет</td><td>Нужен <code>requests.Session()</code>, а не одиночный <code>get</code></td></tr>
+        <tr><td>Время жизни формы: <code>ts</code>, <code>expires</code>, подпись <code>sig</code></td><td>Скрытые поля или атрибуты формы</td><td>Пара запросов подряд — значения разные; устаревшее сервер отвергает</td></tr>
+        <tr><td>Заголовок, которого нет в форме: <code>X-Requested-With</code>, <code>X-CSRF-Token</code>, <code>Referer</code></td><td>Только во вкладке Network — генерирует JavaScript</td><td>Копируем из реального запроса и добавляем в <code>session.headers</code></td></tr>
+      </tbody>
+    </table>
+    <p class="warn"><strong>Признак, что вы угадали не все поля.</strong> <code>requests.post</code> вернул 200, но в ответе форма ругается, или пришёл 403 без текста. Сравните своё тело с телом браузерного запроса до символа: чаще всего не хватает одного скрытого поля или порядка кодирования.</p>
+  </section>
+
+  <section id="curl">
+    <h2>Copy as cURL: самый быстрый способ прочитать чужую форму</h2>
+    <p>Откройте DevTools → Network → найдите запрос <code>fetch</code> или <code>document</code> → правая кнопка → «Copy as cURL». В одной строке лежат метод, адрес, заголовки, куки и тело. Разбираем пример:</p>
+<pre><code>curl 'http://localhost:8000/http/echo' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -b 'session_id=demo-session-42' \
+  --data-raw 'csrf_token=a1b2c3d4e5f6&amp;login=ivan.petrov&amp;remember=yes'</code></pre>
+    <table class="table--compact">
+      <thead>
+        <tr><th>Кусок cURL</th><th>В requests</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">-H 'Content-Type: application/x-www-form-urlencoded'</td><td class="mono">data=&#123;...&#125; — заголовок подставится сам</td></tr>
+        <tr><td class="mono">-H 'Content-Type: application/json'</td><td class="mono">json=&#123;...&#125;</td></tr>
+        <tr><td class="mono">-H 'X-Requested-With: XMLHttpRequest'</td><td class="mono">headers=&#123;'X-Requested-With': 'XMLHttpRequest'&#125;</td></tr>
+        <tr><td class="mono">-b 'session_id=demo-session-42'</td><td class="mono">session.cookies.set('session_id', 'demo-session-42')</td></tr>
+        <tr><td class="mono">--data-raw 'a=1&amp;b=2'</td><td class="mono">data={'a': '1', 'b': '2'}</td></tr>
+        <tr><td class="mono">--compressed</td><td>не нужно: requests распаковывает gzip сам</td></tr>
+        <tr><td class="mono">?q=%D1%81%D0%B2%D0%B5%D1%82</td><td class="mono">params=&#123;'q': 'свет'&#125; — кодировать руками не надо</td></tr>
+      </tbody>
+    </table>
+    <p class="hint">Полезная привычка: после «Copy as cURL» первым делом ищите <code>--data</code>. Если его нет, а метод POST — значит сервер смотрит не на поля формы, а на заголовки или на JSON в другом формате отправки.</p>
+  </section>
+
+  <section id="types">
+    <h2>Карты полей: что видно в HTML и что уезжает в запрос</h2>
+    <table class="table--striped">
+      <caption>Типы полей большого теста</caption>
+      <thead>
+        <tr><th>Поле</th><th>Значение в разметке</th><th>В запросе</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">text / email / tel / url / date / color</td><td>атрибут <code>value</code>, может быть пустым</td><td>одна пара <code>name=value</code></td></tr>
+        <tr><td class="mono">password</td><td><code>value</code> пустой по соображениям безопасности</td><td>то, что ввели; из HTML не берётся</td></tr>
+        <tr><td class="mono">hidden</td><td>значение всегда в <code>value</code></td><td>уезжает всегда, даже если поля не видно</td></tr>
+        <tr><td class="mono">checkbox</td><td><code>value</code> плюс <code>checked</code></td><td>пары только для отмеченных; без <code>value</code> придёт <code>on</code></td></tr>
+        <tr><td class="mono">radio</td><td>одинаковый <code>name</code> у нескольких <code>value</code></td><td>одно значение — отмеченная кнопка</td></tr>
+        <tr><td class="mono">select</td><td><code>option</code> с <code>selected</code></td><td>значение выбранного <code>option</code>; если <code>value</code> нет — текст опции</td></tr>
+        <tr><td class="mono">select multiple</td><td>несколько <code>selected</code></td><td>повторяющиеся пары <code>name=v1&amp;name=v2</code></td></tr>
+        <tr><td class="mono">textarea</td><td>текст между тегами, а не в <code>value</code></td><td>одна пара, переносы кодируются как <code>%0D%0A</code></td></tr>
+        <tr><td class="mono">file</td><td><code>value</code> в HTML всегда пустой</td><td>multipart-часть с именем поля</td></tr>
+        <tr><td class="mono">disabled</td><td>атрибут у любого поля</td><td>не уезжает никогда</td></tr>
+        <tr><td class="mono">readonly</td><td>атрибут у текстовых полей</td><td>уезжает с значением из <code>value</code></td></tr>
+        <tr><td class="mono">submit c formaction</td><td>свой <code>name</code>/<code>value</code> и адрес</td><td>только у нажатой кнопки: пара <code>name=value</code> плюс другой адрес</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="map">
+    <h2>Страницы модуля</h2>
+    <ul class="tree">
+      <li><a href="search.html">Поиск по каталогу</a> — большая GET-форма: <code>select</code>, диапазон цен, радиокнопки сортировки, чекбоксы тегов, ловец <code>disabled</code>-поля и таблица про кодирование кириллицы в адресе.</li>
+      <li><a href="results.html">Страница результатов</a> — тот же адрес с параметрами: таблица «что пришло в <code>location.search</code>» и список, который рисует JavaScript. Здесь удобно сверять свой <code>params=</code> с тем, что видит браузер.</li>
+      <li><a href="login.html">Вход в кабинет</a> — POST-форма: <code>csrf_token</code>, скрытые поля, <code>disabled</code> против <code>readonly</code>, разговор про <code>Session</code> и куки.</li>
+      <li><a href="multi.html">Анкета товара</a> — конструктор «всего сразу»: <code>textarea</code>, <code>select multiple</code>, файлы, повторяющиеся имена, <code>fieldset</code>, две кнопки с разным <code>formaction</code> и поля-двойники по <code>id</code>.</li>
+    </ul>
+    <p class="muted">Смежные модули: <a href="../http/index.html">HTTP, куки и API</a> — про <code>Set-Cookie</code>, коды ответов и учебные эндпоинты; <a href="../markup/index.html">HTML-разметка</a> — как вообще достать поле из дерева.</p>
+  </section>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Шпаргалка сценария · Scrapy · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="LinkExtractors, allow/deny, restrictions, ROBOTSTXT_OBEY, FEEDS, pipeline-валидация и дедупликация: задача → настройка." />
+</head>
+<body data-page="scrapy/rules" data-module="scrapy">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Шпаргалка сценария: правила, ограничения, выгрузка</h1>
+  <p class="lede">Всё, что понадобится пауку по этому полигону: как ходить только по нужным ссылкам, не залезать туда, куда нельзя, и не собрать одну карточку дважды.</p>
+
+  <h2>LinkExtractor: три способа сузить обход</h2>
+  <pre><code>from scrapy.linkextractors import LinkExtractor
+from scrapy.spiders import CrawlSpider, Rule
+
+class QuoteSpider(CrawlSpider):
+    name = "quotes"
+    allowed_domains = ["example.github.io"]      # полигон живёт в подпапке — домен один
+    start_urls = ["https://…/scrapy/quotes.html"]
+
+    rules = (
+        # 1) по CSS-области: брать ссылки только из блока пагинации
+        Rule(LinkExtractor(restrict_css=("ul.pager", "a[rel='next']")),
+             callback="parse_page", follow=True),
+
+        # 2) по regex: allow — «куда идём», deny — «куда точно нет»
+        Rule(LinkExtractor(allow=r"item-\d+\.html$", deny=r"index\.html$"),
+             callback="parse_item"),
+
+        # 3) по xpath-области: ссылки внутри div.tags
+        Rule(LinkExtractor(restrict_xpaths="//div[@class='tags']"),
+             callback="parse_tag"),
+    )</code></pre>
+  <ul>
+    <li><code>restrict_css=(«область», «ссылка внутри области»)</code> и <code>restrict_xpaths</code> — самый точный способ: берём ссылки только из нужного контейнера (пагинация, карточка, блок «Top tags» — не наша цель).</li>
+    <li><code>allow</code>/<code>deny</code> — регулярки по абсолютному URL; <code>allow_domains</code> отсекает уходы на чужие домены.</li>
+    <li><code>unique=True</code> (по умолчанию) не возвращает одну и ту же ссылку дважды в пределах одного ответа; <code>process_links</code> — хук для тонкой ручной фильтрации.</li>
+    <li>Ключ <code>dont_filter=True</code> у <code>response.follow</code> отключает дедупликатор RequestQueue — без нужды не трогайте: начнёте собирать дубли.</li>
+  </ul>
+
+  <h2>robots.txt: учимся уважать запрет</h2>
+  <p class="warn"><strong>На этом полигоне раздел <code>/private/</code> запрещён в <a href="../robots.txt">robots.txt</a></strong>
+  (<code>Disallow: /private/</code>). При <code>ROBOTSTXT_OBEY = True</code> Scrapy скачает robots.txt, увидит запрет — и ни одна ссылка на
+  <code>private/index.html</code> не будет запланирована, даже если её явно передать в <code>start_urls</code> (Scrapy всё равно проверит robots
+  для каждого запроса). Это учебная проверка: паук с <code>ROBOTSTXT_OBEY = False</code> на страницу заглянет — и это как раз то, за что в реальном мире
+  банят по IP. Страницы раздела существуют: <a href="../private/index.html">private/index.html</a>.</p>
+
+  <h2>Выгрузка без «ручного» json.dump</h2>
+  <pre><code># settings.py — FEEDS: формат, файл, режим
+FEEDS = {
+    "items.jsonl": {
+        "format": "jsonlines",
+        "encoding": "utf8",
+        "overwrite": True,
+        "item_fields": ["sku", "title", "price", "currency", "stock"],
+    },
+    "items.csv": {"format": "csv", "overwrite": True},
+}
+FEED_EXPORT_ENCODING = "utf-8"       # чтобы кириллица не превратилась в \u0410\u0411\u0412</code></pre>
+  <p>Альтернатива разовой выгрузки — <code>FEED_URI</code> + <code>FEED_FORMAT</code> (устаревшая пара) или запуск
+  <code>scrapy crawl quotes -O items.jsonl</code> (Scrapy ≥ 2.4).</p>
+
+  <h2>Pipeline: валидация и дедупликация</h2>
+  <pre><code>import re
+from scrapy.exceptions import DropItem
+
+class ValidateProductPipeline:
+    """Пустая карточка или цена без числа — DropItem."""
+    def process_item(self, item, spider):
+        if not item.get("sku") or not re.match(r"TB-\d{4}$", item["sku"]):
+            raise DropItem(f"битый артикул: {item.get('sku')!r}")
+        if not isinstance(item.get("price"), int) or item["price"] <= 0:
+            raise DropItem(f"цена не число: {item.get('price')!r}")
+        return item
+
+class DedupeBySkuPipeline:
+    """Одна карточка может встретиться в списке и в деталях — помним первый экземпляр."""
+    def open_spider(self, spider):
+        self.seen = set()
+
+    def process_item(self, item, spider):
+        key = item.get("sku")
+        if key in self.seen:
+            raise DropItem(f"дубль {key}")
+        self.seen.add(key)
+        return item</code></pre>
+  <pre><code>ITEM_PIPELINES = {
+    "quotes.pipelines.ValidateProductPipeline": 100,
+    "quotes.pipelines.DedupeBySkuPipeline": 300,
+    "quotes.pipelines.PriceToIntPipeline": 200,   # «2 490 ₽» → 2490
+}</code></pre>
+  <p class="note">Дедупликация бывает трёх видов: <strong>запросов</strong> (duplicate filter Scrapy, включён по умолчанию), <strong>ответов</strong>
+  (<code>HTTPCACHE</code> с нормализацией URL — <code>httpcache_ignore_headers</code> помогает) и <strong>item'ов</strong> (только руками: множество по sku,
+  как в <code>DedupeBySkuPipeline</code>). Ссылка на карточку из <code>index.html</code> и из <code>item-01.html</code> («хит продаж») даст два одинаковых Item — спасает только третий вид.</p>
+
+  <h2>Задача → настройка</h2>
+  <table class="table--striped">
+    <thead><tr><th>Задача</th><th>Настройка / код</th><th>Где тренировать на полигоне</th></tr></thead>
+    <tbody>
+      <tr><td>Ходить только по «вперёд →»</td><td><code>Rule(LinkExtractor(restrict_css=("ul.pager", "a[rel='next']")))</code></td><td><a href="quotes.html">quotes.html</a></td></tr>
+      <tr><td>Собирать карточки, не листая каталог вхолостую</td><td><code>allow=r"item-\d+\.html$"</code> без <code>follow</code></td><td><a href="index.html">каталог</a></td></tr>
+      <tr><td>Не залезть в закрытый раздел</td><td><code>ROBOTSTXT_OBEY = True</code>, <code>ROBOTSTXT_URL_MARKER</code></td><td><a href="../private/index.html">/private/</a> + robots.txt</td></tr>
+      <tr><td>Не слать 100 запросов в секунду</td><td><code>AUTOTHROTTING_ENABLED = True</code>, <code>DOWNLOAD_DELAY = 1</code></td><td>весь полигон (Crawl-delay: 1)</td></tr>
+      <tr><td>Выгрузить results в JSONL одной строкой настройки</td><td><code>FEEDS = {"items.jsonl": {"format": "jsonlines"}}</code></td><td><a href="export.html">export.html</a></td></tr>
+      <tr><td>Отбросить карточки без цены</td><td>pipeline + <code>DropItem</code></td><td><a href="item-01.html">item-01.html</a></td></tr>
+      <tr><td>Не собрать один товар дважды</td><td>множество по sku в pipeline; <code>dont_filter</code> не включать</td><td><a href="index.html">index.html</a> + <a href="item-01.html">item-01.html</a></td></tr>
+      <tr><td>Починить относительный src у iframe без браузера</td><td><code>urljoin(response.url, src)</code> или <code>response.follow(src)</code></td><td><a href="../js/iframe-outer.html">js/iframe-outer.html</a></td></tr>
+    </tbody>
+  </table>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

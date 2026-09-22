@@ -1,0 +1,296 @@
+{
+  "basics/hello": [
+    {
+      "id": "B-01",
+      "level": 1,
+      "q": "Заберите текст единственного заголовка h1 на странице",
+      "solution": {
+        "css": "h1",
+        "xpath": "//h1",
+        "bs4": "soup.find('h1').get_text(strip=True)"
+      },
+      "answer": "«Первая страница-мишень»; узел ровно один, id у него — main-title"
+    },
+    {
+      "id": "B-02",
+      "level": 1,
+      "q": "Соберите все абзацы учебной мишени с классом hello-line и посчитайте их",
+      "solution": {
+        "css": "p.hello-line",
+        "xpath": "//p[contains(@class, 'hello-line')]",
+        "bs4": "[p.get_text(strip=True) for p in soup.select('p.hello-line')]"
+      },
+      "answer": "3 абзаца: приветствие, задача, проверка"
+    },
+    {
+      "id": "B-03",
+      "level": 2,
+      "q": "Достаньте обе ссылки блока hello-links парами «текст → адрес»",
+      "solution": {
+        "css": "a.start-link",
+        "xpath": "//a[@class='start-link']",
+        "bs4": "[(a.get_text(strip=True), a['href']) for a in soup.select('a.start-link')]"
+      },
+      "answer": "2 ссылки: anatomy.html и ../data/products.json"
+    },
+    {
+      "id": "B-04",
+      "level": 2,
+      "q": "Найдите в head описание страницы (meta name=description) и заберите его content",
+      "solution": {
+        "css": "meta[name='description']",
+        "xpath": "//meta[@name='description']",
+        "bs4": "soup.find('meta', attrs={'name': 'description'})['content']"
+      },
+      "answer": "Начинается со слов «Минимальная мишень»"
+    },
+    {
+      "id": "B-05",
+      "level": 3,
+      "q": "Возьмите абзац-проверку по его уникальному id и убедитесь, что класс тут ни при чём",
+      "solution": {
+        "css": "p#line-check",
+        "xpath": "//p[@id='line-check']",
+        "bs4": "soup.find(id='line-check').get_text(strip=True)"
+      },
+      "answer": "Текст про «четыре строки, а не три»"
+    }
+  ],
+  "basics/index": [
+    {
+      "id": "B-06",
+      "level": 2,
+      "q": "Соберите термины из определения запроса: все dt списка request-anatomy",
+      "solution": {
+        "css": "dl.request-anatomy > dt",
+        "xpath": "//dl[contains(@class, 'request-anatomy')]/dt",
+        "bs4": "[dt.get_text(strip=True) for dt in soup.select('dl.request-anatomy > dt')]"
+      },
+      "answer": "5 терминов: Метод, Адрес, Версия протокола, Заголовки, Тело"
+    },
+    {
+      "id": "B-07",
+      "level": 2,
+      "q": "Посчитайте шаги дорожной карты модуля в упорядоченном списке roadmap",
+      "solution": {
+        "css": "ol.roadmap > li",
+        "xpath": "//ol[@class='roadmap']/li",
+        "bs4": "len(soup.select('ol.roadmap > li'))"
+      },
+      "answer": "5 шагов, последний — «Контроль» без ссылки"
+    },
+    {
+      "id": "B-08",
+      "level": 3,
+      "q": "Вытащите всю колонку urllib.request из таблицы сравнения библиотек",
+      "solution": {
+        "css": "table.compare tbody tr td:nth-child(2)",
+        "xpath": "//table[contains(@class, 'compare')]/tbody/tr/td[2]",
+        "bs4": "[td.get_text(strip=True) for td in soup.select('table.compare tbody tr td:nth-child(2)')]"
+      },
+      "answer": "9 ячеек, первая — «не нужна: часть стандартной библиотеки»"
+    },
+    {
+      "id": "B-09",
+      "level": 3,
+      "q": "Соберите заголовки карточек страниц модуля (не перепутав их с карточкой главной)",
+      "solution": {
+        "css": "div.grid--3 article.page-card h3",
+        "xpath": "//article[@class='card page-card']/h3",
+        "bs4": "[h.get_text(strip=True) for h in soup.select('article.page-card h3')]"
+      },
+      "answer": "4 карточки: Первая мишень, Анатомия HTML, Культура парсинга, Кодировки"
+    },
+    {
+      "id": "B-25",
+      "level": 3,
+      "q": "Соберите дорожную карту парами «шаг → адрес урока»: у последнего шага ссылки нет, и это тоже результат",
+      "solution": {
+        "css": "ol.roadmap > li",
+        "xpath": "//ol[@class='roadmap']/li",
+        "bs4": "[(li.select_one('.step').get_text(strip=True), li.a['href'] if li.a else None) for li in soup.select('ol.roadmap > li')]"
+      },
+      "answer": "5 пар: первые четыре ведут на hello/anatomy/etiquette/encoding, у шага «Контроль» ссылки нет (None)"
+    },
+    {
+      "id": "B-26",
+      "level": 4,
+      "q": "Сравните два аргумента выбора библиотеки: посчитайте пункты внутри каждой карточки блока grid--2",
+      "solution": {
+        "css": "div.grid--2 > div.card",
+        "xpath": "//div[@class='grid grid--2']/div[contains(@class,'card')]",
+        "bs4": "[(c.select_one('h3').get_text(strip=True), len(c.select('ul > li'))) for c in soup.select('div.grid--2 > div.card')]"
+      },
+      "answer": "2 карточки по 3 пункта: «Когда достаточно urllib» и «Когда берём requests»; вместе 6 абзацев-пунктов, поэтому считать надо от карточки, а не от страницы"
+    }
+  ],
+  "basics/anatomy": [
+    {
+      "id": "B-10",
+      "level": 2,
+      "q": "Найдите в таблице слоёв строки, которые BeautifulSoup НЕ видит целиком (data-seen=no)",
+      "solution": {
+        "css": "tr[data-seen='no']",
+        "xpath": "//tr[@data-seen='no']",
+        "bs4": "[tr.select_one('td').get_text(strip=True) for tr in soup.select('tr[data-seen=\"no\"]')]"
+      },
+      "answer": "2 строки: script с кодом и DOM после скриптов"
+    },
+    {
+      "id": "B-11",
+      "level": 2,
+      "q": "Заберите подпись (caption) таблицы слоёв документа",
+      "solution": {
+        "css": "table.layers caption",
+        "xpath": "//table[contains(@class, 'layers')]/caption",
+        "bs4": "soup.select_one('table.layers caption').get_text(strip=True)"
+      },
+      "answer": "«Что есть в файле и кто это видит»"
+    },
+    {
+      "id": "B-12",
+      "level": 3,
+      "q": "Соберите все заголовки второго уровня основного текста, не трогая навигацию, футер и блок заданий",
+      "solution": {
+        "css": "main > h2",
+        "xpath": "//main/h2",
+        "bs4": "[h.get_text(strip=True) for h in soup.find('main').find_all('h2', recursive=False)]"
+      },
+      "answer": "5 заголовков: Слои документа, Три обязательные вещи, Каркас страницы-мишени, Комментарии, Что делает браузер"
+    },
+    {
+      "id": "B-13",
+      "level": 4,
+      "q": "Достаньте из документа учебный HTML-комментарий (в bs4 нужен тип Comment, import from bs4 import Comment)",
+      "solution": {
+        "bs4": "[str(c) for c in soup.find_all(string=lambda s: isinstance(s, Comment))]",
+        "xpath": "//comment()"
+      },
+      "answer": "1 комментарий: «подсказка для внимательных…»; get_text() его не возвращает"
+    },
+    {
+      "id": "B-14",
+      "level": 3,
+      "q": "Найдите абзац внутри noscript и убедитесь, что html.parser оставил его узлом",
+      "solution": {
+        "css": "noscript p",
+        "xpath": "//noscript/p",
+        "bs4": "soup.find('noscript').find('p').get_text(strip=True)"
+      },
+      "answer": "Один абзац начинается со слов «Видите это сообщение»"
+    }
+  ],
+  "basics/etiquette": [
+    {
+      "id": "B-15",
+      "level": 2,
+      "q": "Соберите директивы разобранного robots.txt: значения атрибута data-directive у строк таблицы",
+      "solution": {
+        "css": "tr[data-directive]",
+        "xpath": "//tr[@data-directive]",
+        "bs4": "[tr['data-directive'] for tr in soup.select('tr[data-directive]')]"
+      },
+      "answer": "7 директив: user-agent, allow, disallow, disallow-mask, crawl-delay, sitemap, rss"
+    },
+    {
+      "id": "B-16",
+      "level": 2,
+      "q": "Отметьте строки таблицы User-Agent, на которых сервер отвечает отказом (verdict=blocked)",
+      "solution": {
+        "css": "td[data-verdict='blocked']",
+        "xpath": "//td[@data-verdict='blocked']",
+        "bs4": "[td.get_text(strip=True) for td in soup.select('td[data-verdict=\"blocked\"]')]"
+      },
+      "answer": "2 строки: «403 или капча» и «400 или 403»"
+    },
+    {
+      "id": "B-17",
+      "level": 3,
+      "q": "Вытащите три практики вежливости: жирный текст первых строк списка practice",
+      "solution": {
+        "css": "ol.practice > li > strong",
+        "xpath": "//ol[@class='practice']/li/strong",
+        "bs4": "[s.get_text(strip=True) for s in soup.select('ol.practice > li > strong')]"
+      },
+      "answer": "Пауза между запросами; Разумный таймаут; Повтор с нарастанием"
+    },
+    {
+      "id": "B-18",
+      "level": 3,
+      "q": "Соберите заголовки двух карточек юридического раздела «Можно / Нельзя»",
+      "solution": {
+        "css": "div.grid--2 > div.card > h3",
+        "xpath": "//div[@class='grid grid--2']/div/h3",
+        "bs4": "[h.get_text(strip=True) for h in soup.select('div.grid--2 > div.card > h3')]"
+      },
+      "answer": "«Можно» и «Нельзя без разрешения»"
+    },
+    {
+      "id": "B-19",
+      "level": 4,
+      "q": "Достаньте из блока исходника robots.txt значение Crawl-delay регуляркой по тексту pre-блока",
+      "solution": {
+        "css": "pre.robots-block code",
+        "bs4": "re.search(r'Crawl-delay:\\s*(\\d+)', soup.select_one('pre.robots-block code').get_text()).group(1)"
+      },
+      "answer": "1 секунда; import re обязателен"
+    }
+  ],
+  "basics/encoding": [
+    {
+      "id": "B-20",
+      "level": 2,
+      "q": "Посчитайте симптомы кракозябр в таблице: строки с атрибутом data-cause",
+      "solution": {
+        "css": "tr[data-cause]",
+        "xpath": "//tr[@data-cause]",
+        "bs4": "[tr['data-cause'] for tr in soup.select('tr[data-cause]')]"
+      },
+      "answer": "6 строк: utf8-as-latin1, cp1251-as-latin1, utf8-as-cp1251, cp1251-as-utf8, bom, entities"
+    },
+    {
+      "id": "B-21",
+      "level": 2,
+      "q": "Соберите названия кодировок из шпаргалки: dt списка charset-cheatsheet",
+      "solution": {
+        "css": "dl.charset-cheatsheet > dt",
+        "xpath": "//dl[contains(@class, 'charset-cheatsheet')]/dt",
+        "bs4": "[dt.get_text(strip=True) for dt in soup.select('dl.charset-cheatsheet > dt')]"
+      },
+      "answer": "5 кодировок: utf-8, windows-1251, koi8-r, cp866, iso-8859-1"
+    },
+    {
+      "id": "B-22",
+      "level": 3,
+      "q": "Заберите три упражнения локальной мишени windows-1251 по их шагам",
+      "solution": {
+        "css": "li[data-step]",
+        "xpath": "//li[@data-step]",
+        "bs4": "[li.get_text(strip=True) for li in soup.select('li[data-step]')]"
+      },
+      "answer": "3 шага: r.text, принудительный utf-8, сохранение content в файл"
+    },
+    {
+      "id": "B-23",
+      "level": 3,
+      "q": "Соберите все битые образцы текста (класс broken) из таблицы симптомов",
+      "solution": {
+        "css": "code.broken",
+        "xpath": "//code[@class='broken']",
+        "bs4": "[c.get_text() for c in soup.select('code.broken')]"
+      },
+      "answer": "6 образцов; последний — HTML-сущности, он читается как есть"
+    },
+    {
+      "id": "B-24",
+      "level": 4,
+      "q": "Для строки «UTF-8 прочитали как latin-1» найдите сам битый пример: селектор по data-cause и вложенному коду",
+      "solution": {
+        "css": "tr[data-cause='utf8-as-latin1'] td code.broken",
+        "xpath": "//tr[@data-cause='utf8-as-latin1']//code[@class='broken']",
+        "bs4": "soup.select_one('tr[data-cause=\"utf8-as-latin1\"] code.broken').get_text()"
+      },
+      "answer": "«Ð¢Ð¸Ñ…Ð°Ñ Ð±ÑƒÑ…Ñ‚Ð°: Ñ‚ÐµÑ€Ð¼Ð¾Ñ 0.75 Ð»»"
+    }
+  ]
+}

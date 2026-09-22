@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Атрибуты data-*, aria-* и ловушки регистра · Селекторы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Читаем атрибуты: data-sku, data-price, data-stock, aria-*, id против class, класс из трёх значений, кавычки, регистр и элементы без атрибутов." />
+</head>
+<body data-page="selectors/attributes" data-module="selectors">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Атрибуты: data-*, aria-* и всё, что в кавычках</h1>
+  <p class="lede">Значение почти всегда лежит в атрибуте, а не в тексте: цена, валюта, остаток, дата обновления. Ниже — честный набор атрибутов с шумом: его придётся отфильтровать, иначе в отчёт попадёт мусор.</p>
+
+  <h2>Товарные data-атрибуты</h2>
+  <p class="muted">Полезные признаки: <code>data-sku</code>, <code>data-price</code>, <code>data-currency</code>, <code>data-stock</code>, <code>data-category</code>, <code>data-updated</code>. Остальное — наследие редизайнов.</p>
+  <div class="grid grid--2 attr-cards">
+    <article class="attr-card" data-sku="TB-1001" data-price="2490" data-currency="RUB" data-stock="14" data-category="мебель" data-updated="2026-03-02T10:15:00Z" data-color="серый" data-size="48×16×12 см" data-legacy-flag="old-catalog-v2" data-hash="9f3c1a" DATA-NOTE="Служебная метка старой выгрузки">
+      <h3 class="attr-card__title">Складной стул «Бриз»</h3>
+      <p class="attr-card__price"><span class="price" data-price="2490" data-currency="RUB">2 490 ₽</span></p>
+      <p class="attr-card__meta">обновлён <time datetime="2026-03-02T10:15:00Z">2026-03-02</time></p>
+    </article>
+    <article class="attr-card" data-sku="TB-2010" data-price="8990" data-currency="RUB" data-stock="6" data-category="одежда" data-updated="2026-03-11T14:02:00Z" data-color="синий" data-size="S–XXL" data-legacy-flag="old-catalog-v2" data-supplier="Мастерская Прибой">
+      <h3 class="attr-card__title">Куртка штормовая «Маяк»</h3>
+      <p class="attr-card__price"><span class="price" data-price="8990" data-currency="RUB">8 990 ₽</span></p>
+      <p class="attr-card__meta">обновлён <time datetime="2026-03-11T14:02:00Z">2026-03-11</time></p>
+    </article>
+    <article class="attr-card" data-sku="TB-1002" data-price="640" data-currency="RUB" data-stock="0" data-category="горелки" data-updated="2026-02-19T07:40:00Z" data-color="красный" data-size="450 мл" data-internal-note="остаток обнулён вручную">
+      <h3 class="attr-card__title">Картуш газовой смеси 450 мл</h3>
+      <p class="attr-card__price"><span class="price" data-price="640" data-currency="RUB">640 ₽</span></p>
+      <p class="attr-card__meta">обновлён <time datetime="2026-02-19T07:40:00Z">2026-02-19</time></p>
+    </article>
+    <article class="attr-card" data-sku="TB-5040" data-price="3290" data-currency="RUB" data-category="посуда" data-updated="2026-03-09T12:00:00Z" data-color="чёрный" data-hash="a7d0" data-quoted='одинарные кавычки в значении' data-empty="">
+      <h3 class="attr-card__title">Термос 0.75 л «Полночь»</h3>
+      <p class="attr-card__price"><span class="price" data-price="3290" data-currency="RUB">3 290 ₽</span></p>
+      <p class="attr-card__meta">обновлён <time datetime="2026-03-09T12:00:00Z">2026-03-09</time></p>
+    </article>
+    <article class="attr-card" data-sku="TB-3020" data-price="1990" data-currency="RUB" data-stock="23" data-category="свет" data-updated="2026-03-05T18:30:00Z" data-color="чёрный" data-size="400 лм">
+      <h3 class="attr-card__title">Фонарь налобный «Светляк 400»</h3>
+      <p class="attr-card__price"><span class="price" data-price="1990" data-currency="RUB">1 990 ₽</span></p>
+      <p class="attr-card__meta">обновлён <time datetime="2026-03-05T18:30:00Z">2026-03-05</time></p>
+    </article>
+    <article class="attr-card" data-sku="TB-4030" data-price="15900" data-currency="RUB" data-stock="3" data-category="лагерь" data-updated="2026-03-13T08:45:00Z" data-color="оранжевый" data-size="2 места" data-legacy-flag="old-catalog-v2">
+      <h3 class="attr-card__title">Палатка двухместная «Бухта 2»</h3>
+      <p class="attr-card__price"><span class="price" data-price="15900" data-currency="RUB">15 900 ₽</span></p>
+      <p class="attr-card__meta">обновлён <time datetime="2026-03-13T08:45:00Z">2026-03-13</time></p>
+    </article>
+    <article class="attr-card" data-sku="TB-6050" data-price="9800" data-currency="RUB" data-stock="7" data-category="снаряжение" data-updated="2026-03-01T19:25:00Z" data-color="зелёный" data-size="65 л">
+      <h3 class="attr-card__title">Рюкзак забросный 65 л</h3>
+      <p class="attr-card__price"><span class="price" data-price="9800" data-currency="RUB">9 800 ₽</span></p>
+      <p class="attr-card__meta">обновлён <time datetime="2026-03-01T19:25:00Z">2026-03-01</time></p>
+    </article>
+    <article class="attr-card" data-sku="TB-6051" data-price="1690" data-currency="RUB" data-category="снаряжение" data-updated="2026-02-14T13:55:00Z" data-color="жёлтый" data-size="25 л" data-empty="">
+      <h3 class="attr-card__title">Гермомешок 25 л</h3>
+      <p class="attr-card__price"><span class="price" data-price="1690" data-currency="RUB">1 690 ₽</span></p>
+      <p class="attr-card__meta">обновлён <time datetime="2026-02-14T13:55:00Z">2026-02-14</time></p>
+    </article>
+  </div>
+  <p class="tip">У карточек термоса и гермомешка нет <code>data-stock</code>: это не «ноль», это «данных нет». Разница видна только в атрибуте — <code>[data-sku]:not([data-stock])</code> вернёт две карточки из восьми.</p>
+
+  <h2>aria-*: атрибуты для людей, а не для ботов</h2>
+  <div class="aria-demo" role="group" aria-label="Демонстрация aria-атрибутов">
+    <p id="aria-help" class="muted">Подсказка, на которую ссылается кнопка ниже.</p>
+    <button class="btn ghost" type="button" aria-describedby="aria-help" aria-expanded="false" aria-controls="aria-panel" data-widget="toggle">Показать панель</button>
+    <div class="card" id="aria-panel" role="region" aria-live="polite" aria-label="Панель состояния">
+      <p>Текст панели. <span aria-hidden="true">★</span> — декоративный символ: скринридер его не читает, а парсер заберёт вместе со всем остальным текстом.</p>
+      <p class="status" data-state="ok">Соединение установлено.</p>
+    </div>
+  </div>
+  <p class="warn">Декоративный символ с <code>aria-hidden="true"</code> и подпись <code>aria-label</code> — обычный источник «лишних» знаков в тексте: <code>get_text()</code> соберёт и то и другое. Отфильтровывайте по атрибуту, а не регуляркой после.</p>
+
+  <h2>id против class</h2>
+  <p id="unique-note" class="note-line">У этого абзаца есть <code>id="unique-note"</code> — он один на странице, и <code>#unique-note</code> найдёт именно его.</p>
+  <p class="note-line">А таких абзацев с классом <code>.note-line</code> три: <code>.note-line</code> всегда вернёт список.</p>
+  <p class="note-line">Третий абзац с тем же классом — чтобы вы не перепутали «нашёл один» и «нашёл первый».</p>
+  <table class="table--striped id-vs-class">
+    <thead>
+      <tr><th>Что</th><th>id</th><th>class</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Сколько на странице</td><td>один, повтор — ошибка валидности</td><td>сколько угодно, несколько значений в одном атрибуте</td></tr>
+      <tr><td>Селектор</td><td><code>#unique-note</code></td><td><code>.note-line</code></td></tr>
+      <tr><td>Надёжность для парсера</td><td>высокая, но id часто генерируют: <code>id="note-4812"</code></td><td>стабильнее, но зависит от методологии именования</td></tr>
+      <tr><td>Что ломается</td><td>пагинация и перестроение DOM</td><td>редизайн: <code>.card</code> → <code>.b-card</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Класс из трёх значений</h2>
+  <div class="card note-box legacy-promo" data-case="triple">
+    <h3>Один элемент, три класса</h3>
+    <p><code>.card</code> ищет по первому значению, <code>.note-box</code> — по второму, <code>.legacy-promo</code> — по третьему. Точное совпадение <code>[class="card note-box legacy-promo"]</code> требует и порядок, и пробелы, и регистр.</p>
+  </div>
+  <div class="card legacy-promo note-box" data-case="swapped">
+    <h3>Те же классы в другом порядке</h3>
+    <p>Для <code>.note-box</code> разницы нет, для <code>[class="card note-box legacy-promo"]</code> — есть: атрибут просто не совпадёт как строка.</p>
+  </div>
+
+  <h2>Кавычки, регистр и пустые значения</h2>
+  <ul class="attr-notes">
+    <li>Имена атрибутов парсер приводит к нижнему регистру: <code>DATA-NOTE</code> в исходнике станет <code>data-note</code> — ищите маленькими.</li>
+    <li>Значения — чувствительны к регистру: <code>data-color="серый"</code> и <code>"Серый"</code> — разные строки.</li>
+    <li>Кавычки в исходнике бывают двойные и одинарные: <code>data-quoted='одинарные кавычки в значении'</code> разбирается так же.</li>
+    <li>Пустое значение <code>data-empty=""</code> — атрибут существует: <code>[data-empty]</code> сработает, а проверка «не пусто» — нет.</li>
+    <li>Значение может содержать пробелы: <code>data-size="48×16×12 см"</code> — не разбивайте его <code>split()</code>.</li>
+  </ul>
+  <div class="card case-demo">
+    <p class="case-demo__item" data-color="серый" data-variant="нижний">Карточка с точным значением <code>серый</code>.</p>
+    <p class="case-demo__item" data-color="Серый" data-variant="верхний">Карточка с заглавной <code>Серый</code> — для парсера это другой цвет.</p>
+    <p class="muted">В CSS <code>[data-color="серый"]</code> найдёт один пункт из двух. В XPath спасает <code>translate()</code>: <code>translate(@data-color,"АБВ...","абв...")</code> — алфавит придётся переписать целиком. В bs4 проще: <code>[n for n in soup.select("[data-color]") if n["data-color"].lower() == "серый"]</code>.</p>
+  </div>
+
+  <h2>Элементы совсем без атрибутов</h2>
+  <div class="no-attrs">
+    <p>Абзац без класса, id и data: текст придётся брать по позиции или по родителю.</p>
+    <span>Простой span без атрибутов.</span>
+    <em>Акцент без атрибутов.</em>
+    <p class="has-class">А этот абзац — шум: у него есть класс.</p>
+    <b>Жирный без атрибутов.</b>
+  </div>
+  <p class="hint" data-no-attrs="true">Конец блока: этот абзац помечен атрибутом <code>data-no-attrs</code> — удобный ориентир, чтобы проверить, что вы не схватили лишнего после узлов без атрибутов.</p>
+  <p class="muted">Итого в блоке четыре узла без атрибутов и один с классом. XPath решает это <code>//*[count(@*)=0]</code>, CSS — только исключением <code>:not([class]):not([id])</code>, а bs4 — проверкой словаря <code>element.attrs</code>.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

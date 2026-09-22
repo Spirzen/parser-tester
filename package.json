@@ -1,0 +1,21 @@
+{
+  "name": "parsing-trainer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Парсинг-тренажёр — статичный сайт-мишень для уроков по веб-парсингу",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "generate": "node tools/generate.mjs",
+    "build": "node tools/generate.mjs --write && node tools/build.mjs",
+    "build:only": "node tools/build.mjs",
+    "check": "node tools/check.mjs",
+    "validate:tasks": "python tools/validate_tasks.py --zero",
+    "verify": "node tools/generate.mjs --verify && node tools/build.mjs && node tools/check.mjs",
+    "serve": "node tools/build.mjs && node tools/serve.mjs",
+    "test:py": "python examples/smoke_test.py"
+  },
+  "devDependencies": {}
+}

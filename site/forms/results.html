@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Результаты поиска · Формы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Страница, которая живёт только query-параметрами: показывает принятые значения и фильтрует каталог ../data/products.json." />
+</head>
+<body data-page="forms/results" data-module="forms">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Результаты: адрес важнее формы</h1>
+  <p class="lede">Эта страница ничего не помнит: весь её вид определяется набором параметров в адресной строке. Откройте её с разными <code>?…</code> — и увидите, как форма превращается в URL, а URL в список товаров.</p>
+
+  <p class="warn"><strong>Как запустить.</strong> Товары читаются из <code>../data/products.json</code> через <code>fetch</code>, поэтому нужен локальный сервер: <code>node tools/serve.mjs</code> и адрес вида <code>http://localhost:8000/forms/results.html?q=термос&amp;sort=price-asc</code>. Без сервера страница покажет параметры, но список останется пустым.</p>
+
+  <p class="status" id="query-status" role="status">разбираем адрес…</p>
+  <dl class="kv">
+    <dt>Параметров со значением</dt>
+    <dd><strong id="params-count">0</strong></dd>
+    <dt>Товаров найдено</dt>
+    <dd><strong id="results-count">0</strong> из <span id="catalog-count">0</span> в каталоге</dd>
+    <dt>Декодированный запрос</dt>
+    <dd><code id="raw-query" class="mono">(пусто)</code></dd>
+    <dt>Как выглядит в адресе</dt>
+    <dd><code id="encoded-query" class="mono">(пусто)</code></dd>
+  </dl>
+
+  <div class="tip" id="no-params" hidden>
+    <p>Параметров в адресе нет, поэтому показан весь каталог без фильтра. Примеры адресов, которые стоит попробовать (и которые стоит собрать регуляркой, когда вы пишете обход):</p>
+    <ul class="tree">
+      <li><a href="results.html?q=термос">results.html?q=термос</a> — поиск по подстроке</li>
+      <li><a href="results.html?q=%D1%82%D0%B5%D1%80%D0%BC%D0%BE%D1%81">то же самое в процентном кодировании</a> — UTF-8, байт на символ больше, чем букв</li>
+      <li><a href="results.html?category=%D1%81%D0%B2%D0%B5%D1%82">results.html?category=свет</a> — фильтр по категории</li>
+      <li><a href="results.html?price_min=1000&amp;price_max=3000&amp;sort=price-asc">results.html?price_min=1000&amp;price_max=3000&amp;sort=price-asc</a> — диапазон и сортировка</li>
+      <li><a href="results.html?tags=%D1%82%D0%B8%D1%82%D0%B0%D0%BD&amp;tags=%D0%BF%D0%BE%D1%85%D0%BE%D0%B4">results.html?tags=титан&amp;tags=поход</a> — повторяющийся параметр <code>tags</code></li>
+      <li><a href="results.html?in_stock=1&amp;sort=rating">results.html?in_stock=1&amp;sort=rating</a> — только в наличии, по рейтингу</li>
+      <li><a href="results.html?q=%D1%81%D0%BD%D0%B0%D1%80%D1%8F%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5">results.html?q=снаряжение</a> — пустой ответ: проверьте, как вы обрабатываете «ничего не найдено»</li>
+    </ul>
+  </div>
+
+  <h2>Что пришло в адресе</h2>
+  <table class="table--striped table--compact">
+    <caption>Разбор query-параметров: значение берётся из текущего URL</caption>
+    <thead><tr><th>Параметр</th><th>Значение</th><th>Как страница его понимает</th></tr></thead>
+    <tbody id="echo"></tbody>
+  </table>
+
+  <h2>Список результатов</h2>
+  <div id="results" class="grid grid--2" data-test="results"></div>
+  <p class="note" id="empty-note" hidden>По этому адресу товаров нет. Для парсера это нормальный ответ: проверяйте не «есть ли первый элемент», а длину списка.</p>
+
+  <section id="parse">
+    <h2>Как это парсить</h2>
+    <p>Каждый результат помечен <code>article.result</code> с <code>data-sku</code>, <code>data-category</code>, <code>data-price</code> и <code>data-stock</code>. Но полезнее помнить, что фильтр — это адрес: те же самые выборки собираются запросом к JSON без единого регулярного выражения.</p>
+<pre><code>import requests
+
+BASE = "http://localhost:8000"
+
+resp = requests.get(BASE + "/forms/results.html",
+                    params={"q": "термос", "price_max": 3500, "sort": "price-asc"}, timeout=15)
+print(resp.url)                                   # …?q=%D1%82%D0%B5%D1%80%D0%BC%D0%BE%D1%81&amp;price_max=3500&amp;sort=price-asc</code></pre>
+<pre><code>from bs4 import BeautifulSoup
+
+soup = BeautifulSoup(resp.text, "html.parser")
+sku = [a["data-sku"] for a in soup.select("article.result")]   # [] — список дорисовывает скрипт
+print(sku, soup.find(id="results-count").get_text())           # 0 и '0'
+
+data = requests.get(BASE + "/data/products.json", timeout=15).json()["products"]
+print([p["sku"] for p in data if "термос" in p["title"].lower() and p["price"] &lt;= 3500])</code></pre>
+    <p class="tip">Повторяющийся параметр (<code>?tags=титан&amp;tags=поход</code>) в <code>requests</code> собирается списком кортежей: <code>params=[("tags", "титан"), ("tags", "поход")]</code>. Один словарь два значения под одним ключом не передаст.</p>
+    <p class="muted">Отправить форму руками: <a href="search.html">поиск по каталогу</a>. Разбор форм без браузера — на <a href="index.html">главной странице модуля</a>.</p>
+  </section>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+<script src="../assets/js/form-echo.js" defer></script>
+</body>
+</html>

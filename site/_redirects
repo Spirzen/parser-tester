@@ -1,0 +1,10 @@
+# Файл для Netlify / Cloudflare Pages: настоящие HTTP-редиректы 301/302.
+# На GitHub Pages он не работает (GitHub его игнорирует), поэтому на Pages
+# урок про редиректы идёт через meta refresh и history.replaceState (см. http/redirect.html).
+# При переносе на Netlify/Cloudflare раскомментируйте нужные строки.
+
+/old/catalog.html        /selectors/products.html      301
+/old/news                /http/index.html              302
+/data/legacy.json        /data/products.json           301
+/promo/2024              /pagination/index.html        302
+/private/secrets.html    /404.html                     410

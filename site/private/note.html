@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Служебная записка · Закрытый раздел · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Страница из раздела, запрещённого robots.txt: учебная приманка для проверки ROBOTSTXT_OBEY." />
+</head>
+<body data-page="private/note" data-module="private">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Служебная записка: прайс для внутреннего пользования</h1>
+  <p class="warn"><strong>Раздел <code>/private/</code> запрещён для краулеров</strong> в <a href="../robots.txt">robots.txt</a>.
+  Вы открыли эту страницу напрямую — значит, либо вы человек в браузере, либо ваш паук с <code>ROBOTSTXT_OBEY = False</code>.
+  Во втором случае поздравляем: урок пройден, а в реальном мире такое поведение кончается ban-страницей по IP.</p>
+
+  <p class="lede"><a href="index.html">← назад во вход</a> — там объяснение, как устроен запрет.</p>
+
+  <h2>Закупочные цены (вымышленные, разумеется)</h2>
+  <table class="table--striped">
+    <thead><tr><th>Артикул</th><th>Товар</th><th>Закупка</th><th>Поставщик</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">TB-1001</td><td>Складной стул «Бриз»</td><td>1 480 ₽</td><td>Артель Тихая бухта</td></tr>
+      <tr><td class="mono">TB-2010</td><td>Куртка штормовая «Маяк»</td><td>5 300 ₽</td><td>Мастерская Прибой</td></tr>
+      <tr><td class="mono">TB-4030</td><td>Палатка двухместная «Бухта 2»</td><td>9 700 ₽</td><td>Артель Тихая бухта</td></tr>
+    </tbody>
+  </table>
+
+  <p class="note">Проверка на честность: спарсенные отсюда цены нельзя публиковать как «витрину магазина» — витрина лежит в
+  <a href="../scrapy/index.html">scrapy/index.html</a> и доступна всем. Разница между «доступно технически» и «разрешено правилами» — весь смысл этого раздела.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

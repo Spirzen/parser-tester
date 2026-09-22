@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HTTP для парсера: методы, коды, где смотреть заголовки · HTTP · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Методы HTTP, таблица кодов состояния 200—503 с действиями парсера, где смотреть заголовки и какие эндпоинты полигона живут только на локальном сервере." />
+</head>
+<body data-page="http/index" data-module="http">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Модуль 3 · HTTP: заголовки, коды, куки, редиректы</h1>
+  <p class="lede">Парсер, который понимает протокол, чинит себя сам: видит <code>429</code> и засыпает, видит <code>301</code> и молча идёт дальше, видит <code>403</code> и перестаёт ломиться.</p>
+  <ul class="breadcrumbs">
+    <li><a href="../index.html">Главная</a></li>
+    <li>HTTP, куки и API</li>
+  </ul>
+
+  <h2 id="karkas">Как выглядит обмен байтами</h2>
+  <p>Всё, что происходит «в сети», — два текстовых сообщения. Слева то, что отправляет ваша программа, справа то, что возвращает сервер.</p>
+  <pre data-lang="http" class="wire"><code>GET /http/news.html?page=2 HTTP/1.1
+Host: localhost:8000
+User-Agent: TikhayaParser/1.0 (+contact@example.com)
+Accept: text/html
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Content-Length: 8412
+Set-Cookie: session_id=demo-session-42; Path=/; Max-Age=3600
+X-Powered-By: parsing-trainer
+
+&lt;!DOCTYPE html&gt;
+&lt;html lang="ru"&gt; ...</code></pre>
+  <p class="note">Пустая строка между заголовками и телом — часть протокола. В <code>requests</code> её видно не всегда, в <code>curl -v</code> — всегда.</p>
+
+  <h2 id="methods">Методы: что безопасно для чтения</h2>
+  <table class="table--striped methods-table">
+    <thead>
+      <tr><th>Метод</th><th>Смысл</th><th>Парсеру</th></tr>
+    </thead>
+    <tbody>
+      <tr data-method="GET"><td><code>GET</code></td><td>вернуть документ по адресу</td><td>основной рабочий метод; параметры — в строке запроса</td></tr>
+      <tr data-method="HEAD"><td><code>HEAD</code></td><td>то же, но без тела</td><td>проверить доступность и заголовки дёшево</td></tr>
+      <tr data-method="POST"><td><code>POST</code></td><td>передать данные в теле</td><td>поиск по форме, логин, JSON-выгрузки</td></tr>
+      <tr data-method="PUT"><td><code>PUT</code></td><td>записать ресурс целиком</td><td>не используем: изменяем чужие данные</td></tr>
+      <tr data-method="DELETE"><td><code>DELETE</code></td><td>удалить ресурс</td><td>не используем никогда</td></tr>
+      <tr data-method="OPTIONS"><td><code>OPTIONS</code></td><td>спросить, что разрешено</td><td>интересно при кросс-доменных запросах из браузера</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="codes">Коды состояния и действия парсера</h2>
+  <table class="table--striped status-table">
+    <caption>Что означает ответ и что с ним делать</caption>
+    <thead>
+      <tr><th>Код</th><th>Название</th><th>Что это значит</th><th>Действие парсера</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono" data-code="200">200</td><td>OK</td><td>документ на месте</td><td data-step="parse">разбираем тело</td></tr>
+      <tr><td class="mono" data-code="301">301</td><td>Moved Permanently</td><td>адрес переехал навсегда, новый — в <code>Location</code></td><td data-step="follow">идём за редиректом и обновляем список URL</td></tr>
+      <tr><td class="mono" data-code="302">302</td><td>Found</td><td>временный редирект</td><td data-step="follow">идём за <code>Location</code>, в кэш не пишем</td></tr>
+      <tr><td class="mono" data-code="304">304</td><td>Not Modified</td><td>сервер подтвердил: тело не менялось</td><td data-step="cache">берём локальную копию, отправляем <code>If-None-Match</code></td></tr>
+      <tr><td class="mono" data-code="400">400</td><td>Bad Request</td><td>ошибка в нашем запросе: кривые параметры</td><td data-step="fix">правим URL, повторять бесполезно</td></tr>
+      <tr><td class="mono" data-code="401">401</td><td>Unauthorized</td><td>нужна аутентификация, есть <code>WWW-Authenticate</code></td><td data-step="auth">логин или ключ в заголовках</td></tr>
+      <tr><td class="mono" data-code="403">403</td><td>Forbidden</td><td>сервер понял, кто вы, и не хочет</td><td data-step="stop">прекращаем: повторные попытки только ухудшают</td></tr>
+      <tr><td class="mono" data-code="404">404</td><td>Not Found</td><td>страницы нет (или адрес собран неверно)</td><td data-step="check">проверяем маску URL и границу пагинации</td></tr>
+      <tr><td class="mono" data-code="429">429</td><td>Too Many Requests</td><td>превысили лимит, ждём <code>Retry-After</code></td><td data-step="sleep">спим столько, сколько просят, и снижаем темп</td></tr>
+      <tr><td class="mono" data-code="500">500</td><td>Internal Server Error</td><td>упал сервер, это не наша вина</td><td data-step="retry">повторяем 1–2 раза с паузой и фиксим лог</td></tr>
+      <tr><td class="mono" data-code="503">503</td><td>Service Unavailable</td><td>перегрузка или техработы, часто есть <code>Retry-After</code></td><td data-step="sleep">экспоненциальная задержка, максимум несколько попыток</td></tr>
+    </tbody>
+  </table>
+  <p class="warn"><code>requests</code> не считает ошибкой ничего, кроме исключения сети: <code>get()</code> вернёт объект и для <code>404</code>, и для <code>500</code>. Проверка обязательна: <code>r.raise_for_status()</code> или явное сравнение <code>r.status_code</code>.</p>
+
+  <h2 id="devtools">Где смотреть заголовки</h2>
+  <ol class="where-to-look">
+    <li><strong>DevTools браузера.</strong> F12 → Network → Reload → клик по документу → вкладки Headers: Request headers и Response headers. Ищите фильтр <code>Fetch/XHR</code>, чтобы найти JSON-эндпоинт страницы.</li>
+    <li><strong>curl с флагом <code>-i</code>.</strong> Покажет ответ вместе с заголовками: <code>curl -i http://localhost:8000/http/echo</code>.</li>
+    <li><strong>curl с <code>-v</code>.</strong> Добавляет заголовки запроса и детали TLS: удобно, когда сервер «не понимает», кто к нему пришёл.</li>
+    <li><strong>Сам объект ответа.</strong> <code>r.request.headers</code> — что ушло, <code>r.headers</code> — что вернулось, <code>r.history</code> — по каким редиректам прошлись.</li>
+  </ol>
+  <pre data-lang="bash"><code>curl -i  "http://localhost:8000/http/status?code=429"   # увидим Retry-After: 2
+curl -i -L "http://localhost:8000/http/redirect-301"    # -L = следовать редиректу
+curl -s  "http://localhost:8000/http/echo"              # что сервер видит в нашем запросе
+curl -i  "http://localhost:8000/http/protected"         # 401 без ключа</code></pre>
+  <pre data-lang="python"><code>import requests
+
+r = requests.get(
+    "http://localhost:8000/http/protected",
+    headers={"X-API-Key": "trainer-demo-key"},
+    timeout=10,
+)
+print(r.status_code)          # 200
+print(r.request.headers)      # что реально ушло, включая наш ключ
+print(r.history)              # [] — редиректов не было
+
+r429 = requests.get("http://localhost:8000/http/status?code=429", timeout=10)
+print(r429.headers["Retry-After"])   # 2 — спим ровно столько, сколько просят</code></pre>
+
+  <h2 id="local">Эндпоинты: только локальный сервер</h2>
+  <p>GitHub Pages отдаёт одни файлы, поэтому «живое» поведение протокола имитирует <code>node tools/serve.mjs</code>. Запуск: <code>node tools/build.mjs</code>, затем <code>node tools/serve.mjs</code>, адрес по умолчанию — <code>http://localhost:8000</code>. Без сервера эти адреса вернут 404: в <code>dist/</code> таких файлов нет.</p>
+  <table class="table--striped endpoints-table">
+    <caption>Учебные эндпоинты полигона</caption>
+    <thead>
+      <tr><th>Метод</th><th>Адрес</th><th>Что демонстрирует</th></tr>
+    </thead>
+    <tbody>
+      <tr data-local="true"><td><code>GET</code></td><td><code data-endpoint="/http/echo">/http/echo</code></td><td>возвращает JSON с вашими заголовками, query и куками</td></tr>
+      <tr data-local="true"><td><code>GET</code></td><td><code data-endpoint="/http/status?code=429">/http/status?code=429</code></td><td>любой код: 200 401 403 404 429 503, у 429 и 503 есть <code>Retry-After</code></td></tr>
+      <tr data-local="true"><td><code>GET</code></td><td><code data-endpoint="/http/redirect-301">/http/redirect-301</code></td><td>настоящий 301 на <code>/http/final.html</code>; рядом <code>/http/redirect-302</code> и цепочка <code>/http/redirect-chain</code></td></tr>
+      <tr data-local="true"><td><code>GET</code></td><td><code data-endpoint="/http/cookies">/http/cookies</code></td><td>выдаёт три <code>Set-Cookie</code>, один из них <code>HttpOnly</code></td></tr>
+      <tr data-local="true"><td><code>GET</code></td><td><code data-endpoint="/http/api/products?page=1&amp;size=8">/http/api/products?page=1&amp;size=8</code></td><td>JSON с постраничной выдачей, фильтром <code>category</code> и полем <code>next</code></td></tr>
+      <tr data-local="true"><td><code>GET</code></td><td><code data-endpoint="/http/slow">/http/slow</code></td><td>отвечает с задержкой <code>?ms=3000</code> — тренировка <code>timeout</code></td></tr>
+      <tr data-local="true"><td><code>GET</code></td><td><code data-endpoint="/http/charset">/http/charset</code></td><td>HTML в windows-1251: урок про кодировки в <a href="../basics/encoding.html">basics/encoding</a></td></tr>
+      <tr data-local="true"><td><code>GET</code></td><td><code data-endpoint="/http/protected">/http/protected</code></td><td>401 без заголовка <code>X-API-Key: trainer-demo-key</code></td></tr>
+    </tbody>
+  </table>
+  <p class="tip">Статические «файлы API» (<code>../data/products.json</code> и другие) работают где угодно — и на Pages, и с диска. Их список и примеры запросов: <a href="api.html">http/api.html</a>.</p>
+
+  <h2 id="stranicy">Страницы модуля</h2>
+  <div class="grid grid--3 module-pages">
+    <article class="card page-card">
+      <h3>Заголовки</h3>
+      <p>Что отправляет браузер, что — <code>requests</code>, и зачем нужен <code>ETag</code>.</p>
+      <a class="page-card__link" href="headers.html">К таблицам заголовков</a>
+    </article>
+    <article class="card page-card">
+      <h3>Куки</h3>
+      <p><code>Path</code>, <code>HttpOnly</code>, <code>SameSite</code> и живой тренажёр <code>document.cookie</code>.</p>
+      <a class="page-card__link" href="cookies.html">К куки-тренажёру</a>
+    </article>
+    <article class="card page-card">
+      <h3>Редиректы</h3>
+      <p><code>meta refresh</code> против 301 и 302: разница, которую видит парсер.</p>
+      <a class="page-card__link" href="redirect.html">К редиректу</a>
+    </article>
+    <article class="card page-card">
+      <h3>Новости и RSS</h3>
+      <p>Лента и карта сайта как источник ссылок: быстрее, чем обход страниц.</p>
+      <a class="page-card__link" href="news.html">К ленте</a>
+    </article>
+    <article class="card page-card">
+      <h3>JSON-API полигона</h3>
+      <p>Файлы <code>data/</code> и локальные эндпоинты: что терять на HTML-разметке.</p>
+      <a class="page-card__link" href="api.html">К API</a>
+    </article>
+    <article class="card page-card">
+      <h3>Куда ведёт редирект</h3>
+      <p>Финальная страница с тремя фактами и кукой-маркером.</p>
+      <a class="page-card__link" href="final.html">Финальная страница</a>
+    </article>
+  </div>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

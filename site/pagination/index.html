@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Отзывы, страница 1 · Пагинация · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Страница 1 учебной пагинации с отзывами вымышленного магазина." />
+  <link rel="next" href="page-2.html" />
+  <link rel="canonical" href="index.html" />
+</head>
+<body data-page="pagination/index" data-module="pagination">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Отзывы покупателей — страница 1</h1>
+  <p class="lede">Обход нумерованных страниц: ссылки, rel=next, признак конца.</p>
+  <p class="muted">Страница <strong data-current="1">1</strong> из <span data-total="6">6</span>. Всего отзывов: 30.
+  Адрес меняется — это самый простой случай пагинации: подставляйте номер в URL и не забудьте про задержку между запросами.</p>
+  <div class="reviews">
+      <article class="card review" data-review="R-001" data-product="TB-1002" data-rating="5" data-verified="true" data-date="2026-01-27">
+        <p class="review__head"><span class="review__author">Светлана Ровова</span>
+          <span class="review__city">Приморск-2</span>
+          <span class="chip">★★★★★</span></p>
+        <h3 class="review__title">Есть нюансы</h3>
+        <p class="review__text">Доставка быстрая, товар соответствует описанию. Единственное — инструкция только на английском.</p>
+        <p class="review__meta">к товару <a href="../scrapy/item-02.html">Картуш газовой смеси 450 мл</a>
+          · полезно: <span class="review__helpful" data-count="39">39</span>
+          · фото: <span class="review__photos">0</span>
+          <span class="badge">покупка подтверждена</span></p>
+      </article>
+      <article class="card review" data-review="R-002" data-product="TB-4031" data-rating="3" data-verified="true" data-date="2026-03-09">
+        <p class="review__head"><span class="review__author">Илья Соловьёв</span>
+          <span class="review__city">Севск</span>
+          <span class="chip">★★★☆☆</span></p>
+        <h3 class="review__title">Стоит своих денег</h3>
+        <p class="review__text">Сначала показалось, что брак: не держал клапан. Оказалось, перепутал сторону уплотнения.</p>
+        <p class="review__meta">к товару <a href="../scrapy/item-08.html">Спальник пуховый −7 °C</a>
+          · полезно: <span class="review__helpful" data-count="8">8</span>
+          · фото: <span class="review__photos">2</span>
+          <span class="badge">покупка подтверждена</span></p>
+      </article>
+      <article class="card review" data-review="R-003" data-product="TB-1001" data-rating="5" data-verified="true" data-date="2026-03-25">
+        <p class="review__head"><span class="review__author">Илья Соловьёв</span>
+          <span class="review__city">Приморск-2</span>
+          <span class="chip">★★★★★</span></p>
+        <h3 class="review__title">Взял на сезон</h3>
+        <p class="review__text">Для города в самый раз, но в сильный дождь промокает по молнии — приходится закрывать клапаном.</p>
+        <p class="review__meta">к товару <a href="../scrapy/item-01.html">Складной стул «Бриз»</a>
+          · полезно: <span class="review__helpful" data-count="37">37</span>
+          · фото: <span class="review__photos">0</span>
+          <span class="badge">покупка подтверждена</span></p>
+      </article>
+      <article class="card review" data-review="R-004" data-product="TB-4030" data-rating="3" data-verified="true" data-date="2026-01-04">
+        <p class="review__head"><span class="review__author">Ева Кузьмина</span>
+          <span class="review__city">Верхние Ключи</span>
+          <span class="chip">★★★☆☆</span></p>
+        <h3 class="review__title">Беру второй раз</h3>
+        <p class="review__text">Взял перед походом, за неделю показал себя честно. Швы ровные, ничего не торчит.</p>
+        <p class="review__meta">к товару <a href="../scrapy/item-07.html">Палатка двухместная «Бухта 2»</a>
+          · полезно: <span class="review__helpful" data-count="14">14</span>
+          · фото: <span class="review__photos">3</span>
+          <span class="badge">покупка подтверждена</span></p>
+      </article>
+      <article class="card review" data-review="R-005" data-product="TB-6051" data-rating="4" data-verified="true" data-date="2026-01-09">
+        <p class="review__head"><span class="review__author">Фёдор Лыжин</span>
+          <span class="review__city">Севск</span>
+          <span class="chip">★★★★☆</span></p>
+        <h3 class="review__title">Взял на сезон</h3>
+        <p class="review__text">Второй сезон. Заменили по гарантии без разговоров — это отдельно радует.</p>
+        <p class="review__meta">к товару <a href="../scrapy/item-12.html">Гермомешок 25 л</a>
+          · полезно: <span class="review__helpful" data-count="20">20</span>
+          · фото: <span class="review__photos">1</span>
+          <span class="badge">покупка подтверждена</span></p>
+      </article>
+  </div>
+<nav class="pager-wrap" aria-label="Страницы">
+  <ul class="pager">
+    <li><li class="is-disabled">← назад</li></li>
+    <li><li><span class="is-current" aria-current="page">1</span></li></li>
+    <li><li><a href="page-2.html">2</a></li></li>
+    <li><li><a href="page-3.html">3</a></li></li>
+    <li><li><a href="page-4.html">4</a></li></li>
+    <li><li><a href="page-5.html">5</a></li></li>
+    <li><li><a href="page-6.html">6</a></li></li>
+    <li><li><a rel="next" href="page-2.html">вперёд →</a></li></li>
+  </ul>
+</nav>
+  <h2>Как идти дальше</h2>
+  <ul>
+    <li>Соберите адреса всех страниц одним регулярным выражением по <code>page-(\d+)\.html</code>.</li>
+    <li>Остановитесь, когда <code>rel="next"</code> отсутствует: не гадайте по числу страниц в тексте.</li>
+    <li>Проверьте, что не собрали один отзыв дважды из-за дублирующихся ссылок.</li>
+  </ul>
+  <p class="tip">Тот же массив доступен как JSON: <a href="../data/reviews.json">../data/reviews.json</a> — сравните, что быстрее и устойчивее.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

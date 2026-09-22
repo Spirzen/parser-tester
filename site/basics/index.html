@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Основы запроса и ответа · Основы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Что такое HTTP-запрос и ответ, чем requests отличается от urllib, план модуля «Основы» и ссылки на страницы-мишени." />
+</head>
+<body data-page="basics/index" data-module="basics">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Модуль 1 · Основы: запрос, ответ, первый HTML</h1>
+  <p class="lede">Прежде чем вытаскивать цены и телефоны, научитесь видеть сам обмен: что уходит от программы, что возвращается сервером и в каком месте текста живёт нужное поле.</p>
+  <ul class="breadcrumbs">
+    <li><a href="../index.html">Главная</a></li>
+    <li>Основы запросов</li>
+  </ul>
+
+  <section id="zagros-i-otvet">
+    <h2>Что такое запрос и ответ</h2>
+    <p>Парсинг — это всегда диалог по протоколу HTTP. Программа-клиент пишет текст-запрос, сервер отвечает текстом-ответом. BeautifulSoup, lxml и «Парсинг-тренажёр» работают только с тем, что пришло в теле ответа: ни один селектор не знает, что «на самом деле» лежит в базе данных магазина.</p>
+    <h3>Запрос: из чего складывается</h3>
+    <dl class="kv request-anatomy">
+      <dt>Метод</dt>
+      <dd><code>GET</code> — «отдай документ», <code>POST</code> — «прими данные формы». Для чтения каталога достаточно GET.</dd>
+      <dt>Адрес</dt>
+      <dd>Путь и запрос: <code>/http/news.html?page=2</code>. Параметры после <code>?</code> — часть URL, а не «волшебная строка».</dd>
+      <dt>Версия протокола</dt>
+      <dd><code>HTTP/1.1</code> или <code>HTTP/2</code>; влияет на переиспользование соединения.</dd>
+      <dt>Заголовки</dt>
+      <dd><code>User-Agent</code>, <code>Accept</code>, <code>Referer</code>, <code>Cookie</code> — обычные строки «имя: значение».</dd>
+      <dt>Тело</dt>
+      <dd>У GET обычно пустое; у POST в нём форма или JSON.</dd>
+    </dl>
+    <h3>Ответ: что разбирать</h3>
+    <dl class="kv response-anatomy">
+      <dt>Статус</dt>
+      <dd><code>200</code> — тело стоит читать; <code>404</code> — тело есть, но это страница ошибки; <code>429</code> — вас попросили медленнее.</dd>
+      <dt>Заголовки</dt>
+      <dd>Здесь живёт <code>Content-Type: text/html; charset=utf-8</code> — из него узнают кодировку до разбора текста.</dd>
+      <dt>Тело</dt>
+      <dd>Байты. <code>response.content</code> — байты, <code>response.text</code> — строка, полученная по угаданной кодировке.</dd>
+    </dl>
+    <p class="note"><strong>Проверка на практике.</strong> Откройте <code>hello.html</code> в браузере, нажмите F12 → вкладка Network → Reload. Вы увидите ровно тот байтовый поток, который получит ваш скрипт. Всё, чего нет в этой вкладке, недоступно и парсеру.</p>
+  </section>
+
+  <section id="urllib-vs-requests">
+    <h2>urllib и requests: две библиотеки одной задачи</h2>
+    <p><code>urllib.request</code> входит в стандартную библиотеку Python, <code>requests</code> ставится через <code>pip install requests</code>. Обе делают один и тот же HTTP-запрос; разница — в количестве строк, которое вы напишете на каждую мелочь.</p>
+    <table class="table--striped compare">
+      <caption>Сравнение urllib.request и requests на типовых задачах парсера</caption>
+      <thead>
+        <tr><th>Что сравниваем</th><th>urllib.request</th><th>requests</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Установка</td><td>не нужна: часть стандартной библиотеки</td><td><code>pip install requests</code></td></tr>
+        <tr><td>Простой GET</td><td><code>urlopen(url).read()</code> — байты, декодируем сами</td><td><code>get(url).text</code> — строка и <code>.content</code> — байты</td></tr>
+        <tr><td>Заголовки</td><td>только через <code>Request(url, headers=...)</code></td><td><code>get(url, headers=...)</code></td></tr>
+        <tr><td>Параметры строки</td><td><code>urlencode</code> и ручная склейка</td><td><code>params={'page': 2}</code></td></tr>
+        <tr><td>Куки и сессия</td><td><code>HTTPCookieProcessor</code> + <code>build_opener</code></td><td><code>Session()</code> — куки, таймауты и базовый URL</td></tr>
+        <tr><td>Переиспользование соединения</td><td>вручную, держим opener</td><td>из пула <code>HTTPAdapter</code></td></tr>
+        <tr><td>Таймаут</td><td><code>urlopen(url, timeout=5)</code></td><td><code>get(url, timeout=5)</code></td></tr>
+        <tr><td>Ошибки статуса</td><td>бросает <code>HTTPError</code></td><td>молча возвращает ответ; проверяем <code>raise_for_status()</code></td></tr>
+        <tr><td>Перенаправления</td><td>следует по умолчанию</td><td>следует по умолчанию, <code>allow_redirects=False</code></td></tr>
+      </tbody>
+    </table>
+    <div class="grid grid--2">
+      <div class="card">
+        <h3>Когда достаточно urllib</h3>
+        <ul>
+          <li>Один запрос к одному адресу, зависимостей ставить нельзя.</li>
+          <li>Скрипт живёт на сервере заказчика или в docker-образе без pip.</li>
+          <li>Нужен полный контроль декодирования: сами читаем <code>Content-Type</code> и вызываем <code>.decode()</code>.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Когда берём requests</h3>
+        <ul>
+          <li>Несколько страниц подряд: <code>Session()</code> держит куки и соединения.</li>
+          <li>Нужны заголовки, прокси, повторы, разумный <code>timeout</code>.</li>
+          <li>Дальше разбор через BeautifulSoup: <code>BeautifulSoup(r.text, "html.parser")</code> ложится в одну строку.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="warn"><strong>Общая ловушка обеих библиотек.</strong> Ни <code>urllib</code>, ни <code>requests</code> не выполняют JavaScript. Страницы модуля «JS-страницы» вернут вам пустой <code>&lt;div id="app"&gt;</code> — там нужны Selenium или Playwright.</p>
+  </section>
+
+  <section id="roadmap">
+    <h2>Дорожная карта модуля</h2>
+    <p>Идём по порядку: каждая страница — отдельный урок и отдельная мишень для скрипта.</p>
+    <ol class="roadmap">
+      <li><span class="step">Знакомство</span><a href="hello.html">hello.html</a> — минимальная мишень: заголовок, три абзаца, две ссылки, <code>title</code> и <code>description</code>.</li>
+      <li><span class="step">Разбор</span><a href="anatomy.html">anatomy.html</a> — анатомия документа: <code>doctype</code>, <code>head</code>, комментарии, <code>noscript</code>.</li>
+      <li><span class="step">Культура</span><a href="etiquette.html">etiquette.html</a> — robots.txt, User-Agent, задержки и юридическая рамка.</li>
+      <li><span class="step">Лечение</span><a href="encoding.html">encoding.html</a> — кодировки, «кракозябры», <code>text</code> против <code>content</code>.</li>
+      <li class="plain"><span class="step">Контроль</span>Открываем собранный список в Excel или SQLite и сверяем поля: имя, цена, ссылка, дата обновления.</li>
+    </ol>
+  </section>
+
+  <section id="stranicy-modulya">
+    <h2>Страницы модуля</h2>
+    <div class="grid grid--3">
+      <article class="card page-card">
+        <h3>Первая мишень</h3>
+        <p>Ровно три абзаца с <code>id</code>, одна <code>h1</code> и две ссылки — учиться отличать «то, что искали» от «того, что нашлось».</p>
+        <a class="page-card__link" href="hello.html">Открыть урок</a>
+      </article>
+      <article class="card page-card">
+        <h3>Анатомия HTML</h3>
+        <p>Строение документа по слоям: что парсер видит в <code>head</code>, что в <code>body</code> и куда деваются комментарии.</p>
+        <a class="page-card__link" href="anatomy.html">Открыть урок</a>
+      </article>
+      <article class="card page-card">
+        <h3>Культура парсинга</h3>
+        <p>Читаем robots.txt, ставим <code>User-Agent</code>, спим между запросами и не трогаем чужие данные.</p>
+        <a class="page-card__link" href="etiquette.html">Открыть урок</a>
+      </article>
+      <article class="card page-card">
+        <h3>Кодировки</h3>
+        <p>UTF-8 против windows-1251: почему вместо «Тихой бухты» приходит «Ð¢Ð¸Ñ…Ð°Ñ» и как это починить.</p>
+        <a class="page-card__link" href="encoding.html">Открыть урок</a>
+      </article>
+    </div>
+    <p class="tip">Все страницы модуля — обычные файлы из <code>dist/</code>. Локально их отдаёт <code>node tools/serve.mjs</code> на <code>http://localhost:8000/</code>: там же живут «живые» HTTP-эндпоинты для модуля HTTP.</p>
+  </section>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Первая страница-мишень · Основы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Минимальная мишень: один заголовок h1, три абзаца с id, две ссылки, title и meta description. Первый запрос и первые пять селекторов." />
+</head>
+<body data-page="basics/hello" data-module="basics">
+<!-- inject:nav -->
+<main class="page">
+  <h1 id="main-title">Первая страница-мишень</h1>
+  <p class="lede">Страница намеренно бедная: один заголовок, три абзаца с <code>id</code>, две ссылки и описание в <code>head</code>. Ровно тот объём, на котором удобно проверить, что ваш скрипт работает.</p>
+  <p id="line-greeting" class="hello-line">Магазин «Тихая бухта» отдаёт этот документ по методу GET: открыли адрес — получили HTML целиком, без прокрутки и без JavaScript.</p>
+  <p id="line-task" class="hello-line">Ваша первая задача — не селектор, а выгрузка: заголовок страницы, три абзаца по их <code>id</code> и обе ссылки вместе с адресами.</p>
+  <p id="line-check" class="hello-line">Проверка простая: если в результате четыре строки, а не три, вы забрали ещё и <code>class="lede"</code>. Если семь — захватили навигацию сайта.</p>
+  <p class="hello-links">
+    <a class="start-link" href="anatomy.html">Следующий шаг: анатомия документа</a>
+    ·
+    <a class="start-link" href="../data/products.json">Товары «Тихой бухты» одним JSON-файлом</a>
+  </p>
+  <p class="note">Сохраните ответ в файл и откройте его в редакторе: <code>with open("hello.html", "wb") as f: f.write(r.content)</code>. Дальше учитесь отличать «то, что искали» от «того, что нашлось»: лишний совпавший узел — частая ошибка новичка.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

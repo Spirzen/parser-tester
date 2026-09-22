@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Каталог, страница 1 · Scrapy · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Страница списка товаров для учебной паука Scrapy." />
+  <link rel="next" href="catalog-2.html" />
+</head>
+<body data-page="scrapy/index" data-module="scrapy">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Каталог «Тихая бухта» — страница 1</h1>
+  <p class="lede">Ссылки на карточки, дата обновления, признак наличия.</p>
+  <p class="lede">Сценарий для Scrapy: три страницы списка и двенадцать карточек. Задача — один паук, который проходит список и собирает детали.</p>
+  <section class="note">
+    <p style="margin:0"><strong>start_urls</strong> — только страницы списка: <code>index.html</code>, <code>catalog-2.html</code>, <code>catalog-3.html</code>.
+    Ссылки на карточки забираем через <code>response.css('.catalog-item__link::attr(href)')</code>, переход — <code>response.follow(...)</code>.</p>
+  </section>
+  <ul class="catalog-list">
+      <li class="catalog-item" data-sku="TB-1001" data-category="мебель" data-page="1">
+        <a class="catalog-item__link" href="item-01.html">Складной стул «Бриз»</a>
+        <span class="price" data-price="2490" data-currency="RUB">2 490 ₽</span>
+        <span class="product-card__meta">в наличии: 14</span>
+        <time class="updated" datetime="2026-03-02T10:15:00Z">2026-03-02</time>
+      </li>
+      <li class="catalog-item" data-sku="TB-1002" data-category="горелки" data-page="1">
+        <a class="catalog-item__link" href="item-02.html">Картуш газовой смеси 450 мл</a>
+        <span class="price" data-price="640" data-currency="RUB">640 ₽</span>
+        <span class="product-card__meta">нет в наличии</span>
+        <time class="updated" datetime="2026-02-19T07:40:00Z">2026-02-19</time>
+      </li>
+      <li class="catalog-item" data-sku="TB-2010" data-category="одежда" data-page="1">
+        <a class="catalog-item__link" href="item-03.html">Куртка штормовая «Маяк»</a>
+        <span class="price" data-price="8990" data-currency="RUB">8 990 ₽</span>
+        <span class="product-card__meta">в наличии: 6</span>
+        <time class="updated" datetime="2026-03-11T14:02:00Z">2026-03-11</time>
+      </li>
+      <li class="catalog-item" data-sku="TB-2011" data-category="одежда" data-page="1">
+        <a class="catalog-item__link" href="item-04.html">Носки трекинговые, пара</a>
+        <span class="price" data-price="690" data-currency="RUB">690 ₽</span>
+        <span class="product-card__meta">в наличии: 88</span>
+        <time class="updated" datetime="2026-01-30T09:00:00Z">2026-01-30</time>
+      </li>
+  </ul>
+<nav class="pager-wrap" aria-label="Страницы">
+  <ul class="pager">
+    <li><li class="is-disabled">← назад</li></li>
+    <li><li><span class="is-current" aria-current="page">1</span></li></li>
+    <li><li><a href="catalog-2.html">2</a></li></li>
+    <li><li><a href="catalog-3.html">3</a></li></li>
+    <li><li><a rel="next" href="catalog-2.html">вперёд →</a></li></li>
+  </ul>
+</nav>
+  <h2>Правила краулера</h2>
+  <table class="table--striped">
+    <thead><tr><th>Что</th><th>Значение</th><th>Зачем на этом полигоне</th></tr></thead>
+    <tbody>
+      <tr><td><code>ROBOTSTXT_OBEY</code></td><td>True</td><td>раздел <code>/private/</code> запрещён — краулер его не увидит</td></tr>
+      <tr><td><code>DOWNLOAD_DELAY</code></td><td>1</td><td>вежливость: тот же <code>Crawl-delay</code> в robots.txt</td></tr>
+      <tr><td><code>CONCURRENT_REQUESTS</code></td><td>4</td><td>не превращаем урок в атаку</td></tr>
+      <tr><td><code>FEEDS</code></td><td>items.jsonl</td><td>выгрузка без pipeline</td></tr>
+    </tbody>
+  </table>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

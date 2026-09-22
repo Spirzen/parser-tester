@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Анкета товара: все типы полей сразу · Формы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Большая форма-конструктор: textarea, select multiple, файлы, повторяющиеся имена, скрытые CSS-блоком поля, id-двойники и кнопки с formaction — и что из этого реально уезжает в запрос." />
+</head>
+<body data-page="forms/multi" data-module="forms">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Анкета товара: форма, в которой есть всё</h1>
+  <p class="lede">Здесь собрано то, что на реальных сайтах обычно попадается по отдельности: <code>textarea</code>, <code>select multiple</code>, файлы, одинаковые <code>name</code> у двух полей, <code>fieldset</code> с <code>legend</code>, кнопки с разным <code>formaction</code> и два одинаковых <code>id</code>. Задача разбора — не «найти все <code>input</code>», а предсказать тело запроса.</p>
+
+  <p class="warn"><strong>Форма никуда не отправляется.</strong> Атрибут <code>action</code> здесь — <code>#</code>, потому что на GitHub Pages сервера нет. Кнопка «Сохранить черновик» показывает второй способ: у неё собственный <code>formaction</code>, и по ней браузер уйдёт на <code>results.html</code>. На локальном сервере вместо <code>#</code> подставьте <code>/http/echo</code> — и сравните <code>fields</code> в ответе с таблицей внизу.</p>
+
+  <form id="product-form" method="post" action="#" accept-charset="utf-8" enctype="application/x-www-form-urlencoded"
+        data-form-version="2026-03" data-draft-endpoint="results.html">
+
+    <fieldset id="basic">
+      <legend>Основное</legend>
+      <div class="field-row">
+        <div class="field">
+          <label for="name">Название для склада</label>
+          <input type="text" id="name" name="name" value="Фонарь «Тихая бухта» 400" required />
+        </div>
+        <div class="field">
+          <label for="title">Заголовок в каталоге</label>
+          <input type="text" id="title" name="title" value="Космический фонарь ручной клади" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="sku">Артикул</label>
+          <input type="text" id="sku" name="sku" value="TB-100" pattern="[A-Z]{2}-[0-9]{3}" />
+          <p class="hint"><code>pattern</code> — тоже только браузерная проверка: парсер о ней не знает.</p>
+        </div>
+        <div class="field">
+          <label for="category">Категория</label>
+          <select id="category" name="category">
+            <optgroup label="Свет">
+              <option value="light">Фонари</option>
+              <option value="lamp" selected>Гирлянды</option>
+            </optgroup>
+            <optgroup label="Лагерь">
+              <option value="tent">Палатки</option>
+              <option value="mat">Коврики</option>
+            </optgroup>
+            <optgroup label="Текстиль">
+              <option value="towel">Полотенца</option>
+              <option value="blanket">Одеяла</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="description">Описание</label>
+        <textarea id="description" name="description" rows="4" cols="60">Ровный тёплый свет.
+Работает от трёх батареек, запасной отсек в крышке.
+Проверено на стенде: 12 часов без моргания.</textarea>
+        <p class="hint">У <code>textarea</code> нет атрибута <code>value</code>: содержимое лежит между тегами, поэтому читают <code>.get_text()</code>, а не <code>['value']</code>.</p>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="contact-email">Почта для заявок</label>
+          <input type="email" id="contact-email" name="contact_email" value="press@example.com" />
+        </div>
+        <div class="field">
+          <label for="contact-phone">Телефон склада</label>
+          <input type="tel" id="contact-phone" name="contact_phone" value="+7 000 123-45-67" />
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset id="price-stock">
+      <legend>Цена и склад</legend>
+      <div class="field-row">
+        <div class="field">
+          <label for="price">Цена, ₽</label>
+          <input type="number" id="price" name="price" value="4900" min="0" max="999999" step="50" required />
+        </div>
+        <div class="field">
+          <label for="old_price">Старая цена, ₽</label>
+          <input type="number" id="old_price" name="old_price" min="0" max="999999" step="50" placeholder="пустое поле" />
+          <p class="hint">Атрибута <code>value</code> нет: браузер отправит <code>old_price=</code> — пустую пару, а не отсутствие ключа.</p>
+        </div>
+        <div class="field">
+          <label for="stock">Остаток</label>
+          <input type="number" id="stock" name="stock" value="12" min="-1" step="1" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="warehouse">Склады хранения</label>
+          <select id="warehouse" name="warehouse" multiple size="5">
+            <option value="wh-north">Северный депо</option>
+            <option value="wh-bay" selected>Бухта, ангар 3</option>
+            <option value="wh-hill">Холм</option>
+            <option value="wh-sorted" selected>Сортировочный</option>
+            <option value="wh-return">Возвраты</option>
+          </select>
+          <p class="hint"><code>multiple</code>: выбранных опций несколько, и в запросе <code>name</code> повторится столько же раз.</p>
+        </div>
+        <div class="field">
+          <label for="accent">Цвет плашки товара</label>
+          <input type="color" id="accent" name="accent" value="#1f9d55" />
+          <label for="available_from">Дата появления</label>
+          <input type="date" id="available_from" name="available_from" value="2026-04-01" />
+          <p class="hint">Значения всегда в атрибуте <code>value</code>, причём <code>date</code> — строго в формате <code>ГГГГ-ММ-ДД</code>.</p>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="name">Менеджер партии</label>
+          <input type="text" id="name" name="vendor_manager" value="Ольда Петровна" />
+          <p class="hint">Внимание: у этого поля <strong>двойник по <code>id</code></strong> — он называется так же, как поле «Название для склада» выше. См. сноску под формой.</p>
+        </div>
+        <div class="field">
+          <label for="vendor-code">Код поставщика</label>
+          <input type="text" id="vendor-code" name="vendor_code" value="TB-000" readonly />
+        </div>
+        <div class="field">
+          <label for="moderator-note">Заметка модератора</label>
+          <input type="text" id="moderator-note" name="moderator_note" value="на проверке" disabled />
+        </div>
+      </div>
+      <input type="hidden" name="form_version" value="2026-03" id="form-version" />
+      <input type="hidden" name="locale" value="ru" id="locale" />
+      <div class="hidden-block">
+        <label for="promo-code">Промокод акции (блок скрыт стилями)</label>
+        <input type="text" id="promo-code" name="promo_code" value="SECRET-2026" />
+      </div>
+    </fieldset>
+
+    <fieldset id="tags-fieldset">
+      <legend>Метки и состояние</legend>
+      <p class="muted">Метки: <code>name="tags[]"</code> — квадратные скобки в имени реальны на старых PHP-сайтах, для парсера это просто символы в значении атрибута.</p>
+      <div class="field">
+        <label><input type="checkbox" name="tags[]" value="фонари" checked /> фонари</label>
+        <label><input type="checkbox" name="tags[]" value="лагерь" checked /> лагерь</label>
+        <label><input type="checkbox" name="tags[]" value="новинки" /> новинки</label>
+        <label><input type="checkbox" name="tags[]" value="уценка" checked /> уценка</label>
+        <label><input type="checkbox" name="tags[]" checked /> без значения (придёт <code>on</code>)</label>
+      </div>
+      <div class="field">
+        <span class="mono muted">name="condition"</span>
+        <label><input type="radio" name="condition" value="new" checked /> новый</label>
+        <label><input type="radio" name="condition" value="used" /> б/у</label>
+        <label><input type="radio" name="condition" value="refurb" /> восстановленный</label>
+      </div>
+      <div class="field">
+        <span class="mono muted">name="delivery" — ни одна кнопка не отмечена</span>
+        <label><input type="radio" name="delivery" value="pickup" /> самовывоз</label>
+        <label><input type="radio" name="delivery" value="courier" /> курьер</label>
+        <label><input type="radio" name="delivery" value="post" /> почта</label>
+        <p class="hint">Неотмеченная группа не отправляется целиком: ключа <code>delivery</code> в теле не будет.</p>
+      </div>
+    </fieldset>
+
+    <fieldset id="files-fieldset">
+      <legend>Файлы и спецификация</legend>
+      <div class="field-row">
+        <div class="field">
+          <label for="photo">Главное фото</label>
+          <input type="file" id="photo" name="photo" accept="image/*" />
+        </div>
+        <div class="field">
+          <label for="gallery">Галерея, несколько</label>
+          <input type="file" id="gallery" name="gallery[]" multiple accept="image/*,application/pdf" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="spec">Параметр спецификации</label>
+          <select id="spec" name="spec">
+            <option value="водонепроницаемость" selected>Водонепроницаемость</option>
+            <option value="масса">Масса</option>
+            <option value="материал">Материал</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="spec">Значение параметра</label>
+          <select id="spec" name="spec">
+            <option value="10 АТМ" selected>10 АТМ</option>
+            <option value="20 АТМ">20 АТМ</option>
+            <option value="30 АТМ">30 АТМ</option>
+          </select>
+          <p class="hint">Два разных поля с одним <code>name</code> и одним <code>id</code>: в теле будет две пары подряд, и обычный словарь <code>data=</code> такое не выразит — нужен список кортежей.</p>
+        </div>
+      </div>
+      <div class="field">
+        <label for="units">Единица измерения</label>
+        <input type="text" id="units" name="units" value="шт" list="units-list" />
+        <datalist id="units-list">
+          <option value="шт"></option>
+          <option value="упак"></option>
+          <option value="м"></option>
+          <option value="л"></option>
+        </datalist>
+        <p class="hint"><code>datalist</code> — подсказки ввода, а не поля формы: значений оттуда в запрос не попадает ничего.</p>
+      </div>
+      <div class="field">
+        <label for="notes">Комментарий приёмки</label>
+        <textarea id="notes" name="notes" rows="2" placeholder="пустой textarea уедет пустой парой"></textarea>
+      </div>
+      <div class="field">
+        <label for="barcode">Штрихкод</label>
+        <input type="text" id="barcode" name="barcode" value="4600000000017" />
+      </div>
+    </fieldset>
+
+    <div class="field-row">
+      <button type="submit" class="btn" name="publish" value="yes">Опубликовать</button>
+      <button type="submit" class="btn" name="save" value="draft" formaction="results.html">Сохранить черновик</button>
+      <button type="submit" class="btn" name="preview" value="print" formaction="#" id="preview-btn">Предпросмотр</button>
+      <button type="reset" class="btn">Сбросить</button>
+    </div>
+    <p class="hint">Три кнопки отправки отличаются: у первых двух есть <code>name</code> и <code>value</code>, значит нажатая кнопка добавит в тело свою пару (<code>publish=yes</code> или <code>save=draft</code>). У <code>reset</code> имени нет — он исчезает бесследно.</p>
+  </form>
+
+  <p class="tip"><strong>Про двойники <code>id</code>.</strong> В анкете два раза встречается <code>id="name"</code> (поле «Название для склада» и «Менеджер партии») и два раза <code>id="spec"</code> (оба <code>select</code>). HTML так делать не разрешает, но парсеры ведут себя по-разному: <code>soup.find(id="name")</code> и <code>driver.find_element(By.ID, "name")</code> вернут <em>первый</em> элемент, а <code>soup.select("#name")</code> и <code>find_elements</code> — <em>оба</em>. Отсюда практическое правило: для форм надёжнее искать по <code>name</code> и контексту (<code>fieldset</code>, <code>label</code>), а не по <code>id</code>.</p>
+
+  <section id="predict">
+    <h2>Что уедет в тело запроса</h2>
+    <p>Правило одно: пара <code>name=value</code> появляется, если у элемента есть <code>name</code>, он не отключён и его тип участвует в отправке. Всё остальное — детали типов.</p>
+    <table class="table--striped">
+      <caption>Предсказание тела при отправке «Опубликовать» без изменений в форме</caption>
+      <thead>
+        <tr><th>Ключ</th><th>Значение</th><th>Почему так</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">name</td><td class="mono">Фонарь «Тихая бухта» 400</td><td>обычное текстовое поле</td></tr>
+        <tr><td class="mono">category</td><td class="mono">lamp</td><td>выбрана опция с <code>selected</code>, берётся её <code>value</code>, не текст</td></tr>
+        <tr><td class="mono">description</td><td class="mono">Ровный тёплый свет. …</td><td>текст <code>textarea</code>, переносы строк кодируются в <code>%0D%0A</code> или <code>%0A</code></td></tr>
+        <tr><td class="mono">old_price</td><td class="mono">(пусто)</td><td>значения нет, но ключ есть</td></tr>
+        <tr><td class="mono">warehouse</td><td class="mono">wh-bay, затем wh-sorted</td><td><code>multiple</code>: два повторения одного имени</td></tr>
+        <tr><td class="mono">moderator_note</td><td class="mono">—</td><td><code>disabled</code>: поля нет в запросе</td></tr>
+        <tr><td class="mono">vendor_code</td><td class="mono">TB-000</td><td><code>readonly</code> отправляется как обычно</td></tr>
+        <tr><td class="mono">promo_code</td><td class="mono">SECRET-2026</td><td>блок скрыт <code>display:none</code>, а браузер про внешний вид не спрашивает: поле участвует в отправке</td></tr>
+        <tr><td class="mono">tags[]</td><td class="mono">фонари, лагерь, уценка, on</td><td>только отмеченные; у пятого нет <code>value</code> — приходит <code>on</code></td></tr>
+        <tr><td class="mono">condition</td><td class="mono">new</td><td>отмеченная радиокнопка</td></tr>
+        <tr><td class="mono">delivery</td><td class="mono">—</td><td>ни одна кнопка группы не отмечена</td></tr>
+        <tr><td class="mono">spec</td><td class="mono">водонепроницаемость, 10 АТМ</td><td>два поля с одним именем: нужен <code>data=[('spec', …), ('spec', …)]</code></td></tr>
+        <tr><td class="mono">photo, gallery[]</td><td class="mono">—</td><td>файлы не выбраны; при выборе — только <code>multipart/form-data</code></td></tr>
+        <tr><td class="mono">publish</td><td class="mono">yes</td><td>значения ненажатых кнопок в запрос не попадают: <code>save</code> и <code>preview</code> не поедут</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="code">
+    <h2>Разбор этой формы кодом</h2>
+<pre><code>from bs4 import BeautifulSoup
+import requests
+
+BASE = 'http://localhost:8000'
+html_text = requests.get(f'{BASE}/forms/multi.html', timeout=15).text
+soup = BeautifulSoup(html_text, 'html.parser')
+form = soup.find('form', id='product-form')
+
+# 1. Имена полей без привязки к типу — и сколько раз имя повторяется
+names = [el['name'] for el in form.find_all(attrs={'name': True})]
+doubles = {n for n in names if names.count(n) &gt; 1}          # {'spec'}
+
+# 2. Скрытые поля, которые легко потерять
+hidden = {el['name']: el.get('value', '') for el in form.find_all('input', {'type': 'hidden'})}
+
+# 3. Отмеченные чекбоксы и радиокнопки: remember = checked
+marked = form.find_all('input', {'type': ['checkbox', 'radio']})
+chosen = [(el['name'], el.get('value', 'on')) for el in marked if el.has_attr('checked')]
+
+# 4. Все выбранные опции, включая multiple
+def selected_options(field):
+    return [o.get('value') or o.get_text(strip=True) for o in field.find_all('option')
+            if o.has_attr('selected')]
+
+payload = [
+    ('name', form.find('input', {'name': 'name'})['value']),
+    ('category', selected_options(form.find('select', {'name': 'category'}))[0]),
+    ('description', form.find('textarea', {'name': 'description'}).get_text()),
+    ('warehouse', 'wh-bay'), ('warehouse', 'wh-sorted'),        # список кортежей, не словарь
+    ('spec', 'водонепроницаемость'), ('spec', '10 АТМ'),
+    ('condition', 'new'),
+    ('tags[]', 'фонари'), ('tags[]', 'лагерь'), ('tags[]', 'уценка'), ('tags[]', 'on'),
+    ('publish', 'yes'),
+]
+r = requests.post(f'{BASE}/http/echo', data=payload, timeout=15)
+print(r.json()['fields'])           # сравните с таблицей: delivery и moderator_note там не будет</code></pre>
+    <p>С файлами <code>data=</code> уже не обойтись: <code>requests</code> сам переключится на <code>multipart/form-data</code>, как только вы передадите <code>files=</code>.</p>
+<pre><code>with open('fonar.jpg', 'rb') as fh:
+    r = requests.post(f'{BASE}/http/echo',
+                      data=[('name', 'Фонарь «Тихая бухта» 400'), ('warehouse', 'wh-bay')],
+                      files={'photo': ('fonar.jpg', fh, 'image/jpeg'),
+                             'gallery[]': [('a.jpg', open('a.jpg', 'rb'), 'image/jpeg'),
+                                           ('b.pdf', open('b.pdf', 'rb'), 'application/pdf')]},
+                      timeout=15)
+print(r.json()['content_type'])     # multipart/form-data; boundary=...</code></pre>
+    <p class="note"><strong>Порядок полей важнее, чем кажется.</strong> Браузер идёт по дереву документа, а не по алфавиту: <code>name</code> идёт раньше <code>title</code>, а <code>spec</code> из третьего <code>fieldset</code> — раньше <code>units</code>. На сайтах с подписью тела запроса (некоторые платёжные формы) порядок даёт другую подпись, и запрос отвергается без внятной ошибки.</p>
+  </section>
+
+  <section id="structure">
+    <h2>Структура документа: что считает BeautifulSoup</h2>
+    <table class="table table--compact">
+      <caption>Счётчики по странице <span class="mono">forms/multi.html</span> (считано парсером <span class="mono">html.parser</span>)</caption>
+      <thead>
+        <tr><th>Что считаем</th><th>Селектор</th><th>Сколько</th></tr>
+      </thead>
+      <tbody id="counts-body">
+        <tr><td>Форм на странице</td><td class="mono">soup.find_all('form')</td><td class="mono">1</td></tr>
+        <tr><td>Полей внутри формы (input + select + textarea)</td><td class="mono">form.find_all(['input','select','textarea'])</td><td class="mono">37</td></tr>
+        <tr><td>Только <code>input</code></td><td class="mono">form.find_all('input')</td><td class="mono">31</td></tr>
+        <tr><td>Элементов с <code>name</code> — 37 полей плюс 3 кнопки отправки</td><td class="mono">form.find_all(attrs={'name': True})</td><td class="mono">40</td></tr>
+        <tr><td>Скрытых полей</td><td class="mono">form.find_all('input', type='hidden')</td><td class="mono">2</td></tr>
+        <tr><td>Чекбоксов, из них отмеченных</td><td class="mono">type='checkbox' плюс атрибут checked</td><td class="mono">5 / 4</td></tr>
+        <tr><td>Радиокнопок, из них отмеченных</td><td class="mono">type='radio' плюс атрибут checked</td><td class="mono">6 / 1</td></tr>
+        <tr><td><code>select</code> / всех <code>option</code> / выбранных <code>option</code></td><td class="mono">find_all('select'), find_all('option', selected=True)</td><td class="mono">4 / 21 / 5</td></tr>
+        <tr><td><code>textarea</code></td><td class="mono">form.find_all('textarea')</td><td class="mono">2</td></tr>
+        <tr><td>Файловых полей</td><td class="mono">form.find_all('input', type='file')</td><td class="mono">2</td></tr>
+        <tr><td><code>fieldset</code> и <code>legend</code></td><td class="mono">find_all('fieldset'), find_all('legend')</td><td class="mono">4 / 4</td></tr>
+        <tr><td>Кнопок с собственным адресом</td><td class="mono">find_all(attrs={'formaction': True})</td><td class="mono">2</td></tr>
+        <tr><td>Повторяющихся <code>name</code></td><td class="mono">tags[] — 5, condition — 3, delivery — 3, spec — 2</td><td class="mono">4 имени</td></tr>
+        <tr><td>Повторяющихся <code>id</code> на странице</td><td class="mono">id, встречающийся чаще одного раза</td><td class="mono">2: name, spec</td></tr>
+        <tr><td>Опций, которые полем не являются</td><td class="mono">soup.find('datalist').find_all('option')</td><td class="mono">4</td></tr>
+      </tbody>
+    </table>
+    <p class="muted">Другие страницы модуля: <a href="index.html">разбор форм без браузера</a>, <a href="search.html">GET-поиск</a>, <a href="results.html">результаты с параметрами</a>, <a href="login.html">POST-вход и куки</a>.</p>
+  </section>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

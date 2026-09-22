@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Каталог, страница 2 · Scrapy · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Страница списка товаров для учебной паука Scrapy." />
+  <link rel="prev" href="index.html" />
+  <link rel="next" href="catalog-3.html" />
+</head>
+<body data-page="scrapy/catalog-2" data-module="scrapy">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Каталог «Тихая бухта» — страница 2</h1>
+  <p class="lede">Ссылки на карточки, дата обновления, признак наличия.</p>
+  <p class="lede">Сценарий для Scrapy: три страницы списка и двенадцать карточек. Задача — один паук, который проходит список и собирает детали.</p>
+  <section class="note">
+    <p style="margin:0"><strong>start_urls</strong> — только страницы списка: <code>index.html</code>, <code>catalog-2.html</code>, <code>catalog-3.html</code>.
+    Ссылки на карточки забираем через <code>response.css('.catalog-item__link::attr(href)')</code>, переход — <code>response.follow(...)</code>.</p>
+  </section>
+  <ul class="catalog-list">
+      <li class="catalog-item" data-sku="TB-3020" data-category="свет" data-page="2">
+        <a class="catalog-item__link" href="item-05.html">Фонарь налобный «Светляк 400»</a>
+        <span class="price" data-price="1990" data-currency="RUB">1 990 ₽</span>
+        <span class="product-card__meta">в наличии: 23</span>
+        <time class="updated" datetime="2026-03-05T18:30:00Z">2026-03-05</time>
+      </li>
+      <li class="catalog-item" data-sku="TB-3021" data-category="свет" data-page="2">
+        <a class="catalog-item__link" href="item-06.html">Гирлянда кемпинговая 10 м</a>
+        <span class="price" data-price="1250" data-currency="RUB">1 250 ₽</span>
+        <span class="product-card__meta">в наличии: 41</span>
+        <time class="updated" datetime="2026-02-08T11:20:00Z">2026-02-08</time>
+      </li>
+      <li class="catalog-item" data-sku="TB-4030" data-category="лагерь" data-page="2">
+        <a class="catalog-item__link" href="item-07.html">Палатка двухместная «Бухта 2»</a>
+        <span class="price" data-price="15900" data-currency="RUB">15 900 ₽</span>
+        <span class="product-card__meta">в наличии: 3</span>
+        <time class="updated" datetime="2026-03-13T08:45:00Z">2026-03-13</time>
+      </li>
+      <li class="catalog-item" data-sku="TB-4031" data-category="лагерь" data-page="2">
+        <a class="catalog-item__link" href="item-08.html">Спальник пуховый −7 °C</a>
+        <span class="price" data-price="11400" data-currency="RUB">11 400 ₽</span>
+        <span class="product-card__meta">в наличии: 9</span>
+        <time class="updated" datetime="2026-02-27T16:10:00Z">2026-02-27</time>
+      </li>
+  </ul>
+<nav class="pager-wrap" aria-label="Страницы">
+  <ul class="pager">
+    <li><li><a rel="prev" href="index.html">← назад</a></li></li>
+    <li><li><a href="index.html">1</a></li></li>
+    <li><li><span class="is-current" aria-current="page">2</span></li></li>
+    <li><li><a href="catalog-3.html">3</a></li></li>
+    <li><li><a rel="next" href="catalog-3.html">вперёд →</a></li></li>
+  </ul>
+</nav>
+  <h2>Правила краулера</h2>
+  <table class="table--striped">
+    <thead><tr><th>Что</th><th>Значение</th><th>Зачем на этом полигоне</th></tr></thead>
+    <tbody>
+      <tr><td><code>ROBOTSTXT_OBEY</code></td><td>True</td><td>раздел <code>/private/</code> запрещён — краулер его не увидит</td></tr>
+      <tr><td><code>DOWNLOAD_DELAY</code></td><td>1</td><td>вежливость: тот же <code>Crawl-delay</code> в robots.txt</td></tr>
+      <tr><td><code>CONCURRENT_REQUESTS</code></td><td>4</td><td>не превращаем урок в атаку</td></tr>
+      <tr><td><code>FEEDS</code></td><td>items.jsonl</td><td>выгрузка без pipeline</td></tr>
+    </tbody>
+  </table>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

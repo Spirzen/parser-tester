@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Культура парсинга · Основы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="robots.txt, User-Agent, задержки между запросами, повторные попытки и юридическая рамка: как парсить вежливо и не навредить." />
+</head>
+<body data-page="basics/etiquette" data-module="basics">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Культура парсинга</h1>
+  <p class="lede">Технически возможно собрать почти всё. Законно и этично — заметно меньше. На этом полигоне можно ничего не бояться, но привычку вежливости вырабатывать лучше сразу.</p>
+
+  <h2 id="robots">robots.txt: первый файл проекта</h2>
+  <p>Файл лежит по адресу <a href="../robots.txt">../robots.txt</a> и описывает, что разрешено автоматическим клиентам. Он не защищает данные — это договорённость, которую исполняют честные боты. Читают его до первого запроса к контенту.</p>
+  <h3>Фрагмент файла целиком</h3>
+  <pre data-lang="robots" class="robots-block"><code># Парсинг-тренажёр: парсить можно всё, включая этот файл.
+User-agent: *
+Allow: /
+Disallow: /private/
+Disallow: /*?debug=
+Crawl-delay: 1
+
+User-agent: AggressiveBot/1.0
+Disallow: /
+
+Sitemap: https://example.github.io/parser-tester/sitemap.xml
+Rss: https://example.github.io/parser-tester/feed.xml</code></pre>
+  <table class="table--striped robots-rules">
+    <caption>Разбор директив</caption>
+    <thead>
+      <tr><th>Директива</th><th>Значение на полигоне</th><th>Что делает парсер</th></tr>
+    </thead>
+    <tbody>
+      <tr data-directive="user-agent"><td><code>User-agent: *</code></td><td>блок для всех, кого нет в списке</td><td>ищем свой блок по имени, иначе читаем звёздочный</td></tr>
+      <tr data-directive="allow"><td><code>Allow: /</code></td><td>разрешено всё сверху вниз</td><td>работает как исключение: конкретнее — значит приоритетнее</td></tr>
+      <tr data-directive="disallow"><td><code>Disallow: /private/</code></td><td>раздел с «личными» страницами</td><td>не заходим и не передаём эти URL краулеру</td></tr>
+      <tr data-directive="disallow-mask"><td><code>Disallow: /*?debug=</code></td><td>запрет по маске, <code>*</code> — любые символы</td><td>поддержка масок есть не во всех парсерах robots.txt</td></tr>
+      <tr data-directive="crawl-delay"><td><code>Crawl-delay: 1</code></td><td>одна секунда между запросами</td><td><code>time.sleep(1)</code> в цикле или <code>DOWNLOAD_DELAY = 1</code> в Scrapy</td></tr>
+      <tr data-directive="sitemap"><td><code>Sitemap:</code></td><td>ссылка на карту страниц</td><td>отдаём <code>sitemap.xml</code> как источник URL вместо обхода вручную</td></tr>
+      <tr data-directive="rss"><td><code>Rss:</code></td><td>ссылка на ленту</td><td>лента — бесплатный источник дат и ссылок</td></tr>
+    </tbody>
+  </table>
+  <p class="tip">В Python есть готовый читатель: <code>from urllib.robotparser import RobotFileParser</code>, далее <code>rp.read()</code> и <code>rp.can_fetch(url, ua)</code>. Он не понимает нестандартных строк вроде <code>Rss:</code> — их добираем сами.</p>
+
+  <h2 id="ua">User-Agent: представьтесь</h2>
+  <p>Пустой или чужой <code>User-Agent</code> — самая частая причина молчаливого <code>403</code>. В учебных скриптах пишите честно: имя проекта и контакт, куда админ пришлёт письмо.</p>
+  <table class="table--striped ua-table">
+    <caption>Что писать и чего не писать</caption>
+    <thead>
+      <tr><th>Заголовок User-Agent</th><th>Реакция сервера</th><th>Комментарий</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>python-requests/2.32.3</code></td><td data-verdict="ok">пустят, но вы анонимны</td><td>значение по умолчанию: видно, что это скрипт</td></tr>
+      <tr><td><code>TikhayaParser/1.0 (+contact@example.com)</code></td><td data-verdict="ok">пустят</td><td>правильный вариант для учебного проекта</td></tr>
+      <tr><td>Chrome с одного экземпляра, без задержек</td><td data-verdict="blocked">403 или капча</td><td>притворяться браузером без остальной «обвязки» бесполезно</td></tr>
+      <tr><td>полностью пустой</td><td data-verdict="blocked">400 или 403</td><td>некоторые серверы считают это ошибкой протокола</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">Полный набор заголовков браузера и порядок их отправки разобран в модуле HTTP: <a href="../http/headers.html">../http/headers.html</a>.</p>
+
+  <h2 id="delay">Задержки и повторные запросы</h2>
+  <p>Сервер — не ваш: он считает соединения, платит за трафик и держит очередь. Три практик, которые закрывают 90 % проблем.</p>
+  <ol class="practice">
+    <li><strong>Пауза между запросами.</strong> От <code>Crawl-delay</code> из robots.txt, а если его нет — от 0,5 до 2 секунд. <code>time.sleep(1)</code> в конце цикла, а не в начале: так не спим после последней страницы.</li>
+    <li><strong>Разумный таймаут.</strong> <code>get(url, timeout=(3.05, 27))</code> — 3 секунды на соединение, 27 на чтение. Запрос без <code>timeout</code> может висеть минутами и блокировать урок.</li>
+    <li><strong>Повтор с нарастанием.</strong> При <code>429</code> и <code>503</code> читаем <code>Retry-After</code> и ждём столько, сколько просят; нет заголовка — удваиваем паузу: 1, 2, 4 секунды, максимум три попытки.</li>
+  </ol>
+  <pre data-lang="python"><code>import time
+import requests
+
+UA = {"User-Agent": "TikhayaParser/1.0 (+contact@example.com)"}
+DELAY = 1.0  # Crawl-delay из ../robots.txt
+
+def fetch(url, attempts=3):
+    for attempt in range(attempts):
+        r = requests.get(url, headers=UA, timeout=(3.05, 27))
+        if r.status_code == 200:
+            return r
+        if r.status_code in (429, 503):
+            wait = float(r.headers.get("Retry-After", 2 ** attempt))
+            time.sleep(wait)
+            continue
+        r.raise_for_status()
+    raise RuntimeError(f"сервер не отдал {url} за {attempts} попыток")
+
+for page in range(1, 7):
+    html = fetch(f"http://localhost:8000/pagination/page-{page}.html")
+    time.sleep(DELAY)
+</code></pre>
+  <p class="warn">Одна секунда × 600 страниц = десять минут урока. Это нормально. Десять параллельных запросов без задержки — уже атака, даже на учебный полигон: <code>CONCURRENT_REQUESTS</code> в Scrapy держим маленьким.</p>
+
+  <h2 id="law">Юридическая рамка</h2>
+  <div class="grid grid--2">
+    <div class="card">
+      <h3>Можно</h3>
+      <ul>
+        <li>Читать открытые страницы этого полигона: все данные вымышлены.</li>
+        <li>Сохранять себе публичные технические метаданные: цену, наличие, дату обновления.</li>
+        <li>Использовать официальный API, если он есть, — это быстрее и честнее.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Нельзя без разрешения</h3>
+      <ul>
+        <li>Личные данные, переписка, закрытые разделы, обход авторизации и капчи.</li>
+        <li>Нарушать условия использования реального сайта: <code>ToS</code> важнее технической возможности.</li>
+        <li>Перепубликовать чужой контент целиком — товарные описания и тексты охраняются.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note">На реальных проектах последовательность действий всегда одна: читаем robots.txt и условия использования → ищем API или выгрузку → только потом HTML. Директивы, адреса и e-mail в этом уроке придуманы; на чужом сайте читайте его собственные правила.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

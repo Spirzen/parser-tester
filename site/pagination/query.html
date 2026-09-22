@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Страницы в query-параметрах · Пагинация · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Одна страница, которая показывает содержимое адреса ?page=2&size=6&category=одежда: самый дешёвый вид пагинации и самый надёжный для парсера." />
+</head>
+<body data-page="pagination/query" data-module="pagination">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Пагинация в адресе: файл один, содержимое разное</h1>
+  <p class="lede">Файл <code>query.html</code> на диске один. Что в нём окажется, решают параметры адреса: <code>?page=</code> — номер страницы, <code>?size=</code> — сколько позиций на странице, <code>?category=</code> — фильтр по категории. Для парсера это лучший случай: не нужно ни кликать, ни скроллить — нужно подставлять числа.</p>
+
+  <p class="warn"><strong>Как запустить.</strong> Список строится из <code>../data/products.json</code> через <code>fetch</code>, поэтому откройте полигон локально: <code>node tools/serve.mjs</code> → <code>http://localhost:8000/pagination/query.html?page=2&amp;size=6</code>. По <code>file://</code> список не придёт, и страница покажет только параметры.</p>
+
+  <section id="examples">
+    <h2>Примеры адресов</h2>
+    <ul class="tree">
+      <li><a href="query.html">query.html</a> — без параметров: страница 1, размер 6, все категории.</li>
+      <li><a href="query.html?page=2">query.html?page=2</a> — вторая страница по умолчанию.</li>
+      <li><a href="query.html?page=3">query.html?page=3</a> — третья: позиции 13–18.</li>
+      <li><a href="query.html?page=2&amp;size=6">query.html?page=2&amp;size=6</a> — размер задан явно.</li>
+      <li><a href="query.html?size=4&amp;page=5">query.html?size=4&amp;page=5</a> — порядок параметров не важен, пятая страница по четыре позиции.</li>
+      <li><a href="query.html?page=2&amp;size=6&amp;category=%D0%BE%D0%B4%D0%B5%D0%B6%D0%B4%D0%B0">query.html?page=2&amp;size=6&amp;category=одежда</a> — фильтр по категории, значение в адресе закодировано процентами.</li>
+      <li><a href="query.html?category=%D1%81%D0%B2%D0%B5%D1%82&amp;size=3">query.html?category=свет&amp;size=3</a> — 6 позиций категории «свет», по три на страницу.</li>
+      <li><a href="query.html?page=99&amp;size=6">query.html?page=99&amp;size=6</a> — страницы не существует: список пустой, <code>data-shown="0"</code>, контейнер получает <code>data-empty="true"</code>, а статус говорит, что страниц всего 4.</li>
+    </ul>
+    <p class="note">Каталог тот же, что в двух других режимах: 12 товаров и 12 позиций партии уценки, всего 24. С фильтром по категории счётчики меняются — сверяйте их с таблицей ниже.</p>
+  </section>
+
+  <section class="controls">
+    <p class="status" id="query-status" role="status">читаем параметры адреса…</p>
+    <p>Позиций на странице: <strong id="query-shown">0</strong> из <span id="query-total">0</span> в выборке.</p>
+  </section>
+
+  <ul id="query-catalog" class="catalog" data-mode="query" data-src="../data/products.json" data-page-size="6" data-item-class="product-item" data-status="#query-status" data-count="#query-shown" data-total="#query-total"></ul>
+
+  <nav class="pager-wrap" aria-label="Страницы выборки">
+    <ul class="pager" data-role="query-pager"></ul>
+  </nav>
+
+  <h2>Что пришло в адресе</h2>
+  <table class="table--striped table--compact">
+    <caption>Параметры текущего URL и то, как их понял скрипт</caption>
+    <thead><tr><th>Параметр</th><th>Значение в адресе</th></tr></thead>
+    <tbody data-role="query-echo"></tbody>
+  </table>
+
+  <section id="reference">
+    <h2>Сколько страниц получается</h2>
+    <p>Размер страницы задаёт <code>size</code>, объём выборки — фильтр по категории. Значения посчитаны по каталогу из 24 позиций.</p>
+    <table class="table--striped">
+      <caption>Выборки и число страниц</caption>
+      <thead><tr><th>Категория</th><th>Позиций в каталоге</th><th>Страниц при size=6</th><th>Страниц при size=4</th></tr></thead>
+      <tbody>
+        <tr><td>все (параметра нет)</td><td>24</td><td>4</td><td>6</td></tr>
+        <tr><td>мебель</td><td>2</td><td>1</td><td>1</td></tr>
+        <tr><td>горелки</td><td>2</td><td>1</td><td>1</td></tr>
+        <tr><td>одежда</td><td>4</td><td>1</td><td>1</td></tr>
+        <tr><td>свет</td><td>4</td><td>1</td><td>1</td></tr>
+        <tr><td>лагерь</td><td>4</td><td>1</td><td>1</td></tr>
+        <tr><td>посуда</td><td>4</td><td>1</td><td>1</td></tr>
+        <tr><td>снаряжение</td><td>4</td><td>1</td><td>1</td></tr>
+      </tbody>
+    </table>
+    <p class="muted">Категории и число товаров — из <a href="../data/products.json">../data/products.json</a>: каждой позиции основной партии соответствует позиция уценки, поэтому товаров всегда ровно два раза больше.</p>
+  </section>
+
+  <section id="lesson">
+    <h2>URL-паттерн важнее кликов</h2>
+    <p>Если пагинация живёт в адресе, ломать её не нужно: собираете шаблон, перебираете номера, останавливаетесь по пустому ответу. Клики и прокрутка остаются для тех случаев, когда страница правда не меняет URL.</p>
+<pre><code>import re
+import time
+from urllib.parse import urlencode
+
+import requests
+
+BASE = "http://localhost:8000/pagination/query.html"
+
+def page_params(page, size=6, category=None):
+    params = {"page": page, "size": size}
+    if category:
+        params["category"] = category        # requests сам закодирует кириллицу в %XX
+    return params
+
+page = 1
+seen = set()
+while True:
+    resp = requests.get(BASE, params=page_params(page, category="одежда"), timeout=15)
+    resp.raise_for_status()
+    print("→", resp.url)                     # ...?page=1&size=6&category=%D0%BE%D0%B4%D0%B5%D0%B6%D0%B4%D0%B0
+    text = resp.text
+    empty = 'data-empty="true"' in text
+    for sku in re.findall(r'data-sku="([^"]+)"', text):
+        if sku in seen:
+            break                            # дубль: мы вернулись на уже пройденную страницу
+        seen.add(sku)
+    if empty:
+        break
+    page += 1
+    time.sleep(1)</code></pre>
+    <p class="tip">Тот же перебор, но с ответом API, короче и надёжнее: <code>requests.get(BASE.replace('query.html', '../data/products.json')).json()["products"]</code>. HTML этой страницы — тренажёр на случай, когда JSON недоступен и данные придётся вынимать из разметки.</p>
+    <p class="muted">Соседи по модулю: <a href="index.html">нумерованные страницы</a>, <a href="load-more.html">кнопка «Показать ещё»</a>, <a href="infinite-scroll.html">бесконечная прокрутка</a>.</p>
+  </section>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+<script src="../assets/js/dynamic.js" defer></script>
+</body>
+</html>

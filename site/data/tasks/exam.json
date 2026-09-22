@@ -1,0 +1,65 @@
+{
+  "exam/index": [
+    {
+      "id": "EX-01",
+      "level": 2,
+      "q": "Соберите бланк экзамена: список id заданий и текст каждого вопроса — это основа вашего автопроверщика.",
+      "solution": {
+        "css": ".exam-item",
+        "xpath": "//*[contains(@class,'exam-item')]",
+        "bs4": "[(t['data-task'], t.select_one('.exam-item__q').get_text(' ', strip=True)) for t in soup.select('.exam-item')]"
+      }
+    },
+    {
+      "id": "EX-02",
+      "level": 3,
+      "q": "Докажите, что правильных ответов на странице бланка нет: где они лежат и как их читать, не подглядывая в DOM?",
+      "solution": {
+        "css": "#exam-check",
+        "requests": "requests.get(base + '/data/exam-answers.json').json()['E-01']['a']  # base64",
+        "bs4": "soup.select_one('body')['data-page']"
+      }
+    },
+    {
+      "id": "EX-05",
+      "level": 5,
+      "q": "Режим экзамена отключает подсказки site-wide. Найдите переключатель и объясните, почему проверка возможна только в браузере.",
+      "solution": {
+        "css": "#exam-check",
+        "bs4": "[(b.get('data-mode'), b.get_text(strip=True)) for b in soup.select('#exam-check [data-mode], #exam-check button')]"
+      }
+    }
+  ],
+  "exam/arena": [
+    {
+      "id": "EX-03",
+      "level": 3,
+      "q": "Сверьте бланк с полигоном: у каждого вопроса на arena есть свой якорь. Найдите их и сопоставьте с id задания.",
+      "solution": {
+        "css": "[data-question]",
+        "xpath": "//*[@data-question]",
+        "bs4": "sorted(a['data-question'] for a in soup.select('[data-question]'))"
+      }
+    },
+    {
+      "id": "EX-04",
+      "level": 4,
+      "q": "Соберите ответ на E-03 (сумма data-price витрины) прямо с полигона, а не из файла ответов.",
+      "solution": {
+        "css": "#showcase .card[data-price]",
+        "xpath": "//*[@id='showcase']//*[contains(@class,'card')][@data-price]",
+        "bs4": "sum(int(c['data-price']) for c in soup.select('#showcase .card[data-price]'))"
+      }
+    },
+    {
+      "id": "EX-06",
+      "level": 4,
+      "q": "E-11 прячет цену среди комментариев-приманок. Найдите настоящее значение и покажите, почему regex по тексту не годится.",
+      "solution": {
+        "css": "#final-price",
+        "xpath": "//*[@id='final-price']",
+        "bs4": "soup.select_one('#final-price').get_text(strip=True)"
+      }
+    }
+  ]
+}

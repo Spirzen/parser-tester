@@ -1,0 +1,208 @@
+{
+  "forms/index": [
+    {
+      "id": "F-01",
+      "level": 1,
+      "q": "Соберите с демо-формы метод, адрес и имена полей — ровно то, что потом уйдёт в requests.",
+      "solution": {
+        "css": "#demo-get-form",
+        "xpath": "//*[@id='demo-get-form']",
+        "bs4": "f = soup.select_one('#demo-get-form'); (f['method'], f['action'], [i['name'] for i in f.find_all(['input','select'], recursive=True)])"
+      },
+      "answer": "GET → results.html, поля q и category; у q уже стоит значение «фонарь» — его тоже надо отправить, если повторяете запрос"
+    },
+    {
+      "id": "F-02",
+      "level": 2,
+      "q": "Селект в демо-форме задаёт category. Выпишите его опции так, как их увидит сервер.",
+      "solution": {
+        "css": "#demo-get-form select[name='category'] option",
+        "xpath": "//*[@id='demo-get-form']//select[@name='category']/option",
+        "bs4": "[(o.get('value'), o.get_text(strip=True)) for o in soup.select(\"#demo-get-form select[name='category'] option\")]"
+      },
+      "answer": "три значения — light, camp, textile; в форме поиска у селекта есть ещё и пустая опция, которая означает «не передавать параметр»"
+    }
+  ],
+  "forms/search": [
+    {
+      "id": "F-03",
+      "level": 1,
+      "q": "Составьте карту полей формы поиска: имя → тип. Сколько их всего?",
+      "solution": {
+        "css": "#search-form input, #search-form select, #search-form textarea",
+        "xpath": "//*[@id='search-form']//input | //*[@id='search-form']//select",
+        "bs4": "{i.get('name'): i.get('type') or i.name for i in soup.select('#search-form input, #search-form select')}"
+      },
+      "answer": "16 именованных полей: q, category, price_min, price_max, sort×4, tags×6, in_stock, hide"
+    },
+    {
+      "id": "F-04",
+      "level": 2,
+      "q": "Радиогруппы и чекбоксы отправляют не все значения, а только отмеченные. Соберите допустимые значения каждого name.",
+      "solution": {
+        "css": "input[type='radio'], input[type='checkbox']",
+        "xpath": "//*[@id='search-form']//input[@type='radio' or @type='checkbox']",
+        "bs4": "g = {}; [g.setdefault(i['name'], []).append(i['value']) for i in soup.select(\"#search-form input[type='radio'], #search-form input[type='checkbox']\")]"
+      },
+      "answer": "sort: price-asc, price-desc, rating, reviews (одиночное значение); tags: мембрана, титан, поход, «400 лм», дождевик, IP54 (массив)"
+    },
+    {
+      "id": "F-05",
+      "level": 2,
+      "q": "Соберите GET-урл результатов так, как его построил бы браузер при q=термос, sort=rating, tags=титан, in_stock=1.",
+      "solution": {
+        "python": "urllib.parse.urlencode({'q': 'термос', 'sort': 'rating', 'tags': 'титан', 'in_stock': '1'})",
+        "bs4": "f = soup.select_one('#search-form'); (f['method'].lower(), f['action'])"
+      },
+      "answer": "results.html?q=…&sort=rating&tags=%D1%82%D0%B8%D1%82%D0%B0%D0%BD&in_stock=1 — чекбокс без value отправился бы как пустая строка"
+    },
+    {
+      "id": "F-06",
+      "level": 3,
+      "q": "Кнопка сброса — не поле. Убедитесь, что ваш разбор не считает её параметром запроса.",
+      "solution": {
+        "css": "button[type='reset']",
+        "xpath": "//*[@id='search-form']//button[@type='reset']",
+        "bs4": "[b.get_text(strip=True) for b in soup.select('#search-form button')]"
+      },
+      "answer": "кнопки «Найти» и «Сбросить» стоят в форме, но name у них нет → в query они не попадают"
+    }
+  ],
+  "forms/results": [
+    {
+      "id": "F-07",
+      "level": 1,
+      "q": "Страница результатов показывает, что она прочитала из query. Найдите блок с «эхом» параметров и блок карточек.",
+      "solution": {
+        "css": "#results",
+        "xpath": "//*[@id='results']",
+        "bs4": "[(s.get('id'), len(s.find_all(True))) for s in soup.select('#echo, #results, #params-count')]"
+      },
+      "answer": "блок #results с карточками, таблица «эха» — #echo, счётчики — #params-count и #results-count"
+    },
+    {
+      "id": "F-08",
+      "level": 2,
+      "q": "Откройте results.html совсем без параметров: что отдаёт сервер, а что дорисовывает скрипт?",
+      "solution": {
+        "css": "#no-params",
+        "xpath": "//*[@id='no-params']",
+        "bs4": "soup.select_one('#no-params').get_text(' ', strip=True)[:60]"
+      },
+      "answer": "просьба передать query + пустой #results: параметры читает JS, requests увидит статичный каркас без карточек"
+    },
+    {
+      "id": "F-09",
+      "level": 3,
+      "q": "Сравните «сырой» и закодированный query на странице — это будущие ключи вашего кэша.",
+      "solution": {
+        "css": "#raw-query",
+        "xpath": "//*[@id='raw-query']",
+        "bs4": "[(e.get('id'), e.get_text(strip=True)) for e in soup.select('#raw-query, #encoded-query')]"
+      },
+      "answer": "оба <code> заполняет JS из location.search; нормализуйте порядок параметров перед тем, как считать ответ «уже скачанным»"
+    }
+  ],
+  "forms/login": [
+    {
+      "id": "F-10",
+      "level": 1,
+      "q": "Найдите все скрытые поля формы входа и их значения — без них POST не пройдёт.",
+      "solution": {
+        "css": "input[type='hidden']",
+        "xpath": "//*[@id='login-form']//input[@type='hidden']",
+        "bs4": "{i['name']: i['value'] for i in soup.select(\"#login-form input[type='hidden']\")}"
+      },
+      "answer": "csrf_token=a1b2c3d4e5f6, redirect=/forms/results.html, ts=2026-03-14T09:00:00Z"
+    },
+    {
+      "id": "F-11",
+      "level": 2,
+      "q": "Какие поля обязательны по разметке, а какие предзаполнены и легко теряются при копипасте?",
+      "solution": {
+        "css": "input[required]",
+        "xpath": "//*[@id='login-form']//input[@required]",
+        "bs4": "([i['name'] for i in soup.select('#login-form input[required]')], {i['name']: i['value'] for i in soup.select(\"#login-form input[value]\")})"
+      },
+      "answer": "required: login, password; предзаполнены role=client и partner=«Тихая бухта» — отправляйте их как есть"
+    },
+    {
+      "id": "F-12",
+      "level": 2,
+      "q": "Соберите полный payload POST-запроса входа, не подставляя пароль в код.",
+      "solution": {
+        "python": "{'login': 'student', 'password': os.environ['TRAINER_PASSWORD'], 'csrf_token': 'a1b2c3d4e5f6', 'redirect': '/forms/results.html', 'ts': '2026-03-14T09:00:00Z', 'remember': 'yes'}",
+        "bs4": "f = soup.select_one('#login-form'); (f['method'].lower(), f['action'])"
+      },
+      "answer": "post на «#»: страница-ловушка, на реальном полигоне адрес берётся из serve.mjs; чекбокс remember уезжает значением yes"
+    },
+    {
+      "id": "F-13",
+      "level": 3,
+      "q": "Почему значение csrf нельзя закешировать навсегда? Найдите поле-«часы» и объясните связь.",
+      "solution": {
+        "css": "input[name='ts']",
+        "xpath": "//*[@id='login-form']//input[@name='ts']",
+        "bs4": "soup.select_one(\"#login-form input[name='ts']\")['value']"
+      },
+      "answer": "ts=2026-03-14T09:00:00Z фиксирует момент выдачи формы: на живых сайтах токен протухает вместе с сессией, поэтому csrf берут из свежего GET"
+    }
+  ],
+  "forms/multi": [
+    {
+      "id": "F-14",
+      "level": 1,
+      "q": "Опишите большой форма-конструктор: сколько fieldset и как они называются.",
+      "solution": {
+        "css": "#product-form fieldset",
+        "xpath": "//*[@id='product-form']//fieldset",
+        "bs4": "[fs.legend.get_text(strip=True) for fs in soup.select('#product-form fieldset')]"
+      },
+      "answer": "4 блока: Основное, Цена и склад, Метки и состояние, Файлы и спецификация"
+    },
+    {
+      "id": "F-15",
+      "level": 2,
+      "q": "Сгруппируйте поля по type — так обычно строят валидатор перед отправкой.",
+      "solution": {
+        "css": "#product-form input",
+        "xpath": "count(//*[@id='product-form']//input)",
+        "bs4": "{i.get('type') or i.name: 1 for i in soup.select('#product-form input, #product-form select, #product-form textarea')}"
+      },
+      "answer": "text 9, radio 6, checkbox 5, select 4, number 3, textarea 2, hidden 2, file 2, и по одному email/tel/color/date"
+    },
+    {
+      "id": "F-16",
+      "level": 2,
+      "q": "Имя поля может быть массивом. Найдите такие поля и объясните, как они поедут в запросе.",
+      "solution": {
+        "css": "input[name*='[]']",
+        "xpath": "//*[@id='product-form']//input[contains(@name,'[]')]",
+        "bs4": "sorted({i['name'] for i in soup.select(\"#product-form [name*='[]']\")})"
+      },
+      "answer": "tags[] (и родственники с []): urlencode повторяет имя, сервер получает список, а не последнюю запись"
+    },
+    {
+      "id": "F-17",
+      "level": 3,
+      "q": "disabled и readonly поля ведут себя по-разному при отправке. Найдите их и скажите, кто доедет до сервера.",
+      "solution": {
+        "css": "input[disabled], input[readonly]",
+        "xpath": "//*[@id='product-form']//input[@disabled or @readonly]",
+        "bs4": "[(i['name'], 'disabled' if i.has_attr('disabled') else 'readonly') for i in soup.select('#product-form input[disabled], #product-form input[readonly]')]"
+      },
+      "answer": "readonly уезжает в payload, disabled — нет (браузер его вырезает); парсить надо то, что реально уходит"
+    },
+    {
+      "id": "F-18",
+      "level": 3,
+      "q": "Форма с enctype multipart: соберите файлы, которые нужно передать в requests.files.",
+      "solution": {
+        "css": "input[type='file']",
+        "xpath": "//*[@id='product-form']//input[@type='file']",
+        "bs4": "f = soup.select_one('#product-form'); (f.get('enctype'), [i['name'] for i in soup.select(\"#product-form input[type='file']\")])"
+      },
+      "answer": "два file-поля; без enctype='multipart/form-data' в requests уйдёт urlencoded и сервер не увидит файл"
+    }
+  ]
+}

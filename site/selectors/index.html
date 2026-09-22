@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CSS, XPath и BeautifulSoup: таблица соответствий · Селекторы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Один и тот же узел тремя способами: таблица соответствий CSS ↔ XPath ↔ BeautifulSoup, правила и подводные камни селекторов." />
+</head>
+<body data-page="selectors/index" data-module="selectors">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Модуль 2 · Селекторы: CSS, XPath и BeautifulSoup</h1>
+  <p class="lede">Одна задача — три синтаксиса. Держите перед глазами таблицу соответствий: она экономит час, когда XPath «умеет», а CSS — нет, и наоборот.</p>
+  <ul class="breadcrumbs">
+    <li><a href="../index.html">Главная</a></li>
+    <li>Селекторы</li>
+  </ul>
+
+  <h2 id="sravnienie">Одна задача — три синтаксиса</h2>
+  <p class="muted">Столбец «BeautifulSoup» написан для <code>soup</code>, полученной как <code>BeautifulSoup(html, "html.parser")</code>. В bs4 работают и CSS (<code>soup.select</code>), и XPath (<code>soup.xpath</code> — только если парсер <code>lxml</code> или <code>lxml-xml</code>).</p>
+  <table class="table--striped sync">
+    <caption>Соответствия между CSS, XPath и BeautifulSoup</caption>
+    <thead>
+      <tr><th>Что выбираем</th><th>CSS</th><th>XPath</th><th>BeautifulSoup</th></tr>
+    </thead>
+    <tbody>
+      <tr data-op="tag"><td>по тегу</td><td><code>div</code></td><td><code>//div</code></td><td><code>soup.find_all("div")</code></td></tr>
+      <tr data-op="id"><td>по id</td><td><code>#product-card-3</code></td><td><code>//*[@id="product-card-3"]</code></td><td><code>soup.find(id="product-card-3")</code></td></tr>
+      <tr data-op="class"><td>по классу</td><td><code>.product-card</code></td><td><code>*[contains(concat(" ", @class, " "), " product-card ")]</code></td><td><code>soup.select(".product-card")</code></td></tr>
+      <tr data-op="class-multi"><td>несколько классов</td><td><code>.card.page-card</code></td><td><code>*[contains(@class, "card")][contains(@class, "page-card")]</code></td><td><code>soup.select(".card.page-card")</code></td></tr>
+      <tr data-op="attr"><td>атрибут существует</td><td><code>[data-sku]</code></td><td><code>//*[@data-sku]</code></td><td><code>soup.select("[data-sku]")</code></td></tr>
+      <tr data-op="attr-eq"><td>атрибут равен значению</td><td><code>[data-currency="RUB"]</code></td><td><code>//*[@data-currency="RUB"]</code></td><td><code>soup.find_all(attrs={"data-currency": "RUB"})</code></td></tr>
+      <tr data-op="attr-start"><td>значение начинается с</td><td><code>a[href^="../scrapy/"]</code></td><td><code>//a[starts-with(@href, "../scrapy/")]</code></td><td><code>soup.select('a[href^="../scrapy/"]')</code></td></tr>
+      <tr data-op="attr-end"><td>значение заканчивается на</td><td><code>a[href$=".html"]</code></td><td><code>//a[substring(@href, string-length(@href) - 4) = ".html"]</code></td><td><code>soup.select('a[href$=".html"]')</code></td></tr>
+      <tr data-op="attr-has"><td>значение содержит подстроку</td><td><code>[href*="item-"]</code></td><td><code>//a[contains(@href, "item-")]</code></td><td><code>soup.select('[href*="item-"]')</code></td></tr>
+      <tr data-op="attr-regex"><td>значение по регулярке</td><td>нет средства</td><td><code>matches()</code> только в XPath 2.0</td><td><code>soup.find_all("a", href=re.compile(r"item-\d+"))</code></td></tr>
+      <tr data-op="child"><td>прямой ребёнок</td><td><code>ul.tag-list &gt; li</code></td><td><code>//ul[@class="tag-list"]/li</code></td><td><code>soup.select("ul.tag-list > li")</code></td></tr>
+      <tr data-op="descendant"><td>любой потомок</td><td><code>article a</code></td><td><code>//article//a</code></td><td><code>soup.select("article a")</code></td></tr>
+      <tr data-op="sibling-next"><td>сосед сразу после</td><td><code>h3 + p</code></td><td><code>//h3/following-sibling::p[1]</code></td><td><code>soup.select("h3 + p")</code></td></tr>
+      <tr data-op="sibling-all"><td>все соседи после</td><td><code>h3 ~ p</code></td><td><code>//h3/following-sibling::p</code></td><td><code>soup.select("h3 ~ p")</code></td></tr>
+      <tr data-op="nth-child"><td>по позиции среди детей</td><td><code>li:nth-child(2)</code></td><td><code>(//ul/li)[2]</code> — позиция считается иначе</td><td><code>soup.select("li:nth-child(2)")</code></td></tr>
+      <tr data-op="nth-type"><td>каждый чётный своего типа</td><td><code>li:nth-of-type(2n)</code></td><td><code>//ul/li[(position() mod 2) = 0]</code></td><td><code>soup.select("li:nth-of-type(2n)")</code></td></tr>
+      <tr data-op="first-last"><td>первый и последний</td><td><code>tbody tr:first-child</code></td><td><code>//tbody/tr[1]</code></td><td><code>soup.select("tbody tr:first-child")</code></td></tr>
+      <tr data-op="text"><td>по тексту узла</td><td>нет средства (:contains только в jQuery)</td><td><code>//*[contains(text(), "Подробнее")]</code></td><td><code>soup.find_all(string=re.compile("Подробнее"))</code></td></tr>
+      <tr data-op="parent"><td>родитель</td><td>нет средства</td><td><code>//li/parent::ul</code></td><td><code>li.parent</code></td></tr>
+      <tr data-op="has-child"><td>«внутри есть такой потомок»</td><td><code>article:has(> .price)</code> — CSS 4, нужен soupsieve ≥ 2.1</td><td><code>//article[.//span[@class="price"]]</code></td><td><code>soup.select("article:has(> .price)")</code></td></tr>
+      <tr data-op="union"><td>несколько тегов сразу</td><td><code>h2, h3</code></td><td><code>//h2 | //h3</code></td><td><code>soup.find_all(["h2", "h3"])</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="pravila">Правила, которые экономят час</h2>
+  <ol class="rules">
+    <li>Селектор обязан быть <strong>наименее общим из работающих</strong>: <code>article.product-card &gt; h3</code> лучше, чем <code>h3</code>.</li>
+    <li>Держите в разметке стабильные <code>data-*</code> признаки: классы переименовывают при редизайне, <code>data-sku</code> живёт годами.</li>
+    <li>Проверяйте <code>len()</code>, а не «первый попавшийся» узел: молча лишний элемент в выборке портит весь отчёт.</li>
+    <li>Ищите от корня содержимого, а не документа: <code>card.select_one(".price")</code> внутри цикла, а не <code>soup.select_one(".price")</code>.</li>
+    <li>Считайте пробелы и переносы: <code>get_text()</code> вернёт текст со всеми табуляциями, нужен <code>strip=True</code> и <code>separator=" "</code>.</li>
+    <li>Регистр тегов и атрибутов парсер снижает, значение атрибута — нет: <code>[data-category="Мебель"]</code> не найдёт <code>мебель</code>.</li>
+  </ol>
+
+  <h2 id="podvodye-kamni">Подводные камни</h2>
+  <table class="table--striped pitfalls">
+    <caption>Частые причины «пустого» результата</caption>
+    <thead>
+      <tr><th>Ситуация</th><th>Почему пусто</th><th>Что делать</th><th>Частота</th></tr>
+    </thead>
+    <tbody>
+      <tr data-severity="high"><td>Селектор работает в DevTools, но не в <code>requests</code></td><td>в браузере дерево построил JavaScript</td><td>Selenium / Playwright или поиск JSON-эндпоинта</td><td data-severity-value="5">очень часто</td></tr>
+      <tr data-severity="high"><td>Нашли 13 карточек вместо 12</td><td>класс-двойник <code>.product-card--similar</code> попал под <code>[class*="product-card"]</code></td><td>точное совпадение класса и тег-ограничитель</td><td data-severity-value="4">часто</td></tr>
+      <tr data-severity="medium"><td>Пустой <code>get_text()</code> у найденного узла</td><td>текст лежит в дочернем <code>span</code> или в атрибуте</td><td><code>get_text()</code> против <code>["data-price"]</code></td><td data-severity-value="4">часто</td></tr>
+      <tr data-severity="medium"><td>XPath нашёл, CSS — нет, и наоборот</td><td><code>//div[3]</code> считает всех детей, <code>nth-child</code> — всех, <code>nth-of-type</code> — только свой тип</td><td>уточняйте область и тип узла</td><td data-severity-value="3">периодически</td></tr>
+      <tr data-severity="low"><td>Скрытый элемент в выборке</td><td><code>display:none</code> и <code>hidden</code> не мешают ни bs4, ни <code>find_element</code></td><td>фильтровать по атрибуту стиля или ждать <code>visibility_of</code></td><td data-severity-value="2">редко, но обидно</td></tr>
+      <tr data-severity="low"><td>Дубли ссылок в результате</td><td>одна и та же карточка продублирована в «похожих товарах»</td><td><code>set()</code> по <code>href</code> или <code>data-sku</code></td><td data-severity-value="3">периодически</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="stranicy">Страницы модуля</h2>
+  <div class="grid grid--3 module-pages">
+    <article class="card page-card">
+      <h3>Вложенность</h3>
+      <p>Дерево на пять уровней, два дерева списков, соседи и родственники: <code>parent</code>, <code>child</code>, <code>uncle</code>.</p>
+      <a class="page-card__link" href="nesting.html">К дереву узлов</a>
+    </article>
+    <article class="card page-card">
+      <h3>Атрибуты</h3>
+      <p><code>data-*</code>, <code>aria-*</code>, регистр, кавычки и класс из трёх значений.</p>
+      <a class="page-card__link" href="attributes.html">К атрибутам</a>
+    </article>
+    <article class="card page-card">
+      <h3>Товарные карточки</h3>
+      <p>Двенадцать карточек из <code>data/products.json</code> и две ловушки: скрытая и похожая.</p>
+      <a class="page-card__link" href="products.html">К каталогу</a>
+    </article>
+    <article class="card page-card">
+      <h3>Шум в классах</h3>
+      <p>Одинаковые <code>.card</code>, <code>.item</code>, <code>.row</code> в четырёх секциях: учимся областям поиска.</p>
+      <a class="page-card__link" href="ambiguous.html">К шуму</a>
+    </article>
+    <article class="card page-card">
+      <h3>Большой список</h3>
+      <p>240 строк журнала заказов: фильтры, скрытые строки, подсчёт суммы.</p>
+      <a class="page-card__link" href="long-list.html">К журналу</a>
+    </article>
+  </div>
+  <p class="tip">На каждой странице в правом нижнем углу живёт панель «Тренажёр селекторов»: вставьте CSS, XPath или регулярку и сразу увидите число совпадений. Быстрый переход к проверке: <a href="products.html?q=article.product-card">products.html?q=article.product-card</a>.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

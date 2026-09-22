@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Поиск по каталогу · Формы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="GET-форма поиска: поля q, category, sort, tags, цена; как из формы получается URL и почему кириллица в нём выглядит как проценты." />
+</head>
+<body data-page="forms/search" data-module="forms">
+<!-- inject:nav -->
+<main class="page">
+  <h1>GET-форма: семь полей, один адрес</h1>
+  <p class="lede">Форма ниже ничего не отправляет на сервер — она просто строит адрес страницы <code>results.html</code>. Ровно то же самое делает парсер: собирает query-параметры и идёт по полученному URL.</p>
+
+  <form id="search-form" method="get" action="results.html" accept-charset="utf-8" data-test="search">
+    <div class="field">
+      <label for="q">Что ищем</label>
+      <input type="text" id="q" name="q" placeholder="например: термос" autocomplete="off" />
+      <p class="hint">Одно текстовое поле — один параметр <code>q</code>. Пустое поле из адреса не исчезает: будет <code>q=</code> со пустым значением.</p>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="category">Категория</label>
+        <select id="category" name="category">
+          <option value="">— не выбрано —</option>
+          <option value="мебель">Мебель</option>
+          <option value="горелки">Горелки</option>
+          <option value="одежда">Одежда</option>
+          <option value="свет">Свет</option>
+          <option value="лагерь">Лагерь</option>
+          <option value="посуда">Посуда</option>
+          <option value="снаряжение">Снаряжение</option>
+        </select>
+        <p class="hint">В адрес уходит <code>value</code>, а не видимый текст: <code>category=свет</code>, а не <code>category=Свет</code>.</p>
+      </div>
+
+      <div class="field">
+        <label for="price_min">Цена от, ₽</label>
+        <input type="number" id="price_min" name="price_min" min="0" max="20000" step="10" placeholder="0" />
+      </div>
+      <div class="field">
+        <label for="price_max">Цена до, ₽</label>
+        <input type="number" id="price_max" name="price_max" min="0" max="20000" step="10" placeholder="20000" />
+      </div>
+    </div>
+
+    <fieldset class="field">
+      <legend>Сортировка</legend>
+      <label><input type="radio" name="sort" value="price-asc" /> сначала дешевле</label>
+      <label><input type="radio" name="sort" value="price-desc" /> сначала дороже</label>
+      <label><input type="radio" name="sort" value="rating" checked /> по рейтингу</label>
+      <label><input type="radio" name="sort" value="reviews" /> по числу отзывов</label>
+      <p class="hint">У группы радиокнопок одно имя <code>sort</code>: в адрес попадёт ровно одно значение, причём <code>checked</code> существует уже в разметке.</p>
+    </fieldset>
+
+    <fieldset class="field">
+      <legend>Теги</legend>
+      <label><input type="checkbox" name="tags" value="мембрана" /> мембрана</label>
+      <label><input type="checkbox" name="tags" value="титан" /> титан</label>
+      <label><input type="checkbox" name="tags" value="поход" /> поход</label>
+      <label><input type="checkbox" name="tags" value="400 лм" /> 400 лм</label>
+      <label><input type="checkbox" name="tags" value="дождевик" /> дождевик</label>
+      <label><input type="checkbox" name="tags" value="IP54" /> IP54</label>
+      <p class="hint">Несколько галочек с одним именем — повторяющийся параметр: <code>?tags=титан&amp;tags=поход</code>.</p>
+    </fieldset>
+
+    <div class="field">
+      <label><input type="checkbox" name="in_stock" value="1" /> только в наличии</label>
+      <label><input type="checkbox" name="hide" value="1" checked disabled /> скрыть промо (поле отключено — в запрос не пойдёт)</label>
+      <p class="hint">Отмеченная и включённая галочка даёт <code>in_stock=1</code>; неотмеченное поле исчезает из адреса совсем, а <code>disabled</code> не участвует в отправке даже отмеченным.</p>
+    </div>
+
+    <div class="field-row">
+      <button type="submit" class="btn">Найти</button>
+      <button type="reset" class="ghost">Сбросить</button>
+    </div>
+
+    <p class="hint">Форма собирает адрес вида <code>results.html?q=термос&amp;category=посуда&amp;price_max=3500&amp;sort=price-asc</code> и переходит по нему: сервер увидит обычный GET-запрос, тело будет пустым.</p>
+  </form>
+
+  <section id="encoding">
+    <h2>Кириллица в query: что видно в адресе</h2>
+    <p>Браузер кодирует значение по UTF-8 и заменяет «небезопасные» символы на <code>%XX</code>. Один кириллический символ — два байта, то есть два <code>%</code>-блока.</p>
+    <table class="table--striped table--compact">
+      <caption>Одно и то же значение в трёх записях</caption>
+      <thead><tr><th>Как выглядит</th><th>Строка</th><th>Комментарий</th></tr></thead>
+      <tbody>
+        <tr><td>в форме</td><td class="mono">свет</td><td>то, что выбирает пользователь.</td></tr>
+        <tr><td>в адресной строке</td><td class="mono">?category=%D1%81%D0%B2%D0%B5%D1%82</td><td>UTF-8 и процентное кодирование: 12 символов вместо 4.</td></tr>
+        <tr><td>в Python</td><td class="mono">urlencode({'category': 'свет'})</td><td><code>requests</code> делает это сам, если передавать словарь в <code>params=</code>.</td></tr>
+        <tr><td>пробел и «+»</td><td class="mono">?q=400+%D0%BB%D0%BC / ?q=400%20%D0%BB%D0%BC</td><td>форма ставит <code>+</code>, а <code>quote_plus</code> умеет и <code>%20</code>: сравнивайте адреса после нормализации.</td></tr>
+      </tbody>
+    </table>
+<pre><code>from urllib.parse import urlencode, quote_plus, parse_qsl
+
+urlencode({'q': '400 лм', 'category': 'свет'})   # q=400+%D0%BB%D0%BC&amp;category=%D1%81%D0%B2%D0%B5%D1%82
+parse_qsl('q=400+%D0%BB%D0%BC')                  # [('q', '400 лм')]  — обратная операция</code></pre>
+    <p class="warn">Ручное кодирование — частый баг: <code>requests.get(url + '?q=' + 'термос')</code> шлёт не-ASCII в заголовке запроса и на части серверов даёт 400. Передавайте значения в <code>params=</code> и не собирайте адрес конкатенацией.</p>
+  </section>
+
+  <section id="fields">
+    <h2>Поля формы одним списком</h2>
+    <p>Соберите атрибуты всех полей — это и есть «контракт» сайта: имена, типы и допустимые значения.</p>
+<pre><code>form = soup.find('form', id='search-form')
+fields = []
+for node in form.find_all(['input', 'select', 'textarea']):
+    value = None
+    if node.name == 'select':
+        selected = node.find('option', selected=True)
+        value = selected['value'] if selected else None
+    else:
+        value = node.get('value')
+    fields.append({'name': node.get('name'), 'type': node.get('type') or node.name, 'value': value})</code></pre>
+    <p class="muted">Результат фильтрации смотрите на странице <a href="results.html">results.html</a>; как отправить POST без браузера — на <a href="index.html">главной странице модуля</a> и в <a href="login.html">форме входа</a>.</p>
+  </section>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Кнопка «Показать ещё» · Пагинация · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Список из 24 позиций, который догружается кнопкой через ../data/products.json: как парсить то, чего нет в исходном HTML." />
+</head>
+<body data-page="pagination/load-more" data-module="pagination">
+<!-- inject:nav -->
+<main class="page">
+  <h1>«Показать ещё»: список догружается скриптом</h1>
+  <p class="lede">В исходном HTML списка нет вообще: есть пустой контейнер, кнопка и счётчик. Товары приходят из JSON-файла и дорисовываются по клику — ровно так же ведут себя реальные интернет-магазины с кнопкой «Показать ещё».</p>
+
+  <p class="warn"><strong>Как запустить.</strong> Страница обращается к <code>../data/products.json</code> через <code>fetch</code>, а по протоколу <code>file://</code> браузер такие запросы блокирует. Поднимите локальный сервер полигона: <code>node tools/serve.mjs</code> и откройте <code>http://localhost:8000/pagination/load-more.html</code>. Без сервера список останется пустым — это тоже часть урока.</p>
+
+  <section class="controls">
+    <p class="status" id="load-status" role="status">подготовка списка…</p>
+    <p>Показано <strong id="shown">0</strong> из <span id="total">0</span> позиций.</p>
+    <button id="load-more" class="btn" type="button" disabled>Загрузка…</button>
+  </section>
+
+  <ul id="catalog" class="catalog" data-mode="load-more" data-src="../data/products.json" data-page-size="8" data-item-class="product-item" data-button="#load-more" data-status="#load-status" data-count="#shown" data-total="#total"></ul>
+
+  <section id="how">
+    <h2>Что здесь происходит</h2>
+    <dl class="kv">
+      <dt>Контейнер</dt>
+      <dd><code>ul#catalog</code> с атрибутом <code>data-mode="load-more"</code>: режимы <code>infinite</code> и <code>query</code> обрабатывает тот же файл <code>../assets/js/dynamic.js</code>.</dd>
+      <dt>Источник данных</dt>
+      <dd><code>data-src="../data/products.json"</code> — 12 товаров. Скрипт добавляет к ним 12 позиций партии уценки (артикул с суффиксом <code>-У</code>, цена ниже на 20 %), всего 24 позиции, порциями по 8.</dd>
+      <dt>Элемент списка</dt>
+      <dd><code>li.product-item</code> с <code>data-sku</code>, <code>data-price</code>, <code>data-category</code>, <code>data-index</code>, <code>data-batch</code> (значения — <code>основная партия</code> и <code>уценка</code>); у позиций без остатка добавлен <code>data-out-of-stock="true"</code>.</dd>
+      <dt>Счётчик</dt>
+      <dd><code>#shown</code> — уже отрисовано, <code>#total</code> — всего в источнике. После полной загрузки кнопка получает <code>disabled</code>, а статус — текст «всё».</dd>
+      <dt>Состояния</dt>
+      <dd>«подготовка списка…», «идёт загрузка…», «готово: показано 8 из 24», «всё: показано 24 из 24, новых позиций сервер не отдаёт».</dd>
+    </dl>
+  </section>
+
+  <section id="parse">
+    <h2>Как это парсить</h2>
+    <table class="table--striped">
+      <caption>Три взгляда на одну страницу</caption>
+      <thead><tr><th>Способ</th><th>Что увидите</th><th>Комментарий</th></tr></thead>
+      <tbody>
+        <tr><td><code>requests.get(url)</code> + BeautifulSoup</td><td>0 элементов <code>.product-item</code></td><td>HTML без JavaScript: контейнер пустой, счётчики на нуле.</td></tr>
+        <tr><td><code>requests.get('../data/products.json')</code></td><td>12 товаров в <code>data.products</code></td><td>Правильный ответ: 24 позиции списка — производные от этих 12, партия уценки достраивается в браузере.</td></tr>
+        <tr><td>Selenium / Playwright</td><td>8 позиций сразу, 24 после трёх кликов</td><td>Нужно ожидание: элемент появляется не мгновенно.</td></tr>
+      </tbody>
+    </table>
+<pre><code>import time
+
+import requests
+from bs4 import BeautifulSoup
+
+BASE = "http://localhost:8000"
+
+soup = BeautifulSoup(requests.get(BASE + "/pagination/load-more.html", timeout=15).text, "html.parser")
+print(len(soup.select("li.product-item")))          # 0 — списка в HTML нет
+
+data = requests.get(BASE + "/data/products.json", timeout=15).json()
+print(len(data["products"]), data["meta"]["shop"])  # 12 «Тихая бухта»</code></pre>
+<pre><code>from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+driver = webdriver.Chrome()
+driver.get(BASE + "/pagination/load-more.html")
+WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "li.product-item")))
+
+while driver.find_element(By.ID, "load-more").is_enabled():   # в конце кнопка становится неактивной
+    driver.find_element(By.ID, "load-more").click()
+    time.sleep(1)                                             # ждём порцию, а не гадаем
+
+items = driver.find_elements(By.CSS_SELECTOR, "li.product-item")
+print(len(items), items[0].get_attribute("data-sku"))         # 24 TB-1001</code></pre>
+    <p class="tip">Признак конца списка на этой странице — <code>disabled</code> у кнопки и слово «всё» в статусе. Ни то ни другое не попадает в HTML, который видит <code>requests</code>: если парсите без браузера, читайте JSON, а не кликайте.</p>
+  </section>
+
+  <section id="pattern">
+    <h2>Разметка контейнера</h2>
+    <p>Все настройки режима лежат в атрибутах контейнера — их и стоит доставать из чужой страницы, когда API неизвестен.</p>
+<pre><code>box = soup.find(id="catalog")
+box["data-mode"]          # 'load-more'
+box["data-src"]           # '../data/products.json'  ← вот настоящий источник данных
+box["data-page-size"]     # '8'
+box["data-item-class"]    # 'product-item'</code></pre>
+    <p class="muted">Соседи по модулю: <a href="index.html">нумерованные страницы</a>, <a href="infinite-scroll.html">бесконечная прокрутка</a>, <a href="query.html">пагинация через query-параметры</a>.</p>
+  </section>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+<script src="../assets/js/dynamic.js" defer></script>
+</body>
+</html>

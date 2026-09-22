@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Навигация по дереву · HTML-разметка · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Как устроено дерево BeautifulSoup: parent, children, siblings, downstream, find и find_all, и чем оно отличается от DOM браузера." />
+</head>
+<body data-page="markup/index" data-module="markup">
+<!-- inject:nav -->
+<main class="page">
+  <h1>HTML-разметка и навигация по дереву</h1>
+  <p class="lede">Парсер не «ищет текст»: он ходит по дереву узлов. Здесь — карта дерева, все способы перехода между узлами в BeautifulSoup и разбор отличий bs4-дерева от DOM браузера.</p>
+
+  <nav class="grid grid--2" aria-label="Страницы модуля">
+    <a class="card" href="headings.html"><h3>Заголовки</h3><p class="muted">h1–h6, уровни вразнобой, data-level, мусор в футере секции.</p></a>
+    <a class="card" href="lists.html"><h3>Списки</h3><p class="muted">Вложенность до четырёх уровней, dl/dt/dd, смешанные списки, пустой ul, скрытые li.</p></a>
+    <a class="card" href="tables.html"><h3>Таблицы</h3><p class="muted">thead/tbody/tfoot, colspan и rowspan, вложенная таблица, разъехавшиеся строки, CSV рядом.</p></a>
+    <a class="card" href="broken.html"><h3>Битая разметка</h3><p class="muted">Незакрытые теги, CDATA, сущности и три парсера на одном фрагменте.</p></a>
+  </nav>
+
+  <h2 id="tree">1. Дерево вместо текста</h2>
+  <p>BeautifulSoup разбирает строку HTML в дерево узлов: теги становятся объектами <code>Tag</code>, текст между ними — узлами <code>NavigableString</code>, комментарии — <code>Comment</code>. Узел хранит родителей и детей, поэтому переход «вверх-вниз-вбок» — это обращение к атрибутам, а не повторный поиск по строке.</p>
+  <div class="grid grid--2">
+    <div class="card card--plain">
+      <h3>Исходная разметка</h3>
+<pre><code>&lt;article class="post"&gt;
+  &lt;header&gt;
+    &lt;h2&gt;Заголовок&lt;/h2&gt;
+    &lt;p class="meta"&gt;Автор: &lt;a&gt;Тихая бухта&lt;/a&gt;&lt;/p&gt;
+  &lt;/header&gt;
+  &lt;section&gt;
+    &lt;ul class="tag-list"&gt;&lt;li&gt;поход&lt;/li&gt;&lt;li&gt;кемпинг&lt;/li&gt;&lt;/ul&gt;
+  &lt;/section&gt;
+&lt;/article&gt;</code></pre>
+    </div>
+    <div class="card card--plain">
+      <h3>То же как дерево</h3>
+<pre><code>article.post                # Tag
+├─ header                   # Tag, parent == article
+│  ├─ h2                    # Tag, next_sibling == p.meta
+│  │   └─ "Заголовок"        # NavigableString
+│  └─ p.meta
+│     ├─ "Автор: "           # текст тоже узел
+│     └─ a → "Тихая бухта"
+└─ section
+   └─ ul.tag-list
+      ├─ li → "поход"        # previous_sibling == None
+      └─ li → "кемпинг"      # previous_sibling == li "поход"</code></pre>
+    </div>
+  </div>
+  <p class="note">Между тегами почти всегда лежит «мусорный» текст: переводы строк и отступы. <code>article.children</code> вернёт их вместе с элементами, поэтому для обхода лучше <code>find_all(recursive=True)</code> или фильтр по <code>Tag</code>.</p>
+
+  <h3>Живой фрагмент для отработки</h3>
+  <p class="muted">Тот же пример в настоящем HTML: выделяйте узлы в тренажёре селекторов справа и сверяйте с кодом ниже.</p>
+  <article class="card" id="doc-sample" data-test="sample-tree">
+    <header class="sample-head">
+      <h3 class="sample-title">Штормовая куртка «Маяк»</h3>
+      <p class="sample-meta">Продавец: <a class="sample-seller" href="../scrapy/index.html">Мастерская Прибой</a></p>
+    </header>
+    <section class="sample-body">
+      <ul class="tag-list">
+        <li class="tag" data-tag="мембрана">мембрана</li>
+        <li class="tag" data-tag="капюшон">капюшон</li>
+      </ul>
+      <p class="sample-price"><span class="price" data-price="8990" data-currency="RUB">8 990 ₽</span></p>
+    </section>
+    <footer class="sample-foot muted">Фрагмент учебный: id и классы здесь настоящие, данные вымышленные.</footer>
+  </article>
+<pre><code>soup = BeautifulSoup(html, "html.parser")
+card = soup.find("article", id="doc-sample")
+
+card.header.h3.get_text()                  # 'Штормовая куртка «Маяк»'
+card.header.next_element                   # перевод строки: NavigableString
+card.select_one(".price").get("data-price")        # '8990' — значение атрибута
+[tag.get_text() for tag in card.select("li.tag")]  # ['мембрана', 'капюшон']</code></pre>
+
+  <h2 id="moves">2. Переходы между узлами</h2>
+  <table class="table--striped">
+    <caption>Атрибуты и методы навигации BeautifulSoup</caption>
+    <thead><tr><th>Переход</th><th>Что возвращает</th><th>Как применять</th></tr></thead>
+    <tbody>
+      <tr><td><code>tag.parent</code></td><td>один узел или <code>None</code></td><td>подняться на шаг вверх. У корня <code>soup.parent is None</code>.</td></tr>
+      <tr><td><code>tag.parents</code></td><td>итератор всех предков вверх до <code>html</code></td><td>фильтр «элемент лежит внутри статьи»: <code>any(p.name == "article" for p in li.parents)</code>; доступен <code>parents[i]</code> и <code>find_parent("div")</code>.</td></tr>
+      <tr><td><code>tag.contents</code></td><td>список детей первого уровня, включая текст</td><td>когда важна порядок и «мусорные» строки; длина <code>len(tag.contents)</code> считается с пробелами.</td></tr>
+      <tr><td><code>tag.children</code></td><td>итератор детей первого уровня</td><td>обойти строки таблицы или пункты списка, не проваливаясь вглубь.</td></tr>
+      <tr><td><code>tag.descendants</code></td><td>итератор всех узлов внутри, на любую глубину</td><td>собрать весь текст с вложенностями; то же делает <code>get_text()</code>.</td></tr>
+      <tr><td><code>tag.string</code></td><td>строка или <code>None</code></td><td><code>None</code>, если внутри больше одного дочернего узла. Надёжнее брать <code>get_text(strip=True)</code>.</td></tr>
+      <tr><td><code>tag.next_sibling</code> / <code>next_siblings</code></td><td>следующий узел того же уровня / итератор</td><td>цепочка «заголовок → описание» без поиска по контейнеру. Шаги идут и по тексту, поэтому часто нужен цикл с проверкой <code>name</code>.</td></tr>
+      <tr><td><code>tag.previous_sibling</code> / <code>previous_siblings</code></td><td>предыдущий узел / итератор назад</td><td>поднять подпись, стоящую перед таблицей.</td></tr>
+      <tr><td><code>tag.next_element</code> / <code>previous_element</code></td><td>следующий узел в порядке обхода</td><td>то, что реально идёт дальше в файле, — в том числе текст и комментарий.</td></tr>
+      <tr><td><code>tag.downstream</code></td><td>итератор всех последующих вложенных узлов</td><td>в 13-page версии bs4 это псевдоним <code>descendants</code>; <code>upstream</code> — наоборот, все предки.</td></tr>
+      <tr><td><code>tag.find_all_next()</code> / <code>find_all_previous()</code></td><td>узлы по документу после/до текущего</td><td>«всё после первой карточки», когда границы секции неразметчены.</td></tr>
+    </tbody>
+  </table>
+<pre><code># сосед «заголовок → текст» без id и классов
+h = soup.find("h2", string="Описание")
+p = h.next_sibling
+while p is not None and getattr(p, "name", None) != "p":   # пропускаем переводы строк
+    p = p.next_sibling
+
+# родитель с нужным атрибутом
+card = product_li.find_parent(attrs={"data-test": "product-card"})
+
+# все предки-ссылки, если вложенность неизвестна
+links = [t for t in soup.article.descendants if getattr(t, "name", None) == "a"]</code></pre>
+
+  <h2 id="find">3. find и find_all: чем фильтровать</h2>
+  <table class="table--striped">
+    <caption>Сигнатура поиска</caption>
+    <thead><tr><th>Аргумент</th><th>Смысл</th><th>Пример</th></tr></thead>
+    <tbody>
+      <tr><td>имя тега (первый позиционный)</td><td>строка, список, регулярное выражение, функция или <code>True</code></td><td><code>soup.find_all(["h2", "h3"])</code>, <code>soup.find_all(re.compile("^h[1-6]$"))</code></td></tr>
+      <tr><td><code>attrs</code> (словарь и <code>**kwargs</code>)</td><td>соответствие атрибутов; для <code>class</code> — через <code>class_=</code></td><td><code>soup.find_all("td", attrs={"data-price": True})</code>, <code>soup.find("a", class_="btn")</code></td></tr>
+      <tr><td><code>string=</code></td><td>текст узла: строка, список, регулярка, функция; вместо устаревшего <code>text=</code></td><td><code>soup.find_all(string=re.compile("₽"))</code></td></tr>
+      <tr><td><code>limit=</code></td><td>остановиться после N совпадений</td><td><code>soup.find_all("li", limit=3)</code></td></tr>
+      <tr><td><code>recursive=False</code></td><td>искать только среди детей текущего узла</td><td><code>ul.find_all("li", recursive=False)</code> — пункты без вложенных списков</td></tr>
+      <tr><td><code>find_*</code> против <code>select*</code></td><td>атрибуты против CSS/XPath</td><td><code>soup.select("ul.tree &gt; li")</code>, <code>soup.select_one("[data-sku]")</code>, в lxml-режиме <code>soup.select("//ul/li")</code></td></tr>
+    </tbody>
+  </table>
+<pre><code># только верхний уровень вложенности — ровно 4 пункта, а не 15
+soup.find("ul", class_="tree").find_all("li", recursive=False)
+
+# атрибут без значения: важно, что он есть
+soup.find_all("tr", attrs={"data-status": "shipped"})
+
+# функция-фильтр: строки, где больше трёх ячеек
+soup.find_all("tr", lambda tr: len(tr.find_all(["td", "th"])) &gt; 3)
+
+# limit= дешевле, чем срез: не обходит весь документ
+first_two = soup.find_all("a", href=True, limit=2)</code></pre>
+  <p class="tip"><code>find</code> возвращает <code>None</code>, <code>find_all</code> — пустой список. Из-за этого <code>soup.find("table")["id"]</code> падает с <code>TypeError</code>, а <code>[t["id"] for t in soup.find_all("table")]</code> просто даёт пустой ответ. Проверяйте, что вернулось, и не подменяйте <code>find_all</code> одиночным <code>find</code> «на всякий случай».</p>
+
+  <h2 id="vs-dom">4. Чем bs4-дерево отличается от DOM браузера</h2>
+  <table class="table--striped">
+    <caption>Один и тот же файл глазами парсера и глазами браузера</caption>
+    <thead><tr><th>Ситуация</th><th>BeautifulSoup (исходный HTML)</th><th>DOM браузера / Selenium, Playwright</th></tr></thead>
+    <tbody>
+      <tr><td>Открыли тег и не закрыли</td><td>Парсер достраивает дерево по своим правилам: узел может «уехать» внутрь соседа. Итог зависит от <code>html.parser</code> / <code>lxml</code> / <code>html5lib</code>.</td><td>Браузер чинит разметку по стандарту HTML5 и всегда показывает исправленное дерево.</td></tr>
+      <tr><td>Содержимое дорисовал JavaScript</td><td>Не видно вообще: bs4 не исполняет скрипты.</td><td>Видно — но только после <code>wait_for</code> / <code>sleep</code>, иначе парсер увидит половину страницы.</td></tr>
+      <tr><td><code>display: none</code>, <code>hidden</code></td><td>Узел обычный, текст достаётся через <code>get_text()</code>.</td><td>Element есть в DOM, но не виден: <code>find_element</code> пройдёт, <code>visibility_of</code> — нет.</td></tr>
+      <tr><td>Комментарии и CDATA</td><td>Узел <code>Comment</code>, виден через <code>string=</code> только с явным фильтром.</td><td>Comment-ноды существуют, но <code>textContent</code> их не отдаёт.</td></tr>
+      <tr><td>Регистр тегов</td><td><code>&lt;B&gt;</code> и <code>&lt;b&gt;</code> — разные имена для <code>html.parser</code>, один и тот же тег для <code>lxml</code>.</td><td>Регистр не важен, теги всегда в нижнем регистре.</td></tr>
+      <tr><td>Пробелы между тегами</td><td>Полноценные <code>NavigableString</code>: <code>next_sibling</code> попадает в перевод строки.</td><td>Текстовые узлы тоже есть, но <code>nextElementSibling</code> их пропускает — сразу следующий элемент.</td></tr>
+      <tr><td>Вложенные «незаконные» теги</td><td><code>&lt;p&gt;&lt;div&gt;</code> остаётся как есть или разрывается — зависит от парсера.</td><td>Браузер гарантированно закроет <code>&lt;p&gt;</code> перед <code>&lt;div&gt;</code>.</td></tr>
+      <tr><td>Скорость и доступность</td><td>Читает строку: <code>requests.get(...).text</code> за десятки миллисекунд, работает без браузера.</td><td>Нужен браузер, ожидание загрузки, иногда обход капчи.</td></tr>
+    </tbody>
+  </table>
+  <p class="warn">Отсюда главное правило модуля: <strong>сверяйте исходный HTML и DOM</strong>. Получите файл через <code>curl</code> или <code>requests.get(...).text</code>, разбейте его BeautifulSoup и сравните количество узлов с <code>document.querySelectorAll('...').length</code> в консоли браузера. Разница и есть ваш баг: либо JavaScript, либо битая разметка, либо другой парсер.</p>
+<pre><code>import re, requests
+from bs4 import BeautifulSoup
+
+html = requests.get(url, timeout=15).text
+soup = BeautifulSoup(html, "html.parser")          # стабильный результат на ломаной разметке
+count_html = len(soup.select("li.product-item"))   # что видит парсер
+# count_dom  = document.querySelectorAll("li.product-item").length   → в консоли браузера
+print(count_html, count_dom, re.findall(r"&lt;li\b", html))</code></pre>
+  <p class="muted">Дальше по модулю: страницы с намеренно сложной разметкой — заголовки, списки, таблицы и откровенно битый HTML с разбором трёх парсеров.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

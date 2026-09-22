@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Редиректы: meta refresh против 301 и 302 · HTTP · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Три способа переезда: HTTP 301/302, meta refresh и history.replaceState. Как каждый из них видит requests, urllib и BeautifulSoup." />
+  <meta http-equiv="refresh" content="4;url=final.html" />
+</head>
+<body data-page="http/redirect" data-module="http">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Редиректы: страница, которой больше нет</h1>
+  <p class="lede">Через четыре секунды браузер сам уйдёт на <a class="redirect-fallback" href="final.html">final.html</a> — это <code>meta refresh</code>, самый «человеческий» способ переезда. Здесь он работает учебным примером: сравните его с настоящими 301 и 302.</p>
+  <p class="warn">Если вы читаете страницу глазами — она убежит. Чтобы остаться и всё разобрать, откройте её через <code>curl</code> или сохраните: <code>curl -s http://localhost:8000/http/redirect.html -o redirect.html</code>. В отличие от HTTP-редиректа, <code>curl</code> сюда не пойдёт: переезд выполняет браузер, а не сервер.</p>
+
+  <h2 id="zdes">Что происходит прямо сейчас</h2>
+  <dl class="kv redirect-info">
+    <dt>Способ</dt><dd><code>meta http-equiv="refresh"</code> внутри <code>head</code></dd>
+    <dt>Задержка</dt><dd><span class="value mono" data-delay="4">4</span> секунды</dd>
+    <dt>Куда</dt><dd><span class="value" data-target="final.html">final.html</span> — путь относительно текущей страницы</dd>
+    <dt>Код ответа</dt><dd><span class="value mono" data-code="200">200</span>: сервер отдал документ целиком, переезд придумал HTML</dd>
+    <dt>Видно в <code>requests</code></dt><dd>только как тег в тексте: <code>r.history</code> пустой, <code>r.url</code> — адрес этой страницы</dd>
+  </dl>
+
+  <h2 id="sposoby">Четыре способа увести читателя</h2>
+  <table class="table--striped ways">
+    <caption>Одна цель — четыре механизма</caption>
+    <thead>
+      <tr><th>Способ</th><th>Что видит человек</th><th>Что видит requests</th><th>Что передаётся поисковику</th></tr>
+    </thead>
+    <tbody>
+      <tr data-way="301"><td>HTTP <code>301</code></td><td>страницу открыло мгновенно, адрес другой</td><td><code>r.history</code> с одним шагом, <code>r.url</code> — целевой адрес, <code>allow_redirects=False</code> покажет <code>Location</code></td><td>переезд навсегда, вес перетекает</td></tr>
+      <tr data-way="302"><td>HTTP <code>302</code></td><td>то же, что и с 301</td><td>то же, но кэшировать новый адрес нельзя</td><td>временно: старый адрес остаётся каноническим</td></tr>
+      <tr data-way="meta-refresh"><td><code>meta refresh</code> (эта страница)</td><td>секунды две можно успеть прочитать текст</td><td>ничего: ответ <code>200</code>, переезд — просто тег в <code>head</code></td><td>слабый сигнал, часто игнорируется</td></tr>
+      <tr data-way="js-location"><td><code>location.href = ...</code> в скрипте</td><td>страница мигнёт и уйдёт</td><td>ничего: запрос не выполнялся, <code>requests</code> тут слеп</td><td>не передаётся вообще</td></tr>
+    </tbody>
+  </table>
+  <p class="note"><strong>Правило парсера.</strong> HTTP-редирект ловится на уровне библиотеки и почти не мешает. <code>meta refresh</code> и <code>location</code> — это уже контент: первый ещё можно прочитать из <code>head</code>, второй исполняет только браузер.</p>
+
+  <h2 id="tools-matrix">Кто что видит: пять инструментов</h2>
+  <table class="table--striped tools-matrix">
+    <caption>Один и тот же переезд в глазах requests, urllib, http.client, BeautifulSoup и браузера</caption>
+    <thead>
+      <tr><th>Инструмент</th><th>HTTP 301/302</th><th>Meta refresh</th><th>JS <code>location</code></th></tr>
+    </thead>
+    <tbody>
+      <tr data-tool="requests"><td><code>requests</code></td><td>следует молча (<code>allow_redirects=True</code> по умолчанию); с <code>allow_redirects=False</code> вернёт <code>30x</code> и заголовок <code>Location</code>; шаги — в <code>r.history</code></td><td>не видит: ответ <code>200</code>, переезд — просто тег в тексте</td><td>не видит: запрос не выполнялся</td></tr>
+      <tr data-tool="urllib"><td><code>urllib</code></td><td>редирект следует всегда (<code>HTTPRedirectHandler</code>), <code>resp.geturl()</code> — финальный адрес; отключить — свой обработчик с <code>http_error_302</code></td><td>не видит</td><td>не видит</td></tr>
+      <tr data-tool="http.client"><td><code>http.client</code></td><td>виден сырым: <code>conn.getresponse().status</code> даст <code>301</code>, <code>Location</code> — в заголовках; следовать сами не получится</td><td>не видит</td><td>не видит</td></tr>
+      <tr data-tool="bs4"><td><code>BeautifulSoup</code></td><td>не видит вовсе: библиотека не ходит в сеть, ей передают уже тело</td><td>видит тег: <code>soup.find("meta", attrs={"http-equiv": "refresh"})</code> и адрес внутри <code>content</code></td><td>максимум — текст скрипта в <code>&lt;script&gt;</code></td></tr>
+      <tr data-tool="browser"><td>браузер</td><td>переходит мгновенно, в адресной строке — цель</td><td>переходит через секунды из <code>content</code></td><td>переходит, когда дойдёт до строки кода</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">Отсюда практический вывод: <code>meta refresh</code> «читается» только теми, кто смотрит в разметку, — браузерами и BeautifulSoup. Чистые HTTP-клиенты его пропускают.</p>
+
+  <h2 id="pages">Почему на GitHub Pages нет настоящего 301</h2>
+  <p class="note">Хостинг статичных файлов не умеет отвечать <code>301</code>: GitHub Pages отдаёт только то, что лежит в репозитории, и живёт в подпапке <code>/parser-tester/</code>. Поэтому настоящие редиректы полигона живут в трёх местах: файл <a class="mono" href="../_redirects">_redirects</a> для Netlify, конфигурация <code>netlify.toml</code> в корне проекта и маршруты <code>node tools/serve.mjs</code> для локальной проверки. На Pages вместо 301 работает эта страница: <code>meta refresh</code> — единственная «переадресация», которую можно положить в HTML.</p>
+
+  <h2 id="replacestate">Кнопка: подменить адрес без перехода</h2>
+  <p class="muted">Иллюзия для наблюдательных: адрес в строке изменится, документ останется этим. Так делают SPA-страницы, и так парсер «теряется», если доверяет адресу.</p>
+  <p><button class="btn" type="button" id="replace-btn" data-target="final.html">Подменить адрес на final.html</button></p>
+  <p class="status" id="url-status" role="status" aria-live="polite">Адрес в строке: <code class="mono" data-role="current-url">—</code></p>
+
+  <h2 id="python">Как это видит Python</h2>
+  <pre data-lang="python"><code>import requests
+from urllib.request import urlopen, Request
+
+URL = "http://localhost:8000/http/redirect-301"
+
+r = requests.get(URL, timeout=10)                 # по умолчанию allow_redirects=True
+print(r.status_code, r.url)                       # 200 .../http/final.html
+print([h.status_code for h in r.history])         # [301]
+
+r = requests.get(URL, allow_redirects=False, timeout=10)
+print(r.status_code, r.headers["Location"])       # 301 /http/final.html
+
+# urllib следует за редиректом всегда и сам; возвращает финальный URL:
+with urlopen(Request(URL), timeout=10) as resp:
+    print(resp.status, resp.geturl())             # 200 .../http/final.html
+
+# Цепочку из трёх редиректов видно целиком:
+r = requests.get("http://localhost:8000/http/redirect-chain", timeout=10)
+print(len(r.history))                             # 3</code></pre>
+  <p class="tip">Если нужно собрать <strong>адреса-источники</strong> (например, старые URL для карты редиректов), ставьте <code>allow_redirects=False</code> и берите <code>Location</code>. Если нужна финальная страница — оставляйте как есть и смотрите в <code>r.url</code>, а не в переменную <code>url</code>.</p>
+
+  <h2 id="local">Локальные адреса для проверки</h2>
+  <p class="muted">Работают только когда запущен <code>node tools/serve.mjs</code>: на статичном хостинге таких файлов нет.</p>
+  <ul class="endpoint-list">
+    <li data-endpoint="/http/redirect-301"><code>/http/redirect-301</code> — честный 301 на <code>final.html</code></li>
+    <li data-endpoint="/http/redirect-302"><code>/http/redirect-302</code> — временный 302 на ту же цель</li>
+    <li data-endpoint="/http/redirect-chain"><code>/http/redirect-chain?hop=1</code> — цепочка из трёх редиректов</li>
+    <li data-endpoint="/http/status?code=301"><code>/http/status?code=…</code> — произвольный код состояния</li>
+  </ul>
+  <p>Чтобы сравнить три механизма одним взглядом: <code>curl -i http://localhost:8000/http/redirect-301</code> покажет заголовок <code>Location</code>, а <code>curl -i http://localhost:8000/http/redirect.html</code> — обычный ответ <code>200</code> с тегом <code>meta</code> внутри.</p>
+  <p class="note">Куда именно ведёт эта страница — <a class="redirect-final" href="final.html">final.html</a>: три факта и кука-маркер, которая появляется только после визита.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+<script>
+  (function () {
+    var button = document.getElementById('replace-btn');
+    var status = document.querySelector('[data-role="current-url"]');
+    if (!button || !status) return;
+    status.textContent = location.href;
+    button.addEventListener('click', function () {
+      history.replaceState({ trainer: 'redirect-demo' }, '', button.getAttribute('data-target'));
+      status.textContent = location.href;
+      document.getElementById('url-status').insertAdjacentHTML('beforeend',
+        ' <span class="badge">адрес подменён, документ прежний</span>');
+    });
+  })();
+</script>
+</body>
+</html>

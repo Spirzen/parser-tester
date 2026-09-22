@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Авторы цитат · Scrapy · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Страница авторов для урока про Item Relation: имя, псевдоним, дата и место рождения, биография, число цитат и ссылка на список." />
+</head>
+<body data-page="scrapy/authors" data-module="scrapy">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Авторы ленты — урок про Item Relation</h1>
+  <p class="lede">У каждого автора есть профиль прямо здесь, а его цитаты — на страницах ленты
+  (<a href="quotes.html">1</a>, <a href="quotes-2.html">2</a>) с якорями вида <code>quotes.html#q01</code>.
+  Паук собирает два разных «представления» одного сущности и склеивает в один Item.</p>
+
+  <section class="note">
+    <p style="margin:0"><strong>Идея приёма.</strong> На странице цитат мы знаем автора лишь частично (имя + ссылка на профиль). Переходя
+    по ссылке, паук получает биографию и счётчики. Правильная схема: в <code>parse_quote</code> отдать <code>response.follow(author_url, callback=self.parse_author, meta={"quote_item": item})</code>,
+    а в <code>parse_author</code> дописать поля в переданный Item и вернуть его один раз на каждую цитату.</p>
+  </section>
+
+  <h2>Профили авторов</h2>
+  <table class="table--striped authors-table">
+    <thead>
+      <tr><th>Имя</th><th>Псевдоним</th><th>Дата рождения</th><th>Место</th><th>Биография</th><th>Цитат</th><th>Список цитат</th></tr>
+    </thead>
+    <tbody>
+      <tr class="author-card" id="inga-primorskaya" data-author="inga-primorskaya" data-born="1972-05-14" data-born-country="Поморский берег" data-quotes="3">
+        <td><a class="author-link" href="quotes.html#q01">Инга Приморская</a></td>
+        <td><span class="alias">Штурман</span></td>
+        <td><time class="dob" datetime="1972-05-14">14.05.1972</time></td>
+        <td class="birthplace">Приморск-2</td>
+        <td class="bio">Двадцать сезонов у штурвала учебной флотилии. Ведёт заметки о навигации и костровом быте.</td>
+        <td class="quote-count" data-count="3">3</td>
+        <td><a href="quotes.html#q01">все цитаты →</a></td>
+      </tr>
+      <tr class="author-card" id="timur-volnorezov" data-author="timur-volnorezov" data-born="1968-11-02" data-born-country="Поморский берег" data-quotes="2">
+        <td><a class="author-link" href="quotes.html#q03">Тимур Волнорезов</a></td>
+        <td><span class="alias">Боцман</span></td>
+        <td><time class="dob" datetime="1968-11-02">02.11.1968</time></td>
+        <td class="birthplace">Севск</td>
+        <td class="bio">Ставит лагеря так, что их не сдувает. Считает, что юмор входит в обязательную экипировку.</td>
+        <td class="quote-count" data-count="2">2</td>
+        <td><a href="quotes.html#q03">все цитаты →</a></td>
+      </tr>
+      <tr class="author-card" id="marfa-kilka" data-author="marfa-kilka" data-born="1985-03-21" data-born-country="Поморский берег" data-quotes="3">
+        <td><a class="author-link" href="quotes.html#q05">Марфа Килька</a></td>
+        <td><span class="alias">Тихоня</span></td>
+        <td><time class="dob" datetime="1985-03-21">21.03.1985</time></td>
+        <td class="birthplace">Верхние Ключи</td>
+        <td class="bio">Ходит медленно и далеко. Пишет о весе снаряжения и о том, как не сорваться на финише.</td>
+        <td class="quote-count" data-count="3">3</td>
+        <td><a href="quotes.html#q05">все цитаты →</a></td>
+      </tr>
+      <tr class="author-card" id="osip-mayachny" data-author="osip-mayachny" data-born="1959-07-30" data-born-country="Поморский берег" data-quotes="2">
+        <td><a class="author-link" href="quotes.html#q07">Осип Маячный</a></td>
+        <td><span class="alias">Хранитель огня</span></td>
+        <td><time class="dob" datetime="1959-07-30">30.07.1959</time></td>
+        <td class="birthplace">Тихая Бухта</td>
+        <td class="bio">Сорок лет на маяке. Узлы завязывает с закрытыми глазами и требует того же от стажёров.</td>
+        <td class="quote-count" data-count="2">2</td>
+        <td><a href="quotes.html#q07">все цитаты →</a></td>
+      </tr>
+      <tr class="author-card" id="vera-priboinaya" data-author="vera-priboinaya" data-born="1979-01-07" data-born-country="Поморский берег" data-quotes="3">
+        <td><a class="author-link" href="quotes.html#q09">Вера Прибойная</a></td>
+        <td><span class="alias">Морозко</span></td>
+        <td><time class="dob" datetime="1979-01-07">07.01.1979</time></td>
+        <td class="birthplace">Озёрный</td>
+        <td class="bio">Тестирует снаряжение на морозе. Принципиально проверяет термос дома, а не в походе.</td>
+        <td class="quote-count" data-count="3">3</td>
+        <td><a href="quotes.html#q09">все цитаты →</a></td>
+      </tr>
+      <tr class="author-card" id="nina-stvornaya" data-author="nina-stvornaya" data-born="1990-09-16" data-born-country="Поморский берег" data-quotes="2">
+        <td><a class="author-link" href="quotes-2.html#q11">Нина Створная</a></td>
+        <td><span class="alias">Створ</span></td>
+        <td><time class="dob" datetime="1990-09-16">16.09.1990</time></td>
+        <td class="birthplace">Старый Лог</td>
+        <td class="bio">Инструктор по безопасности. Держит запасную верёвку и запасной план.</td>
+        <td class="quote-count" data-count="2">2</td>
+        <td><a href="quotes-2.html#q11">все цитаты →</a></td>
+      </tr>
+      <tr class="author-card" id="efim-bakennikov" data-author="efim-bakennikov" data-born="1963-06-11" data-born-country="Поморский берег" data-quotes="2">
+        <td><a class="author-link" href="quotes-2.html#q13">Ефим Бакенников</a></td>
+        <td><span class="alias">Бакен</span></td>
+        <td><time class="dob" datetime="1963-06-11">11.06.1963</time></td>
+        <td class="birthplace">Приморск-2</td>
+        <td class="bio">Картграф и метеоролог-любитель. Считает дождь экзаменом, а не отменой.</td>
+        <td class="quote-count" data-count="2">2</td>
+        <td><a href="quotes-2.html#q13">все цитаты →</a></td>
+      </tr>
+      <tr class="author-card" id="zoya-gibisova" data-author="zoya-gibisova" data-born="1994-04-25" data-born-country="Поморский берег" data-quotes="1">
+        <td><a class="author-link" href="quotes-2.html#q15">Зоя Гибисова</a></td>
+        <td><span class="alias">Ромашка</span></td>
+        <td><time class="dob" datetime="1994-04-25">25.04.1994</time></td>
+        <td class="birthplace">Озёрный</td>
+        <td class="bio">Отвечает за воду на учебных выходах. Носит запасную флягу и объясняет зачем.</td>
+        <td class="quote-count" data-count="1">1</td>
+        <td><a href="quotes-2.html#q15">все цитаты →</a></td>
+      </tr>
+      <tr class="author-card" id="kim-shkherny" data-author="kim-shkherny" data-born="1981-12-05" data-born-country="Поморский берег" data-quotes="2">
+        <td><a class="author-link" href="quotes-2.html#q16">Ким Шхерный</a></td>
+        <td><span class="alias">Лоцман</span></td>
+        <td><time class="dob" datetime="1981-12-05">05.12.1981</time></td>
+        <td class="birthplace">Севск</td>
+        <td class="bio">Водит группы мелководьем. Наизусть знает приливные таблицы бухты.</td>
+        <td class="quote-count" data-count="2">2</td>
+        <td><a href="quotes-2.html#q16">все цитаты →</a></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Как это выглядит в пауке</h2>
+  <pre><code>class QuotesAuthorSpider(scrapy.Spider):
+    name = "quotes-authors"
+    start_urls = ["https://…/scrapy/quotes.html"]
+
+    def parse_quote(self, response):
+        for q in response.css("blockquote.quote"):
+            item = {
+                "text": q.css("small.quote::text").get(),
+                "author": q.css("span.author::text").get(),
+                "tags": q.css("div.tags a.tag::text").getall(),
+                "url": response.url,
+            }
+            # одна цитата — один Item; профиль автора добираем отдельно
+            yield item
+
+    def parse_author(self, response):
+        row = response.css("tr.author-card")
+        yield {
+            "name": row.css("a.author-link::text").get(),
+            "alias": row.css("span.alias::text").get(),
+            "born": row.css("time.dob::attr(datetime)").get(),
+            "birthplace": row.css("td.birthplace::text").get(),
+            "bio": row.css("td.bio::text").get(),
+            "quotes": int(row.css("td.quote-count::attr(data-count)").get()),
+        }</code></pre>
+
+  <p class="tip"><strong>follow против urljoin.</strong> Ссылки «все цитаты» ведут на другие страницы с якорем
+  (<code>quotes.html#q01</code>). Помните: якорь серверу не передаётся — <code>response.follow(...)</code> придёт на всю страницу, а «нужную» цитату
+  вы уже отличите по <code>id</code> блока в HTML. Ручной <code>urljoin(response.url, href)</code> даёт тот же адрес, но не подхватывает
+  <code>callback</code> и не уважает <code>dont_filter</code> — на этом полигоне достаточно <code>response.follow</code>.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

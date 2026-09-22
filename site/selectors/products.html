@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Витрина товаров: 12 карточек для селекторов · Селекторы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Двенадцать товарных карточек «Тихой бухты» с data-атрибутами, ценами, тегами и рейтингом плюс две ловушки: скрытая и похожая карточка." />
+</head>
+<body data-page="selectors/products" data-module="selectors">
+<!-- inject:nav -->
+<main class="page page--wide">
+  <h1>Витрина: двенадцать карточек и две ловушки</h1>
+  <p class="lede">Тот же массив, что лежит в <a href="../data/products.json">../data/products.json</a>, но разложенный по полочкам HTML. Учитесь собирать поля по одному селектору на поле и не терять карточки.</p>
+  <ul class="breadcrumbs">
+    <li><a href="index.html">Селекторы</a></li>
+    <li>Витрина товаров</li>
+  </ul>
+  <table class="table--striped table--compact fields-map">
+    <caption>Карта полей: откуда что берём</caption>
+    <thead>
+      <tr><th>Поле</th><th>Где лежит</th><th>Пример значения</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>артикул</td><td><code>article[data-sku]</code></td><td class="mono">TB-1001</td></tr>
+      <tr><td>название</td><td><code>.product-card__title</code></td><td>Складной стул «Бриз»</td></tr>
+      <tr><td>цена</td><td><code>.price[data-price]</code></td><td class="mono">2490</td></tr>
+      <tr><td>старая цена</td><td><code>.price--old[data-old-price]</code></td><td class="mono">3190</td></tr>
+      <tr><td>теги</td><td><code>.tag-list &gt; li</code></td><td>поход, алюминий</td></tr>
+      <tr><td>наличие</td><td><code>[data-stock]</code></td><td class="mono">14</td></tr>
+      <tr><td>рейтинг</td><td><code>[data-rating]</code></td><td class="mono">4.6</td></tr>
+      <tr><td>ссылка на карточку</td><td><code>.product-card__link</code></td><td class="mono">../scrapy/item-01.html</td></tr>
+    </tbody>
+  </table>
+
+  <section class="grid grid--3 product-grid">
+    <article class="product-card" data-test="product-card" data-sku="TB-1001" data-category="мебель" data-subcategory="туристическая" data-stock="14" data-updated="2026-03-02T10:15:00Z">
+      <h3 class="product-card__title"><a class="product-card__link" href="../scrapy/item-01.html">Складной стул «Бриз»</a></h3>
+      <p class="product-card__price"><span class="price" data-price="2490" data-currency="RUB">2 490 ₽</span> <span class="price price--old" data-old-price="3190" data-price="3190" data-currency="RUB">3 190 ₽</span></p>
+      <p class="product-card__meta">рейтинг <span class="rating" data-rating="4.6">4.6</span> · отзывов <span data-reviews="128">128</span> · <span class="seller">Артель Тихая бухта</span></p>
+      <ul class="tag-list">
+        <li class="tag" data-tag="поход">поход</li>
+        <li class="tag" data-tag="алюминий">алюминий</li>
+        <li class="tag" data-tag="до 120 кг">до 120 кг</li>
+      </ul>
+      <button class="btn add-to-cart ghost" type="button" data-sku="TB-1001" data-btn="add">В корзину</button>
+    </article>
+    <article class="product-card" data-test="product-card" data-sku="TB-1002" data-category="горелки" data-subcategory="топливо" data-stock="0" data-updated="2026-02-19T07:40:00Z">
+      <h3 class="product-card__title"><a class="product-card__link" href="../scrapy/item-02.html">Картуш газовой смеси 450 мл</a></h3>
+      <p class="product-card__price"><span class="price" data-price="640" data-currency="RUB">640 ₽</span></p>
+      <p class="product-card__meta">рейтинг <span class="rating" data-rating="4.2">4.2</span> · отзывов <span data-reviews="57">57</span> · <span class="seller">Тихая бухта</span></p>
+      <p class="stock stock--out">нет в наличии</p>
+      <ul class="tag-list">
+        <li class="tag" data-tag="зимний">зимний</li>
+        <li class="tag" data-tag="смесь изобутана">смесь изобутана</li>
+      </ul>
+      <button class="btn add-to-cart ghost" type="button" data-sku="TB-1002" data-btn="add">В корзину</button>
+    </article>
+    <article class="product-card" data-test="product-card" data-sku="TB-2010" data-category="одежда" data-subcategory="верхняя" data-stock="6" data-updated="2026-03-11T14:02:00Z">
+      <h3 class="product-card__title"><a class="product-card__link" href="../scrapy/item-03.html">Куртка штормовая «Маяк»</a></h3>
+      <p class="product-card__price"><span class="price" data-price="8990" data-currency="RUB">8 990 ₽</span> <span class="price price--old" data-old-price="11490" data-price="11490" data-currency="RUB">11 490 ₽</span></p>
+      <p class="product-card__meta">рейтинг <span class="rating" data-rating="4.8">4.8</span> · отзывов <span data-reviews="214">214</span> · <span class="seller">Мастерская Прибой</span></p>
+      <ul class="tag-list">
+        <li class="tag" data-tag="мембрана">мембрана</li>
+        <li class="tag" data-tag="капюшон">капюшон</li>
+        <li class="tag" data-tag="10000 мм">10000 мм</li>
+      </ul>
+      <button class="btn add-to-cart ghost" type="button" data-sku="TB-2010" data-btn="add">В корзину</button>
+    </article>
+    <article class="product-card" data-test="product-card" data-sku="TB-2011" data-category="одежда" data-subcategory="аксессуары" data-stock="88" data-updated="2026-01-30T09:00:00Z">
+      <h3 class="product-card__title"><a class="product-card__link" href="../scrapy/item-04.html">Носки трекинговые, пара</a></h3>
+      <p class="product-card__price"><span class="price" data-price="690" data-currency="RUB">690 ₽</span></p>
+      <p class="product-card__meta">рейтинг <span class="rating" data-rating="4.1">4.1</span> · отзывов <span data-reviews="39">39</span> · <span class="seller">Артель Тихая бухта</span></p>
+      <ul class="tag-list">
+        <li class="tag" data-tag="меринос">меринос</li>
+        <li class="tag" data-tag="без швов">без швов</li>
+      </ul>
+      <button class="btn add-to-cart ghost" type="button" data-sku="TB-2011" data-btn="add">В корзину</button>
+    </article>
+    <article class="product-card" data-test="product-card" data-sku="TB-3020" data-category="свет" data-subcategory="налобные" data-stock="23" data-updated="2026-03-05T18:30:00Z">
+      <h3 class="product-card__title"><a class="product-card__link" href="../scrapy/item-05.html">Фонарь налобный «Светляк 400»</a></h3>
+      <p class="product-card__price"><span class="price" data-price="1990" data-currency="RUB">1 990 ₽</span> <span class="price price--old" data-old-price="2290" data-price="2290" data-currency="RUB">2 290 ₽</span></p>
+      <p class="product-card__meta">рейтинг <span class="rating" data-rating="4.5">4.5</span> · отзывов <span data-reviews="176">176</span> · <span class="seller">Тихая бухта</span></p>
+      <ul class="tag-list">
+        <li class="tag" data-tag="400 лм">400 лм</li>
+        <li class="tag" data-tag="USB-C">USB-C</li>
+        <li class="tag" data-tag="RED-режим">RED-режим</li>
+      </ul>
+      <button class="btn add-to-cart ghost" type="button" data-sku="TB-3020" data-btn="add">В корзину</button>
+    </article>
+    <article class="product-card" data-test="product-card" data-sku="TB-3021" data-category="свет" data-subcategory="кемпинг" data-stock="41" data-updated="2026-02-08T11:20:00Z" style="display:none" data-hidden="true">
+      <h3 class="product-card__title"><a class="product-card__link" href="../scrapy/item-06.html">Гирлянда кемпинговая 10 м</a></h3>
+      <p class="product-card__price"><span class="price" data-price="1250" data-currency="RUB">1 250 ₽</span></p>
+      <p class="product-card__meta">рейтинг <span class="rating" data-rating="3.9">3.9</span> · отзывов <span data-reviews="64">64</span> · <span class="seller">Мастерская Прибой</span></p>
+      <ul class="tag-list">
+        <li class="tag" data-tag="тёплый свет">тёплый свет</li>
+        <li class="tag" data-tag="IP54">IP54</li>
+      </ul>
+      <button class="btn add-to-cart ghost" type="button" data-sku="TB-3021" data-btn="add">В корзину</button>
+    </article>
+    <article class="product-card" data-test="product-card" data-sku="TB-4030" data-category="лагерь" data-subcategory="палатки" data-stock="3" data-updated="2026-03-13T08:45:00Z">
+      <h3 class="product-card__title"><a class="product-card__link" href="../scrapy/item-07.html">Палатка двухместная «Бухта 2»</a></h3>
+      <p class="product-card__price"><span class="price" data-price="15900" data-currency="RUB">15 900 ₽</span> <span class="price price--old" data-old-price="18900" data-price="18900" data-currency="RUB">18 900 ₽</span></p>
+      <p class="product-card__meta">рейтинг <span class="rating" data-rating="4.7">4.7</span> · отзывов <span data-reviews="92">92</span> · <span class="seller">Артель Тихая бухта</span></p>
+      <ul class="tag-list">
+        <li class="tag" data-tag="четырёхсезонная">четырёхсезонная</li>
+        <li class="tag" data-tag="ветрозащита">ветрозащита</li>
+        <li class="tag" data-tag="тамбур">тамбур</li>
+      </ul>
+      <button class="btn add-to-cart ghost" type="button" data-sku="TB-4030" data-btn="add">В корзину</button>
+    </article>
+    <article class="product-card" data-test="product-card" data-sku="TB-4031" data-category="лагерь" data-subcategory="спальные мешки" data-stock="9" data-updated="2026-02-27T16:10:00Z">
+      <h3 class="product-card__title"><a class="product-card__link" href="../scrapy/item-08.html">Спальник пуховый −7 °C</a></h3>
+      <p class="product-card__price"><span class="price" data-price="11400" data-currency="RUB">11 400 ₽</span></p>
+      <p class="product-card__meta">рейтинг <span class="rating" data-rating="4.9">4.9</span> · отзывов <span data-reviews="47">47</span> · <span class="seller">Тихая бухта</span></p>
+      <ul class="tag-list">
+        <li class="tag" data-tag="пух 700">пух 700</li>
+        <li class="tag" data-tag="компрессия">компрессия</li>
+      </ul>
+      <button class="btn add-to-cart ghost" type="button" data-sku="TB-4031" data-btn="add">В корзину</button>
+    </article>
+    <article class="product-card" data-test="product-card" data-sku="TB-5040" data-category="посуда" data-subcategory="термосы" data-stock="31" data-updated="2026-03-09T12:00:00Z">
+      <h3 class="product-card__title"><a class="product-card__link" href="../scrapy/item-09.html">Термос 0.75 л «Полночь»</a></h3>
+      <p class="product-card__price"><span class="price" data-price="3290" data-currency="RUB">3 290 ₽</span> <span class="price price--old" data-old-price="3890" data-price="3890" data-currency="RUB">3 890 ₽</span></p>
+      <p class="product-card__meta">рейтинг <span class="rating" data-rating="4.4">4.4</span> · отзывов <span data-reviews="205">205</span> · <span class="seller">Мастерская Прибой</span></p>
+      <ul class="tag-list">
+        <li class="tag" data-tag="сталь">сталь</li>
+        <li class="tag" data-tag="12 ч тепло">12 ч тепло</li>
+      </ul>
+      <button class="btn add-to-cart ghost" type="button" data-sku="TB-5040" data-btn="add">В корзину</button>
+    </article>
+    <article class="product-card" data-test="product-card" data-sku="TB-5041" data-category="посуда" data-subcategory="котелки" data-stock="12" data-updated="2026-01-22T10:05:00Z">
+      <h3 class="product-card__title"><a class="product-card__link" href="../scrapy/item-10.html">Котелок титановый 700 мл</a></h3>
+      <p class="product-card__price"><span class="price" data-price="2750" data-currency="RUB">2 750 ₽</span></p>
+      <p class="product-card__meta">рейтинг <span class="rating" data-rating="4.0">4.0</span> · отзывов <span data-reviews="33">33</span> · <span class="seller">Артель Тихая бухта</span></p>
+      <ul class="tag-list">
+        <li class="tag" data-tag="титан">титан</li>
+        <li class="tag" data-tag="85 г">85 г</li>
+      </ul>
+      <button class="btn add-to-cart ghost" type="button" data-sku="TB-5041" data-btn="add">В корзину</button>
+    </article>
+    <article class="product-card" data-test="product-card" data-sku="TB-6050" data-category="снаряжение" data-subcategory="рюкзаки" data-stock="7" data-updated="2026-03-01T19:25:00Z">
+      <h3 class="product-card__title"><a class="product-card__link" href="../scrapy/item-11.html">Рюкзак забросный 65 л</a></h3>
+      <p class="product-card__price"><span class="price" data-price="9800" data-currency="RUB">9 800 ₽</span> <span class="price price--old" data-old-price="12500" data-price="12500" data-currency="RUB">12 500 ₽</span></p>
+      <p class="product-card__meta">рейтинг <span class="rating" data-rating="4.3">4.3</span> · отзывов <span data-reviews="158">158</span> · <span class="seller">Тихая бухта</span></p>
+      <ul class="tag-list">
+        <li class="tag" data-tag="грудная стяжка">грудная стяжка</li>
+        <li class="tag" data-tag="дождевик">дождевик</li>
+        <li class="tag" data-tag="65 л">65 л</li>
+      </ul>
+      <button class="btn add-to-cart ghost" type="button" data-sku="TB-6050" data-btn="add">В корзину</button>
+    </article>
+    <article class="product-card" data-test="product-card" data-sku="TB-6051" data-category="снаряжение" data-subcategory="упаковка" data-stock="55" data-updated="2026-02-14T13:55:00Z">
+      <h3 class="product-card__title"><a class="product-card__link" href="../scrapy/item-12.html">Гермомешок 25 л</a></h3>
+      <p class="product-card__price"><span class="price" data-price="1690" data-currency="RUB">1 690 ₽</span></p>
+      <p class="product-card__meta">рейтинг <span class="rating" data-rating="4.2">4.2</span> · отзывов <span data-reviews="71">71</span> · <span class="seller">Мастерская Прибой</span></p>
+      <ul class="tag-list">
+        <li class="tag" data-tag="IPX6">IPX6</li>
+        <li class="tag" data-tag="лямка">лямка</li>
+      </ul>
+      <button class="btn add-to-cart ghost" type="button" data-sku="TB-6051" data-btn="add">В корзину</button>
+    </article>
+  </section>
+
+  <h2>Блок «Похожие товары»</h2>
+  <p class="muted">Ниже — карточка-двойник: та же куртка, другой блок и другой набор атрибутов. Она не должна попасть в выгрузку каталога.</p>
+  <section class="grid grid--3 similar-grid">
+    <article class="card product-card--similar" data-sku="TB-2010" data-category="одежда" data-updated="2026-03-11T14:02:00Z">
+      <h3 class="product-card__title"><a class="product-card__link" href="../scrapy/item-03.html">Куртка штормовая «Маяк»</a></h3>
+      <p class="product-card__price"><span class="price" data-price="8990" data-currency="RUB">8 990 ₽</span> <span class="price price--old" data-old-price="11490" data-price="11490" data-currency="RUB">11 490 ₽</span></p>
+      <p class="product-card__meta">рейтинг <span class="rating" data-rating="4.8">4.8</span> · <span class="seller">Мастерская Прибой</span></p>
+      <ul class="tag-list">
+        <li class="tag" data-tag="хит">хит</li>
+        <li class="tag" data-tag="возврат 30 дней">возврат 30 дней</li>
+      </ul>
+      <button class="btn add-to-cart ghost" type="button" data-sku="TB-2010" data-btn="add">В корзину</button>
+    </article>
+  </section>
+  <p class="warn"><strong>Ловушки на этой странице.</strong> Одна карточка скрыта через <code>style="display:none"</code>: её видят BeautifulSoup и <code>querySelectorAll</code>, но не видит <code>visibility_of_element_located</code> в Selenium. Вторая — копия товара TB-2010 с классом <code>product-card--similar</code>: она попадёт в выборку <code>[class*="product-card"]</code> и не попадёт в <code>.product-card</code>. У неё же нет <code>data-stock</code> и <code>data-test</code>.</p>
+  <p class="tip">Кнопки «В корзину» тоже несут <code>data-sku</code>: наивный поиск по <code>[data-sku]</code> вернёт не 13 карточек, а вдвое больше узлов. Ограничивайте тег: <code>article[data-sku]</code> или <code>[data-test="product-card"]</code>.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

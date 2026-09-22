@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Iframe: данные во фрейме · JS-страницы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Настоящая таблица спрятана в iframe, а снаружи — двойники с теми же классами: тренируем switch_to.frame и frame_locator." />
+</head>
+<body data-page="js/iframe-outer" data-module="js">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Не перепутать контекст: iframe и его двойники</h1>
+  <p class="lede">Ниже — фрейм с документом <code>iframe-inner.html</code> (src относительный: <code>src="iframe-inner.html"</code>).
+  Настоящие строки поставок лежат внутри фрейма. А сразу под ним — обычная таблица-двойник на той же странице: такие же классы
+  <code>.row-stock</code>, другие артикулы. Ошибка «спарсил не там» выглядит как успешный парсинг.</p>
+
+  <h2>Фрейм с настоящим документом</h2>
+  <iframe id="stock-frame" name="stock-frame" src="iframe-inner.html" title="Таблица поставок во фрейме"
+          style="width:100%;min-height:420px;border:1px solid #d8e2df;border-radius:10px;background:#fff"></iframe>
+
+  <h2>Двойник снаружи (это не данные фрейма)</h2>
+  <table class="table--striped">
+    <caption>Витрина остатков — та же разметка, другой документ</caption>
+    <thead><tr><th>Артикул</th><th>Поставка</th><th>Количество</th></tr></thead>
+    <tbody>
+      <tr class="row-stock" data-sku="TB-OU-01" data-qty="99"><td class="mono">TB-OU-01</td><td>демо-партия А</td><td>99</td></tr>
+      <tr class="row-stock" data-sku="TB-OU-02" data-qty="88"><td class="mono">TB-OU-02</td><td>демо-партия Б</td><td>88</td></tr>
+      <tr class="row-stock" data-sku="TB-OU-03" data-qty="77"><td class="mono">TB-OU-03</td><td>демо-партия В</td><td>77</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Как переключить контекст</h2>
+  <pre><code># Selenium: без switch_to.frame элементы фрейма недоступны
+from selenium.webdriver.common.by import By
+
+driver.get(url_outer)                     # ищем .row-stock — найдём двойников снаружи
+driver.switch_to.frame("stock-frame")     # заходим внутрь iframe по id/name
+rows = driver.find_elements(By.CSS_SELECTOR, "tr.row-stock")   # теперь это TB-FR-*
+driver.switch_to.default_content()        # выходим обратно, если нужны внешние узлы</code></pre>
+
+  <pre><code># Playwright: frame_locator не меняет глобальный контекст — безопаснее
+rows = page.frame_locator("#stock-frame").locator("tr.row-stock")
+data = [(r.get_attribute("data-sku"), r.get_attribute("data-qty")) for r in rows.element_handles()]</code></pre>
+
+  <pre><code># Без браузера: iframe — это просто ещё один URL
+from urllib.parse import urljoin
+inner_url = urljoin(page_url, soup.find("iframe")["src"])   # src="iframe-inner.html"
+inner = BeautifulSoup(urllib.request.urlopen(inner_url).read(), "html.parser")
+# важно: requests не исполняет HTML-документ фрейма — но сам файл отдаёт честно</code></pre>
+
+  <p class="warn"><strong>Про base_url.</strong> У <code>&lt;iframe&gt;</code> относительный <code>src</code>. Для Scrapy это значит: либо
+  <code>response.follow(iframe_src)</code> (он сам разрешит относительный путь от URL страницы), либо аккуратный
+  <code>urljoin(response.url, iframe_src)</code>. <code>settings['BASE_URL']</code> — про запас для «голых» относительных ссылок без страницы-источника.
+  Тот же приём решает любую вложенность: фрейм во фрейме — ещё один <code>switch_to.frame</code> (или <code>frame_locator</code> дважды).</p>
+
+  <p class="note"><strong>Признак своего контекста:</strong> строки документа фрейма помечены классом <code>.frame-card</code>
+  (накладываете его на строки внутри фрейма и никогда — снаружи). Переключили <code>switch_to.frame</code> зря — <code>.frame-card</code> не найдёте.</p>
+
+  <p class="tip">Признак «читаю не тот документ»: сравните <code>data-sku</code> с ожидаемым префиксом (<code>TB-FR-</code> против <code>TB-OU-</code>).
+  Делайте хотя бы одну проверку на содержательный признак — по номерам, датам или артикулам.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

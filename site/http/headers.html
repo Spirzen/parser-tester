@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Заголовки запроса и ответа · HTTP · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="User-Agent, Accept, Referer, Cookie, Set-Cookie, Content-Type, ETag, Last-Modified, Retry-After, Location: что отправляет браузер, что — requests и зачем это парсеру." />
+</head>
+<body data-page="http/headers" data-module="http">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Заголовки: половина ответа живёт здесь</h1>
+  <p class="lede">Кодировка, тип содержимого, имя корзины куки, адрес редиректа, пауза до повтора — всё это не в HTML, а в заголовках. Разбираем по два списка: что уходит и что возвращается.</p>
+
+  <h2 id="request">Заголовки запроса</h2>
+  <p class="muted">Колонка «Кто ставит» честная: часть заголовков браузер запрещает подменять из JavaScript, но <code>requests</code> и <code>urllib</code> ставят их как обычные строки.</p>
+  <table class="table--striped req-headers">
+    <caption>Что летит от клиента</caption>
+    <thead>
+      <tr><th>Заголовок</th><th>Пример значения</th><th>Кто ставит</th><th>Зачем парсеру</th></tr>
+    </thead>
+    <tbody>
+      <tr data-header="user-agent" data-owner="both"><td><code>User-Agent</code></td><td><code>TikhayaParser/1.0 (+contact@example.com)</code></td><td>браузер по умолчанию; скрипт обязан сам</td><td>вежливость и часть анти-бот логики: пустой UA чаще режут</td></tr>
+      <tr data-header="accept" data-owner="browser"><td><code>Accept</code></td><td><code>text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</code></td><td>браузер</td><td>показывает, что ждёт сервер; для JSON-эндпоинта — <code>application/json</code></td></tr>
+      <tr data-header="accept-language" data-owner="browser"><td><code>Accept-Language</code></td><td><code>ru-RU,ru;q=0.9,en;q=0.5</code></td><td>браузер</td><td>иначе получаем англоязычную версию каталога</td></tr>
+      <tr data-header="accept-encoding" data-owner="browser"><td><code>Accept-Encoding</code></td><td><code>gzip, deflate, br</code></td><td>браузер и <code>requests</code></td><td>тело придёт сжатым; <code>requests</code> распакует сам, <code>urllib</code> — нет</td></tr>
+      <tr data-header="referer" data-owner="browser"><td><code>Referer</code></td><td><code>http://localhost:8000/http/index.html</code></td><td>браузер при переходе по ссылке</td><td>некоторые отдают данные только «с нужной страницы»</td></tr>
+      <tr data-header="cookie" data-owner="browser"><td><code>Cookie</code></td><td><code>session_id=demo-session-42; theme=dark</code></td><td>браузер из хранилища</td><td>без сессии каталог показывает страницу входа</td></tr>
+      <tr data-header="connection" data-owner="browser"><td><code>Connection</code></td><td><code>keep-alive</code></td><td>браузер</td><td>переиспользование соединения экономит секунды на сотне запросов</td></tr>
+      <tr data-header="content-type" data-owner="script"><td><code>Content-Type</code></td><td><code>application/x-www-form-urlencoded</code></td><td>тот, кто отправляет тело</td><td>POST-форма: сервер не угадывает формат</td></tr>
+      <tr data-header="if-none-match" data-owner="script"><td><code>If-None-Match</code></td><td><code>"p3"</code></td><td>скрипт или браузер из кэша</td><td>в паре с <code>ETag</code> даёт <code>304</code> вместо перекачки страницы</td></tr>
+      <tr data-header="if-modified-since" data-owner="script"><td><code>If-Modified-Since</code></td><td><code>Sat, 14 Mar 2026 09:00:00 GMT</code></td><td>скрипт или браузер</td><td>то же по дате: дёшево обновлять выгрузку</td></tr>
+      <tr data-header="x-api-key" data-owner="script"><td><code>X-API-Key</code></td><td><code>trainer-demo-key</code></td><td>только скрипт</td><td>ключ к локальному эндпоинту <code>/http/protected</code></td></tr>
+    </tbody>
+  </table>
+  <p class="warn"><code>Referer</code> в стандарте пишется с ошибкой (через <code>e</code>) — так и оставили. <code>referrer</code> сервер не увидит, а <code>requests</code> не исправит за вас.</p>
+
+  <h2 id="response">Заголовки ответа</h2>
+  <table class="table--striped resp-headers">
+    <caption>Что возвращает сервер</caption>
+    <thead>
+      <tr><th>Заголовок</th><th>Пример значения</th><th>Что с ним делать</th></tr>
+    </thead>
+    <tbody>
+      <tr data-header="content-type"><td><code>Content-Type</code></td><td><code>text/html; charset=utf-8</code></td><td>читать кодировку отсюда, а не угадывать: <code>r.encoding</code></td></tr>
+      <tr data-header="content-length"><td><code>Content-Length</code></td><td><code>8412</code></td><td>размер тела в байтах; при gzip его нет или он другой</td></tr>
+      <tr data-header="set-cookie"><td><code>Set-Cookie</code></td><td><code>cart=wagon-7; Path=/http; HttpOnly</code></td><td>сохранять в <code>Session</code>, иначе вторая страница «не та»</td></tr>
+      <tr data-header="location"><td><code>Location</code></td><td><code>/http/final.html</code></td><td>адрес редиректа: <code>r.headers["Location"]</code>, в <code>r.url</code> уже resolved</td></tr>
+      <tr data-header="etag"><td><code>ETag</code></td><td><code>"p3"</code></td><td>слабая отметка версии документа; шлём обратно в <code>If-None-Match</code></td></tr>
+      <tr data-header="last-modified"><td><code>Last-Modified</code></td><td><code>Sat, 14 Mar 2026 09:00:00 GMT</code></td><td>дата изменения: удобно для инкрементальной выгрузки</td></tr>
+      <tr data-header="cache-control"><td><code>Cache-Control</code></td><td><code>max-age=600, must-revalidate</code></td><td>объясняет, почему ответ «старый» при повторных запусках</td></tr>
+      <tr data-header="retry-after"><td><code>Retry-After</code></td><td><code>2</code></td><td>при <code>429</code> и <code>503</code>: спим ровно столько</td></tr>
+      <tr data-header="www-authenticate"><td><code>WWW-Authenticate</code></td><td><code>Basic realm="trainer"</code></td><td>говорит, какой способ авторизации ждёт сервер (код <code>401</code>)</td></tr>
+      <tr data-header="server"><td><code>Server</code>, <code>X-Powered-By</code></td><td><code>tikhaya-http/1.9</code>, <code>parsing-trainer</code></td><td>полезно для диагностики, но не для логики: значения меняются</td></tr>
+      <tr data-header="vary"><td><code>Vary</code></td><td><code>Accept-Encoding, User-Agent</code></td><td>почему кэш иногда отдаёт «другую» версию страницы</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="real">Что реально отправляет браузер</h2>
+  <p class="muted">Ответ локального эндпоинта <code>/http/echo</code> — дословно то, что увидел сервер. Сравните со своим <code>r.request.headers</code>: набор почти совпадёт, порядок — нет.</p>
+  <pre data-lang="json" class="echo-sample"><code>{
+  "method": "GET",
+  "path": "/http/echo",
+  "query": { "page": "2" },
+  "headers": {
+    "host": "localhost:8000",
+    "connection": "keep-alive",
+    "sec-ch-ua": "\"Chromium\";v=\"124\", \"Not(A:Brand\";v=\"24\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 TikhayaDemo/1.0",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,*/*;q=0.8",
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "same-origin",
+    "accept-encoding": "gzip, deflate, br",
+    "cookie": "session_id=demo-session-42; theme=dark"
+  },
+  "cookies": "session_id=demo-session-42; theme=dark"
+}</code></pre>
+  <p class="note">Заголовки <code>sec-ch-ua</code> и <code>sec-fetch-*</code> — отпечаток браузера. Именно по их отсутствию сервер чаще всего отличает скрипт от пользователя. Если урок про обход таких проверок — честно берите Selenium: он эти заголовки отправляет сам.</p>
+
+  <h2 id="requests-defaults">Что подставляет requests сам</h2>
+  <dl class="kv requests-defaults">
+    <dt><code>Accept-Encoding</code></dt><dd>gzip, deflate — и автоматически распаковывает ответ.</dd>
+    <dt><code>Accept</code></dt><dd>*/* — сервер не узнает, что вам нужен HTML.</dd>
+    <dt><code>User-Agent</code></dt><dd>python-requests/версия — первое, что стоит переопределить.</dd>
+    <dt><code>Connection</code></dt><dd>keep-alive, но только внутри <code>Session</code>: одиночный <code>get()</code> открывает новое соединение.</dd>
+    <dt><code>timeout</code></dt><dd>не подставляет ничего: без явного значения запрос может висеть неограниченно.</dd>
+  </dl>
+  <p class="tip">Минимальный приличный набор для учебного парсера: <code>headers={"User-Agent": ..., "Accept-Language": "ru"}</code> плюс <code>timeout</code> и <code>Session()</code>. Остальное — только если сервер действительно просит.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

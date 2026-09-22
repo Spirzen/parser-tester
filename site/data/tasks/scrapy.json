@@ -1,0 +1,155 @@
+{
+  "scrapy/index": [
+    {
+      "id": "C-10",
+      "level": 1,
+      "q": "Соберите start_urls паука из хаб-страницы каталога: ссылки на карточки и их заголовки.",
+      "solution": {
+        "css": "a.catalog-item__link",
+        "xpath": "//a[contains(@class,'catalog-item__link')]",
+        "bs4": "[(a['href'], a.get_text(strip=True)) for a in soup.select('a.catalog-item__link')]"
+      },
+      "answer": "4 ссылки item-01…item-04.html; class у <a> составной, поэтому «a.catalog-item» без суффикса тоже их ловит, но берёт и обёртку"
+    },
+    {
+      "id": "C-11",
+      "level": 2,
+      "q": "Найдите путь на следующую страницу каталога двумя способами: по rel=next и по номеру страницы в pager.",
+      "solution": {
+        "css": ".pager a[rel='next']",
+        "xpath": "//a[@rel='next']",
+        "bs4": "[a['href'] for a in soup.select('.pager a') if 'next' in (a.get('rel') or [])]"
+      },
+      "answer": "оба ведут в catalog-2.html; текущая страница — span.is-current, а не ссылка, поэтому «взять первую ссылку pager» — ошибка"
+    },
+    {
+      "id": "C-12",
+      "level": 2,
+      "q": "В таблице настроек паука лежат подсказки курса. Соберите пары «настройка → значение».",
+      "solution": {
+        "css": "table tbody tr",
+        "xpath": "//table/tbody/tr",
+        "bs4": "{tds[0].get_text(strip=True): tds[1].get_text(strip=True) for tds in (tr.find_all('td') for tr in soup.select('table tbody tr')) if len(tds)>1}"
+      },
+      "answer": "ROBOTSTXT_OBEY=True, DOWNLOAD_DELAY=1, CONCURRENT_REQUESTS=4, FEEDS=items.jsonl"
+    },
+    {
+      "id": "C-13",
+      "level": 3,
+      "q": "Сравните список каталога с карточкой: где лежат цена и дата обновления на первой странице?",
+      "solution": {
+        "css": ".catalog-item .price",
+        "xpath": "//*[contains(@class,'catalog-item')]//*[contains(@class,'price')]",
+        "bs4": "[(li.select_one('a.catalog-item__link')['href'], li.select_one('.price').get_text(strip=True), li.select_one('.updated').get_text(strip=True)) for li in soup.select('.catalog-item')]"
+      },
+      "answer": "и цена (.price), и дата (.updated) есть уже в списке — часть данных можно не перепроверять на item-странице"
+    }
+  ],
+  "scrapy/rules": [
+    {
+      "id": "C-01",
+      "level": 3,
+      "q": "Напишите Rule для CrawlSpider: переходить по ленте цитат только вперёд и только по ссылке rel=\"next\", пропуская якоря, теги и верхнее меню.",
+      "solution": {
+        "scrapy": "Rule(LinkExtractor(restrict_css=('ul.pager', \"a[rel='next']\")), callback='parse_page', follow=True)",
+        "scrapy-xpath": "Rule(LinkExtractor(restrict_xpaths=\"//ul[@class='pager']//a[@rel='next']\"), callback='parse_page', follow=True)",
+        "почему-не-regex": "allow=r'quotes(-\\d+)?\\.html$' тоже дойдёт до страницы 2, но не отличит rel=next от «Page: 1» и на реальном сайте соберёт ловушки-псевдостраницы"
+      },
+      "answer": "quotes.html → quotes-2.html → остановка: на второй странице rel=\"next\" нет"
+    },
+    {
+      "id": "C-02",
+      "level": 2,
+      "q": "Чем response.follow('quotes-2.html') отличается от yield scrapy.Request(urljoin(response.url, 'quotes-2.html'))? Дайте оба варианта для ссылки из карточки товара.",
+      "solution": {
+        "follow": "response.follow('item-01.html', callback=self.parse_item) — сам разрешает относительный путь от response.url, принимает селектор/текст ссылки, подхватывает callback и фильтры",
+        "urljoin": "yield scrapy.Request(url=response.urljoin('item-01.html'), callback=self.parse_item) — то же самое руками: без страницы-контекста (например, в start_requests) urljoin не от чего строить, тогда нужен settings['BASE_URL']",
+        "ловушка": "scrapy.Request('item-01.html') без urljoin упадёт: Request требует абсолютный URL, follow — нет"
+      },
+      "answer": "follow = urljoin + Request + мелочи; внутри callback почти всегда лучше follow"
+    },
+    {
+      "id": "C-03",
+      "level": 4,
+      "q": "Как пройти весь каталог (index.html, catalog-2.html, catalog-3.html → 12 карточек) и не собрать ни одну карточку дважды, если ссылки на item-01.html встречаются и в списке, и внутри других страниц?",
+      "solution": {
+        "запросы": "Дедупликатор запросов Scrapy включён по умолчанию: не включайте dont_filter и не меняйте callback у одинаковых URL",
+        "item-ы": "Дедупликация item'ов только руками: множество по sku в pipeline (DedupeBySkuPipeline из scrapy/rules.html) либо ключ FEEDS + сортировка",
+        "crawl": "Rule(LinkExtractor(allow=r'item-\\d+\\.html$'), callback='parse_item', follow=False) — LinkExtractor unique=True по умолчанию"
+      },
+      "answer": "12 уникальных sku; sort items.jsonl | uniq -d пусто"
+    }
+  ],
+  "scrapy/quotes": [
+    {
+      "id": "C-04",
+      "level": 2,
+      "q": "Соберите с первой страницы все цитаты: текст из small.quote, автора из span.author и теги из div.tags a.tag — и не захватите класс .tag из блока Top tags.",
+      "solution": {
+        "scrapy": "for q in response.css('blockquote.quote-block'): yield {'text': q.css('small.quote::text').get(), 'author': q.css('span.author::text').get(), 'tags': q.css('div.tags a.tag::text').getall()}",
+        "bs4": "[{'author': b.select_one('span.author').get_text(strip=True)} for b in soup.select('blockquote.quote-block')]",
+        "шум": "Top tags — вне div.tags (он в ul.tag-list), поэтому div.tags a.tag его отсекает"
+      },
+      "answer": "10 цитат; у q02 автор «Инга Приморская», теги ['навигация', 'снаряжение']"
+    },
+    {
+      "id": "C-05",
+      "level": 3,
+      "q": "Посчитайте частоту тегов по первой странице и назовите самые частые: соберите Counter из div.tags и сравните с блоком Top tags.",
+      "solution": {
+        "scrapy": "tags = [t for q in response.css('blockquote.quote-block') for t in q.css('div.tags a.tag::text').getall()]; Counter(tags).most_common(2)",
+        "bs4": "Counter(t.get_text(strip=True) for t in soup.select('div.tags a.tag')).most_common(2)"
+      },
+      "answer": "лагерь и навигация — по 3 (блок Top tags подтверждает)"
+    }
+  ],
+  "scrapy/quotes-2": [
+    {
+      "id": "C-06",
+      "level": 2,
+      "q": "На этом листе лента кончается. По какому признаку в разметке пауку остановиться и как не улететь в запрос quotes-3.html?",
+      "solution": {
+        "scrapy": "n = response.css(\"ul.pager a[rel='next']::attr(href)\").get(); if n: yield response.follow(n, callback=self.parse)",
+        "bs4": "if soup.select_one('a[rel=\"next\"]') is None: стоп — третьей страницы нет ни в rel=next, ни в <link rel=\"next\"> в head",
+        "антипаттерн": "цикл for i in range(1, 99) по quotes-{i}.html — вне зависимости от разметки; так собирают 404 и honeypot-ссылки"
+      },
+      "answer": "Здесь нет a[rel=\"next\"] — правильный признак конца"
+    }
+  ],
+  "scrapy/authors": [
+    {
+      "id": "C-07",
+      "level": 4,
+      "q": "Постройте связку «цитата → автор» (Item Relation): на странице цитаты отдайте Item с текстом, а профиль автора (псевдоним, дата и место рождения, биографию) допишите в него же при переходе по ссылке.",
+      "solution": {
+        "scrapy": "def parse_quote(...): item = {...}; yield response.follow(author_href, callback=self.parse_author, cb_kwargs={'quote': item}) — далее в parse_author дополните quote полями alias/born/birthplace/bio и верните его",
+        "meta": "старый стиль: yield response.follow(href, meta={'quote_item': item}); item = response.meta['quote_item'] (в Scrapy 2.10+ предпочтителен cb_kwargs)",
+        "якорь": "ссылки «все цитаты» ведут на quotes.html#qNN: якорь серверу не уходит — follow придёт на всю страницу, нужную цитату ищите по id блока в HTML"
+      },
+      "answer": "20 Item'ов: у каждого текст цитаты + полный профиль автора"
+    }
+  ],
+  "scrapy/export": [
+    {
+      "id": "C-08",
+      "level": 3,
+      "q": "Составьте Item Product по карточке scrapy/item-01.html: title, sku, price (int), old_price (int|null), stock, tags. Укажите FEEDS для выгрузки в JSONL с русскими буквами без \\uXXXX.",
+      "solution": {
+        "item": "{'title': 'Складной стул «Бриз»', 'sku': 'TB-1001', 'price': 2490, 'old_price': 3190, 'stock': 14, 'tags': ['поход', 'алюминий', 'до 120 кг']}",
+        "scrapy": "price = int(response.css('span.price[data-price]::attr(data-price)').get())  # числа берём из атрибута, не из текста «2 490 ₽»",
+        "feeds": "FEEDS = {'items.jsonl': {'format': 'jsonlines', 'overwrite': True}}; FEED_EXPORT_ENCODING = 'utf-8'"
+      },
+      "answer": "сверка: та же запись в ../data/products.json (id 1)"
+    },
+    {
+      "id": "C-09",
+      "level": 2,
+      "q": "Как проверить, что вывод паука совпадает с эталоном? Сравните строки &lt;pre id=\"jsonl-sample\"&gt; с эталонными JSON-файлами страницы.",
+      "solution": {
+        "python": "std = {(p['sku'], p['price'], p['stock']) for p in json.load(open('products.json'))['products'][:5]}; mine = {(j['sku'], j['price'], j['stock']) for j in map(json.loads, open('items.jsonl'))[:5]}; assert mine == std",
+        "shell": "head -5 items.jsonl | python -m json.tool — каждая строка обязана быть отдельным валидным JSON (в &lt;pre&gt; на этой странице — 5 таких строк)"
+      },
+      "answer": "5 строк JSONL = первые 5 товаров products.json (TB-1001…TB-3020)"
+    }
+  ]
+}

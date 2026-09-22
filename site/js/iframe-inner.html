@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Таблица во фрейме · JS-страницы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Страница-содержимое iframe: настоящая таблица поставок, до которой парсеру нужно сначала переключить контекст." />
+</head>
+<body data-page="js/iframe-inner" data-module="js">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Содержимое фрейма: поставки «Тихой бухты»</h1>
+  <p class="lede">Эта страница открывается сама по себе и как документ внутри <code>&lt;iframe&gt;</code> на странице
+  <a href="iframe-outer.html">iframe-outer.html</a>. Насколько она настоящая — см. ниже.</p>
+
+  <p class="note"><strong>Настоящие данные фрейма.</strong> Все три строки ниже принадлежат этому документу.
+    Если ваш парсер их читает «не переключая контекст» — он читает пустоту или, хуже того, двойников с внешней страницы.</p>
+
+  <table class="table--striped">
+    <caption>Поставки за неделю (документ фрейма)</caption>
+    <thead><tr><th>Артикул</th><th>Поставка</th><th>Количество</th></tr></thead>
+    <tbody>
+      <tr class="row-stock frame-card" data-sku="TB-FR-01" data-qty="7"><td class="mono">TB-FR-01</td><td>Картуши, партия 12</td><td>7</td></tr>
+      <tr class="row-stock frame-card" data-sku="TB-FR-02" data-qty="2"><td class="mono">TB-FR-02</td><td>Титановые котелки</td><td>2</td></tr>
+      <tr class="row-stock frame-card" data-sku="TB-FR-03" data-qty="5"><td class="mono">TB-FR-03</td><td>Гермомешки 25 л</td><td>5</td></tr>
+    </tbody>
+  </table>
+
+  <p class="muted">Артикулы настоящих строк начинаются с <code>TB-FR-</code> — по ним легко проверить, из какого документа вы читаете.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

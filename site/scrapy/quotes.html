@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Цитаты, страница 1 · Scrapy · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Классический тренажёр паука: десять цитат, теги, пагинация с rel=next и блок Top tags." />
+  <link rel="next" href="quotes-2.html" />
+</head>
+<body data-page="scrapy/quotes" data-module="scrapy">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Лента цитат «Тихой бухты» — страница 1</h1>
+  <p class="lede">Десять цитат, у каждой — текст в <code>&lt;small class="quote"&gt;</code>, автор в <code>&lt;span class="author"&gt;</code>,
+  теги в <code>&lt;div class="tags"&gt;&lt;a class="tag"&gt;</code>. Внизу — пагинация и топ тегов. Ровно то, на чём учат писать first scrapy spider.</p>
+
+  <section class="quote-list">
+    <blockquote class="quote-block" id="q01">
+      <small class="quote">«Костёр разводят снизу: сначала щепки, потом ветки, потом брёвна. Так же и с маршрутом.»</small>
+      <span class="author">Инга Приморская</span>
+      <div class="tags"><a class="tag" href="#">костёр</a><a class="tag" href="#">маршрут</a></div>
+    </blockquote>
+    <blockquote class="quote-block" id="q02">
+      <small class="quote">«Компас вешают на шею, а не в карман: карман находится не там, где нужно.»</small>
+      <span class="author">Инга Приморская</span>
+      <div class="tags"><a class="tag" href="#">навигация</a><a class="tag" href="#">снаряжение</a></div>
+    </blockquote>
+    <blockquote class="quote-block" id="q03">
+      <small class="quote">«Двухместная палатка — это когда спит один, а второй держит тент.»</small>
+      <span class="author">Тимур Волнорезов</span>
+      <div class="tags"><a class="tag" href="#">лагерь</a><a class="tag" href="#">юмор</a></div>
+    </blockquote>
+    <blockquote class="quote-block" id="q04">
+      <small class="quote">«Ветер проверяет оттяжки лучше любого инструктажа.»</small>
+      <span class="author">Тимур Волнорезов</span>
+      <div class="tags"><a class="tag" href="#">ветер</a><a class="tag" href="#">лагерь</a></div>
+    </blockquote>
+    <blockquote class="quote-block" id="q05">
+      <small class="quote">«Рюкзак должен весить столько, чтобы хотелось идти дальше, а не лечь.»</small>
+      <span class="author">Марфа Килька</span>
+      <div class="tags"><a class="tag" href="#">маршрут</a><a class="tag" href="#">снаряжение</a></div>
+    </blockquote>
+    <blockquote class="quote-block" id="q06">
+      <small class="quote">«Прогноз погоды читают дважды: вчера и сегодня. Ошибки там разные.»</small>
+      <span class="author">Марфа Килька</span>
+      <div class="tags"><a class="tag" href="#">прогноз</a><a class="tag" href="#">навигация</a></div>
+    </blockquote>
+    <blockquote class="quote-block" id="q07">
+      <small class="quote">«Маяк не спорит с туманом — он просто светит.»</small>
+      <span class="author">Осип Маячный</span>
+      <div class="tags"><a class="tag" href="#">море</a><a class="tag" href="#">навигация</a></div>
+    </blockquote>
+    <blockquote class="quote-block" id="q08">
+      <small class="quote">«Узел, который невозможно развязать ночью, завяжи днём дважды.»</small>
+      <span class="author">Осип Маячный</span>
+      <div class="tags"><a class="tag" href="#">узлы</a><a class="tag" href="#">безопасность</a></div>
+    </blockquote>
+    <blockquote class="quote-block" id="q09">
+      <small class="quote">«Спальник проветривают каждое утро: влага — главный вор тепла.»</small>
+      <span class="author">Вера Прибойная</span>
+      <div class="tags"><a class="tag" href="#">лагерь</a><a class="tag" href="#">сезон</a></div>
+    </blockquote>
+    <blockquote class="quote-block" id="q10">
+      <small class="quote">«Термос проверяют дома: на морозе выяснять это поздно.»</small>
+      <span class="author">Вера Прибойная</span>
+      <div class="tags"><a class="tag" href="#">посуда</a><a class="tag" href="#">сезон</a></div>
+    </blockquote>
+  </section>
+
+  <nav class="pager-wrap" aria-label="Страницы цитат">
+    <ul class="pager">
+      <li><span class="muted">Page:</span></li>
+      <li><span class="is-current" aria-current="page">1</span></li>
+      <li><a href="quotes-2.html">2</a></li>
+      <li><a href="quotes-2.html" rel="next">Next →</a></li>
+    </ul>
+  </nav>
+
+  <aside class="card card--plain" aria-label="Популярные теги">
+    <h2>Top tags</h2>
+    <ul class="tag-list">
+      <li class="tag" data-count="4"><a class="tag" href="#">безопасность</a> <span class="muted">4</span></li>
+      <li class="tag" data-count="4"><a class="tag" href="#">лагерь</a> <span class="muted">4</span></li>
+      <li class="tag" data-count="4"><a class="tag" href="#">море</a> <span class="muted">4</span></li>
+      <li class="tag" data-count="4"><a class="tag" href="#">навигация</a> <span class="muted">4</span></li>
+      <li class="tag" data-count="3"><a class="tag" href="#">костёр</a> <span class="muted">3</span></li>
+      <li class="tag" data-count="3"><a class="tag" href="#">маршрут</a> <span class="muted">3</span></li>
+      <li class="tag" data-count="3"><a class="tag" href="#">снаряжение</a> <span class="muted">3</span></li>
+      <li class="tag" data-count="3"><a class="tag" href="#">сезон</a> <span class="muted">3</span></li>
+      <li class="tag" data-count="3"><a class="tag" href="#">юмор</a> <span class="muted">3</span></li>
+    </ul>
+  </aside>
+
+  <p class="tip">Те же данные в машиночитаемом эталоне: <a href="../data/quotes.json">../data/quotes.json</a> — сверяйте вывод паука с этим файлом.
+    Блок «Top tags» выше использует те же классы <code>.tag</code> намеренно: учитесь отсекать шум селектором вида <code>div.tags a.tag</code>. Профиль авторов — на странице <a href="authors.html">authors.html</a>.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

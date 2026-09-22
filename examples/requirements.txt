@@ -1,0 +1,13 @@
+# Ядро курса: достаточно этого набора на первом занятии
+requests>=2.31
+beautifulsoup4>=4.12
+lxml>=5.0
+html5lib>=1.1        # третий парсер для урока про битую разметку
+
+# Дальнейшие модули — ставьте по мере прохождения:
+#   pip install "selenium>=4.20"      # examples/04_selenium_dynamic.py (+ установленный Chrome)
+#   pip install "playwright>=1.44"    # examples/05_playwright_dynamic.py, затем: playwright install chromium
+#   pip install "scrapy>=2.11"        # examples/06_scrapy_spider.py
+#
+# Проверка согласованности полигона и примеров (то же запускается в CI):
+#   python examples/smoke_test.py

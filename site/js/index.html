@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JS-страницы: с чего начать · JS-страницы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Почему requests и BeautifulSoup видят пустоту, чем помогают Selenium и Playwright, как искать настоящий JSON-эндпоинт." />
+</head>
+<body data-page="js/index" data-module="js">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Страницы с JavaScript: почему обычный запрос видит пустоту</h1>
+  <p class="lede">Разбираемся, чем «исходный HTML» отличается от «DOM после скриптов», и учимся выбирать между ожиданием, прямым запросом и браузером.</p>
+
+  <section class="note">
+    <p style="margin:0"><strong>Главная причина пустоты.</strong> <code>requests.get()</code> и <code>urllib</code> получают файл с сервера и останавливаются.
+    BeautifulSoup парсит ровно этот файл. JavaScript в этом процессе не выполняется ни секунды: если строки таблицы дорисовывает
+    <code>lazy-table.js</code>, в ответе <code>requests</code> их не будет — будет пустой <code>&lt;tbody&gt;</code>.</p>
+  </section>
+
+  <h2>Два «снимка» одной страницы</h2>
+  <table class="table--striped">
+    <thead><tr><th></th><th>Исходный HTML (виден curl / requests)</th><th>DOM после JS (виден в DevTools)</th></tr></thead>
+    <tbody>
+      <tr><td>Кто формирует</td><td>сервер (у нас — GitHub Pages как файл)</td><td>браузер: setTimeout, fetch, createElement</td></tr>
+      <tr><td>Строки таблицы на <a href="dynamic-table.html">dynamic-table.html</a></td><td>нет первых 1,5 секунды и никогда без JS</td><td>есть: 6 строк <code>tr.row-stock</code></td></tr>
+      <tr><td>Разделы мини-SPA на <a href="spa.html">spa.html</a></td><td>пустой <code>&lt;div id="spa-root"&gt;</code></td><td>таблица цен или список рецензий</td></tr>
+      <tr><td>Тень на <a href="shadow-dom.html">shadow-dom.html</a></td><td>хост-элемент без содержимого</td><td>таблица внутри <code>shadowRoot</code></td></tr>
+      <tr><td>Ленивые блоки на <a href="hidden-lazy.html">hidden-lazy.html</a></td><td>есть атрибуты <code>data-src</code> — данные видны «в сырье»</td><td>текст догрузки появляется после прокрутки</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Selenium или Playwright: чем ждать</h2>
+  <div class="grid grid--2">
+    <div class="card">
+      <h3>Selenium</h3>
+      <ul>
+        <li><code>driver.implicitly_wait(3)</code> — неявное: перед каждым поиском узла ждёт до N секунд; просто, но глобально и вслепую.</li>
+        <li><code>WebDriverWait(driver, 5).until(EC.visibility_of_element_located(...))</code> — явное: ждёт конкретное условие.</li>
+        <li>Переключение контекста: <code>switch_to.frame()</code>, <code>execute_script()</code> для теней.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Playwright</h3>
+      <ul>
+        <li>Автоожидания по умолчанию: <code>page.locator('tr.row-stock').wait_for()</code>, действия сами ждут готовности элемента.</li>
+        <li><code>page.wait_for_url</code>, <code>wait_for_load_state('networkidle')</code>, <code>expect(...).to_be_visible()</code>.</li>
+        <li><code>frame_locator()</code> для iframe, <code>pierce</code>/<code>evaluate</code> для shadow DOM.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Ждать сеть или DOM?</h3>
+  <ul>
+    <li><strong>Ждать DOM-признак</strong> (строка появилась, <code>#status</code> сменил текст) — надёжно: вам нужен результат работы скрипта, а не факт окончания загрузок.</li>
+    <li><strong>Ждать сеть</strong> (<code>networkidle</code>, <code>page.wait_for_response()</code>) — удобно, когда данных в DOM ещё нет, а JSON уже прилетел: можно перехватить ответ целиком.</li>
+    <li>Пустое ожидание по времени (<code>time.sleep(3)</code>) — плохая привычка: на медленной машине урок «падает», на быстрой вы ждёте лишнее.</li>
+    <li>Комбинация на этом полигоне: таблица появляется через фиксированные 1,5 с, поэтому <code>visibility_of_all</code> по <code>tr.row-stock</code> — самое честное ожидание.</li>
+  </ul>
+
+  <h2>Как искать настоящий JSON-эндпоинт</h2>
+  <ol>
+    <li>Откройте DevTools (F12) → вкладка <strong>Network</strong> → фильтр <strong>Fetch/XHR</strong>.</li>
+    <li>Перезагрузите страницу (Ctrl+R) и покликайте навигацию: каждый клик, который что-то догружает, — это запрос.</li>
+    <li>Смотрите на <code>Path</code>: на <a href="spa.html">spa.html</a> это <code>../data/site-stats.json</code> — один файл вместо трёх кликов.</li>
+    <li>Вкладка <strong>Response</strong> покажет тот JSON, что вернётся вашему <code>requests.get()</code>. Если ответ — HTML-заглушка, эндпоинт придуман вами неверно.</li>
+    <li>Правой кнопкой по запросу → <strong>Copy → Copy as cURL</strong>: превращает запрос в команду; <strong>Copy as fetch</strong> — в JS-код. Вставьте cURL в любой онлайн-конвертер или в <code>subprocess</code>, но для урока достаточно <code>requests.get(url, headers={...})</code>.</li>
+  </ol>
+  <p class="tip">Правило выбора: <strong>сначала ищем JSON</strong> (быстро, стабильно, без браузера); <strong>браузер подключаем</strong>, когда данных в сети нет — их действительно вычисляет JS (анимация, тень, вычисления на клиенте).</p>
+
+  <h2>Страницы модуля</h2>
+  <div class="grid grid--3">
+    <div class="card"><h3><a href="dynamic-table.html">Динамическая таблица</a></h3><p class="muted">Таблица из JS через 1,5 с, кнопка обновления, явные ожидания Selenium/Playwright.</p></div>
+    <div class="card"><h3><a href="spa.html">Мини-SPA на хэшах</a></h3><p class="muted">Хэш-роутинг #/prices, почему requests не видит #часть адреса и где лежит JSON.</p></div>
+    <div class="card"><h3><a href="shadow-dom.html">Shadow DOM</a></h3><p class="muted">Таблица внутри кастомного элемента: querySelector бессилен, shadowRoot и ::part помогают.</p></div>
+    <div class="card"><h3><a href="iframe-outer.html">Iframe</a></h3><p class="muted">Данные во фрейме и двойники снаружи: switch_to.frame и frame_locator.</p></div>
+    <div class="card"><h3><a href="hidden-lazy.html">Ленивая прокрутка</a></h3><p class="muted">IntersectionObserver догружает JSON по data-src: endpoints видны ещё до прокрутки.</p></div>
+  </div>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

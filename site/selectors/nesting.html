@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Вложенность, соседи и предки · Селекторы · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Дерево узлов: пять вложенных div, два дерева списков по три уровня, соседи и родственники — практика для descendant, child, sibling и parent." />
+</head>
+<body data-page="selectors/nesting" data-module="selectors">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Вложенность, соседи, предки</h1>
+  <p class="lede">HTML — дерево, и все сложные селекторы решаются одним вопросом: «кем этот узел приходится найденному?». Здесь пять уровней вложенности, два дерева списков и полный набор родственных связей.</p>
+
+  <h2>Пять уровней div</h2>
+  <p class="muted">Каждый уровень подписан классом <code>lvlN</code> и атрибутом <code>data-level</code>; внутри — служебный абзац.</p>
+  <div class="lvl1" data-level="1">
+    <p class="lvl-note">Уровень 1 — внешний контейнер блока.</p>
+    <div class="lvl2" data-level="2">
+      <p class="lvl-note">Уровень 2 — секция списка.</p>
+      <div class="lvl3" data-level="3">
+        <p class="lvl-note">Уровень 3 — группа элементов.</p>
+        <div class="lvl4" data-level="4">
+          <p class="lvl-note">Уровень 4 — отдельный элемент.</p>
+          <div class="lvl5" data-level="5">
+            <p class="lvl-note">Уровень 5 — самый глубоко вложенный текст: «в бухте штиль, ветер 2 м/с».</p>
+            <span class="lvl-value" data-value="штиль">штиль</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="note"><strong>Проверьте себя.</strong> Селектор <code>.lvl1 div</code> найдёт четыре блока, <code>.lvl1 &gt; div</code> — один, а <code>div[data-level]</code> — пять вместе с внешним. Разница между «потомок» и «ребёнок» стоит дороже, чем кажется.</p>
+
+  <h2>Два дерева списков</h2>
+  <p class="muted">Оба дерева размечены одинаково — <code>ul.tree</code>, вложенность три уровня. Второе дерево лежит внутри <code>section.tree-alt</code>: этим и отличается область поиска.</p>
+  <section class="tree-catalog">
+    <h3>Каталог</h3>
+    <ul class="tree" data-tree="catalog">
+      <li>Категории
+        <ul class="tree">
+          <li>Мебель
+            <ul class="tree">
+              <li>Стулья</li>
+              <li>Столы</li>
+            </ul>
+          </li>
+          <li>Свет
+            <ul class="tree">
+              <li>Налобные</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>Распродажи
+        <ul class="tree">
+          <li>Февраль</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+  <section class="tree-alt">
+    <h3>Отзывы</h3>
+    <ul class="tree" data-tree="reviews">
+      <li>Товары
+        <ul class="tree">
+          <li>Куртка «Маяк»
+            <ul class="tree">
+              <li>Размер маломерит</li>
+              <li>Швы ровные</li>
+              <li>Тяжелеет под дождём</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>Доставка</li>
+    </ul>
+  </section>
+
+  <h2>Соседи</h2>
+  <p class="muted">Порядок узлов важен: <code>+</code> берёт одного соседа, <code>~</code> — всех последующих, а «предыдущий» в CSS недоступен вовсе.</p>
+  <div class="siblings">
+    <p class="sibling-before">Стоит перед целевым узлом.</p>
+    <h3 class="sibling-target">Целевой узел</h3>
+    <ul class="sibling-after">
+      <li class="sibling-item">Первый элемент сразу после цели</li>
+      <li class="sibling-item">Второй элемент после цели</li>
+    </ul>
+    <p class="sibling-later">Узел через один после цели.</p>
+  </div>
+
+  <h2>Родня: parent, child, uncle</h2>
+  <div class="family" data-family="root">
+    <div class="relative" data-rel="parent">
+      <span class="relative__name">Родитель</span>
+      <div class="relative" data-rel="child"><span class="relative__name">Дочерний узел А</span></div>
+      <div class="relative" data-rel="child"><span class="relative__name">Дочерний узел Б</span></div>
+    </div>
+    <div class="relative" data-rel="uncle">
+      <span class="relative__name">Дядя — сосед родителя</span>
+      <div class="relative" data-rel="cousin"><span class="relative__name">Племянник</span></div>
+    </div>
+  </div>
+  <table class="table--striped kinship">
+    <caption>Кем приходится (относительно <code>[data-rel="child"]</code>)</caption>
+    <thead>
+      <tr><th>Роль</th><th>XPath</th><th>Что вернёт</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>родитель</td><td><code>//div[@data-rel="child"]/parent::div</code></td><td>блок <code>data-rel="parent"</code>, дважды</td></tr>
+      <tr><td>брат</td><td><code>//div[@data-rel="child"]/following-sibling::div</code></td><td>второй дочерний узел</td></tr>
+      <tr><td>дядя</td><td><code>//div[@data-rel="child"]/parent::div/following-sibling::div</code></td><td>блок <code>data-rel="uncle"</code></td></tr>
+      <tr><td>кузен</td><td><code>//div[@data-rel="uncle"]/div</code></td><td>блок <code>data-rel="cousin"</code></td></tr>
+      <tr><td>предок до корня</td><td><code>//span[@class="relative__name"]/ancestor::div[2]</code></td><td>вторая ступень вверх</td></tr>
+    </tbody>
+  </table>
+  <p class="warn">Деревья легко спутать: <code>ul.tree li li</code> найдёт узлы обоих деревьев и все вложенности сразу. Хотите конкретное — ограничивайте область (<code>section.tree-alt ul.tree</code>) и глубину через <code>&gt;</code>.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

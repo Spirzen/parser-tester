@@ -1,0 +1,182 @@
+{
+  "pagination/index": [
+    {
+      "id": "P-01",
+      "level": 1,
+      "q": "Соберите карточки всех отзывов открытой страницы и назовите их идентификаторы",
+      "solution": {
+        "css": "article.review",
+        "xpath": "//article[@data-review]",
+        "bs4": "[r['data-review'] for r in soup.select('article.review')]"
+      },
+      "answer": "5 карточек на каждой из шести страниц; id вида R-001 … R-030, всего 30"
+    },
+    {
+      "id": "P-02",
+      "level": 1,
+      "q": "Достаньте номер текущей страницы и общее число страниц из data-атрибутов, а не из текста",
+      "solution": {
+        "bs4": "(soup.find('strong', attrs={'data-current': True})['data-current'], soup.find('span', attrs={'data-total': True})['data-total'])",
+        "css": "strong[data-current], span[data-total]",
+        "xpath": "//strong[@data-current]|//span[@data-total]"
+      },
+      "answer": "index.html: 1 и 6; page-6.html: 6 и 6; всего отзывов 30"
+    },
+    {
+      "id": "P-03",
+      "level": 2,
+      "q": "Найдите ссылку на следующую страницу двумя местами: в <head> через link rel=next и в пагинаторе через a rel=next",
+      "solution": {
+        "css": "link[rel='next'], a[rel='next']",
+        "bs4": "soup.find('a', rel='next') and soup.find('a', rel='next')['href']",
+        "xpath": "//a[@rel='next']|//link[@rel='next']"
+      },
+      "answer": "index.html → page-2.html … page-5.html → page-6.html; на page-6.html обеих ссылок нет"
+    },
+    {
+      "id": "P-04",
+      "level": 2,
+      "q": "Одним регулярным выражением по исходному HTML соберите адреса страниц пагинации. Какую страницу вы при этом теряете?",
+      "solution": {
+        "regex": "page-(\\d+)\\.html",
+        "python": "sorted({int(n) for n in re.findall(r'page-(\\d+)\\.html', html)})",
+        "bs4": "# по исходному тексту, а не по дереву: re.findall работает с resp.text до BeautifulSoup"
+      },
+      "answer": "[2, 3, 4, 5, 6]; первая страница лежит в index.html и в это выражение не попадает"
+    },
+    {
+      "id": "P-05",
+      "level": 3,
+      "q": "Пройдите все шесть страниц по rel=next и соберите 30 отзывов без дублей. Условие остановки — отсутствие ссылки, а не счётчик в тексте",
+      "solution": {
+        "requests": "while url: resp = get(url); soup = BeautifulSoup(resp.text, 'html.parser'); url = urljoin(url, soup.find('a', rel='next')['href']) if soup.find('a', rel='next') else None",
+        "bs4": "seen |= {r['data-review'] for r in soup.select('article.review')}   # множество спасает от двойных ссылок пагинатора",
+        "scrapy": "class ReviewSpider(Spider): … yield response.follow(next_a, callback=self.parse)  # stop = нет a[rel=next]"
+      },
+      "answer": "6 запросов и 30 уникальных data-review; множество нужно, потому что одна страница упоминается в пагинаторе нескольких соседей и без visited один и тот же отзыв попадает в результат дважды"
+    },
+    {
+      "id": "P-06",
+      "level": 3,
+      "q": "По всем шести страницам отфильтруйте отзывы с подтверждённой покупкой",
+      "solution": {
+        "css": "article.review[data-verified='true']",
+        "bs4": "[r for r in soup.select('article.review') if r.get('data-verified') == 'true']",
+        "xpath": "//article[@data-verified='true']"
+      },
+      "answer": "20 из 30"
+    },
+    {
+      "id": "P-07",
+      "level": 4,
+      "q": "Соберите со всех страниц статистику: сколько отзывов с оценкой 4 и выше и к каким артикулам они относятся чаще всего",
+      "solution": {
+        "bs4": "Counter(r['data-product'] for r in all_reviews if int(r['data-rating']) >= 4)",
+        "python": "ratings = [int(r['data-rating']) for r in soup.select('article.review')]  # на каждой странице, затем sum",
+        "xpath": "//article[@data-rating and number(@data-rating) >= 4]"
+      },
+      "answer": "18 отзывов с оценкой 4 и выше из 30; по всем 30 чаще всего попадаются TB-2010 и TB-4031 — по 5, а среди оценок 4+ максимум 2 у пяти артикулов"
+    },
+    {
+      "id": "P-08",
+      "level": 2,
+      "q": "Сделайте то же самое одним запросом к JSON-файлу и сравните объём кода",
+      "solution": {
+        "requests": "data = get(base + '/data/reviews.json', timeout=15).json(); len(data['reviews'])",
+        "bs4": "# не нужен: данные приходят структурированными"
+      },
+      "answer": "30 отзывов одним запросом; meta.perPage = 5, meta.pages = 6"
+    }
+  ],
+  "pagination/load-more": [
+    {
+      "id": "P-09",
+      "level": 2,
+      "q": "Прочитайте настройки списка из контейнера: режим, источник данных и размер порции",
+      "solution": {
+        "bs4": "box = soup.find(id='catalog'); (box['data-mode'], box['data-src'], box['data-page-size'])",
+        "css": "ul[data-mode='load-more']",
+        "xpath": "//ul[@data-mode='load-more']"
+      },
+      "answer": "'load-more', '../data/products.json', '8'"
+    },
+    {
+      "id": "P-10",
+      "level": 2,
+      "q": "Сколько элементов .product-item вернёт requests+BeautifulSoup и сколько — браузер? Объясните разницу",
+      "solution": {
+        "bs4": "len(BeautifulSoup(get(url).text, 'html.parser').select('li.product-item'))",
+        "selenium": "len(driver.find_elements(By.CSS_SELECTOR, 'li.product-item'))"
+      },
+      "answer": "0 против 8: список дорисовывает dynamic.js после загрузки JSON"
+    },
+    {
+      "id": "P-11",
+      "level": 4,
+      "q": "Соберите все 24 позиции, кликая по кнопке, и не запишите дубли: по чему дедуплицировать и сколько позиций партии уценки",
+      "solution": {
+        "selenium": "while driver.find_element(By.ID, 'load-more').is_enabled(): driver.find_element(By.ID, 'load-more').click(); sleep(1)",
+        "bs4": "skus = {li['data-sku'] for li in soup.select('li.product-item')}   # 24 уникальных артикула",
+        "python": "discount = [s for s in skus if s.endswith('-У')]   # ровно 12"
+      },
+      "answer": "24 позиции, из них 12 с суффиксом -У; признак конца — disabled у кнопки и слово «всё» в статусе"
+    }
+  ],
+  "pagination/infinite-scroll": [
+    {
+      "id": "P-12",
+      "level": 3,
+      "q": "Опишите условие остановки прокрутки одним атрибутом и посчитайте, сколько порций нужно прокрутить",
+      "solution": {
+        "selenium": "while driver.find_element(By.ID, 'feed').get_attribute('data-empty') != 'true': driver.execute_script('window.scrollTo(0, document.body.scrollHeight);'); sleep(1)",
+        "css": "#feed[data-empty='true']"
+      },
+      "answer": "4 порции по 6 позиций: всего 24, атрибут data-empty появляется только после старта скрипта"
+    },
+    {
+      "id": "P-13",
+      "level": 3,
+      "q": "Соберите элементы ленты в порядке data-index и проверьте, что ни одна позиция не записана дважды",
+      "solution": {
+        "bs4": "sorted((int(li['data-index']), li['data-sku']) for li in soup.select('li.feed-item'))",
+        "xpath": "//li[@class='feed-item'][@data-index]",
+        "python": "assert len({li['data-sku'] for li in items}) == len(items)"
+      },
+      "answer": "индексы 1…24 без пропусков; артикулы 13…24 отличаются суффиксом -У"
+    }
+  ],
+  "pagination/query": [
+    {
+      "id": "P-14",
+      "level": 2,
+      "q": "Один и тот же файл: сколько страниц получится при ?size=6 и при ?size=4 на всей выборке?",
+      "solution": {
+        "python": "math.ceil(24 / size)  # size из params.get('size')",
+        "bs4": "soup.find(id='query-catalog')['data-pages']"
+      },
+      "answer": "4 страницы при size=6 и 6 страниц при size=4"
+    },
+    {
+      "id": "P-15",
+      "level": 3,
+      "q": "Пройдите по параметрам всю категорию «свет» с размером страницы 2 и остановитесь на пустом ответе",
+      "solution": {
+        "requests": "for p in range(1, 99): resp = get(base, params={'page': p, 'size': 2, 'category': 'свет'}); …стоп, если 'data-empty=\"true\"' в resp.text",
+        "python": "urlencode({'page': 1, 'size': 2, 'category': 'свет'})  # category=%D1%81%D0%B2%D0%B5%D1%82",
+        "bs4": "soup.select(\"#query-catalog li[data-category='свет']\")"
+      },
+      "answer": "2 страницы по 2 позиции (в категории 4 позиции), третья страница пустая: data-shown=\"0\""
+    },
+    {
+      "id": "P-16",
+      "level": 4,
+      "q": "Соберите адрес страницы вручную так, чтобы requests закодировал кириллиц сам, и покажите, во что превращается значение «одежда»",
+      "solution": {
+        "python": "get(base, params={'page': 2, 'size': 6, 'category': 'одежда'}).url",
+        "urllib": "urlencode({'category': 'одежда'})  # category=%D0%BE%D0%B4%D0%B5%D0%B6%D0%B4%D0%B0",
+        "requests": "# руками %XX не пишите: requests кодирует UTF-8 сам"
+      },
+      "answer": "category=%D0%BE%D0%B4%D0%B5%D0%B6%D0%B4%D0%B0; для «одежда» всегда одна страница, page=2 вернёт пустой список"
+    }
+  ]
+}

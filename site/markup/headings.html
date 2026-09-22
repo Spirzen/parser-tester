@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Заголовки h1–h6 · HTML-разметка · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Страница с заголовками всех уровней, вразнобой по вложенности, с data-level, id и мусорными h3 в футере секции." />
+</head>
+<body data-page="markup/headings" data-module="markup">
+<!-- inject:nav -->
+<main class="page">
+  <h1>Заголовки: уровни, порядок, мусор</h1>
+  <p class="lede">На реальной странице заголовки не выстроены по лесенке: уровень четвёртый может идти раньше второго, «h3» оказывается подписью в футере, а <code>data-level</code> противоречит тегу. Здесь все эти случаи собраны вместе.</p>
+  <p class="note">Контракт полигона: <code>&lt;h1&gt;</code> на странице ровно один — он вверху, всё остальное размечено как <code>h2…h6</code>. Задания модуля строятся на этом правиле.</p>
+
+  <section id="ladder">
+    <h2>Все уровни по порядку</h2>
+    <p>Учебная лесенка: каждый следующий заголовок стоит «внутри» предыдущего по смыслу, но не в разметке — заголовки в HTML не вкладываются друг в друга, они идут соседями.</p>
+    <h3>Кемпинг</h3>
+    <p>Раздел каталога.</p>
+    <h4>Палатки</h4>
+    <p>Подраздел.</p>
+    <h5>Двухместные</h5>
+    <p>Группа товаров.</p>
+    <h6>«Бухта 2»</h6>
+    <p>Карточка. Уровень шестой почти никогда не используют как содержательный — обычно это заимствованный шаблон.</p>
+  </section>
+
+  <section id="chaos">
+    <h2>Уровни вразнобой</h2>
+    <p>Порядок «2 → 3 → 4» нарушен намеренно: страница склеена из трёх чужих шаблонов. Считать вложенность по номеру уровня нельзя — только по фактическим родителям в дереве.</p>
+    <h4>Сначала четвёртый</h4>
+    <p>Блок «Доставка» переехал из подвала сайта в середину статьи: тег остался <code>h4</code>, хотя по структуре это обычный раздел второго уровня.</p>
+    <h6>Шестой раньше пятого</h6>
+    <p>Мелкий технический заголовок из старой вёрстки.</p>
+    <h5>А это пятый</h5>
+    <p>Он стоит ниже шестого: если вы искали «последний уровень перед списком», селектор по <code>h5</code> рядом не пройдёт.</p>
+    <h3>Третий без второго рядом</h3>
+    <p>Заголовок секции «Отзывы» из блока комментариев. Формально это h3, но ближайший h2 выше — «Уровни вразнобой», и он к отзывам не относится.</p>
+    <h4>Четвёртый внутри третьего</h4>
+    <p>Сосед, а не потомок: в дереве они лежат в одном <code>section</code>.</p>
+  </section>
+
+  <section id="attrs">
+    <h2>Заголовки с атрибутами</h2>
+    <p>Часть заголовков размечена <code>id</code> и <code>data-level</code>. Значения <code>data-level</code> в двух местах не совпадают с фактическим тегом: так выглядит разметка, которую сгенерировала одна CMS, а значения проставила руками другая.</p>
+    <h3 id="catalog-note" data-level="4">Заметка о наличии</h3>
+    <p class="muted">Тег <code>h3</code>, обещает уровень 4.</p>
+    <h4 id="catalog-note-sub" data-level="3">Подзаголовок к заметке</h4>
+    <p class="muted">Тег <code>h4</code>, обещает уровень 3.</p>
+    <h3 id="sizes" data-level="3">Размерная сетка</h3>
+    <p>Здесь всё честно: <code>h3</code> и <code>data-level="3"</code>.</p>
+    <div class="card">
+      <h5 id="care" data-level="5">Уход за мембраной</h5>
+      <p>Заголовок вложен в <code>div.card</code>: parents[0] — div, parents[1] — section, parents[2] — main.</p>
+    </div>
+    <div class="card">
+      <div class="card">
+        <h6 id="inner-most" data-level="6">Самый глубокий</h6>
+        <p class="muted">Два одинаковых <code>div.card</code> подряд — типичный дублированный шаблон.</p>
+      </div>
+    </div>
+    <h2 id="hidden-h2" data-level="2" class="hidden-block">Служебный заголовок скрытого блока</h2>
+    <p class="muted">Предыдущий <code>h2</code> скрыт стилем: BeautifulSoup его найдёт, Selenium с <code>visibility_of</code> — нет. Это единственный <code>h2</code> на странице с атрибутом <code>data-level</code>, и стоит он не в начале документа.</p>
+  </section>
+
+  <section id="garbage">
+    <h2>Мусор в футере секции</h2>
+    <p>Внизу секции лежит подвал с подписками и вакансиями. Его заголовки — тоже <code>h3</code> и <code>h4</code>, и обычный запрос «собери все h3» приносит четыре лишних пункта: три из <code>footer</code> и один из скрытого блока.</p>
+    <footer class="section-footer">
+      <div class="grid grid--3">
+        <div class="card"><h3>Подписка на рассылку</h3><p>example@post.example — адрес вымышленный.</p></div>
+        <div class="card"><h3>Приём заявок</h3><p>Телефон +7 000 00-00-00, тоже вымышленный.</p></div>
+        <div class="card"><h3>Наши вакансии</h3><p>Одна, упаковщик на склад в Тихой Бухте.</p></div>
+      </div>
+      <div class="card">
+        <h4>Баннер недели</h4>
+        <p class="muted">Вложен в <code>div.card</code> внутри <code>footer</code>: два родителя до <code>section</code>.</p>
+      </div>
+    </footer>
+    <div class="hidden-block">
+      <h3>Служебный блок A/B-теста</h3>
+      <p class="muted">Скрыт через <code>display:none</code>, в тексте страницы виден не будет, в исходнике — есть.</p>
+    </div>
+  </section>
+
+  <section id="howto">
+    <h2>Как отбирать заголовки</h2>
+    <h3>Три приёма</h3>
+    <h4>По тегу</h4>
+<pre><code>soup.find_all(["h2", "h3"])                     # два уровня одним запросом
+soup.find_all(re.compile("^h[1-6]$"))           # любые заголовки по регулярке
+soup.find_all("h3", limit=3)                    # первые три, без обхода всего файла</code></pre>
+    <h4>По атрибуту</h4>
+<pre><code>soup.find_all(attrs={"data-level": "3"})        # обещает уровень 3, теги разные
+soup.find_all("h3", attrs={"data-level": True}) # только размеченные data-level
+soup.find(id="sizes")                           # один узел; id уникален, пока его не продублировали
+[h.get("data-level") for h in soup.find_all("h2")]</code></pre>
+    <h4>Исключить мусор</h4>
+<pre><code>def content_heading(h):
+    return not any(getattr(p, "name", None) in ("footer", "aside") for p in h.parents)
+
+real = [h for h in soup.find_all(["h2", "h3"]) if content_heading(h)]
+
+# то же селектором: заголовки, не лежащие в подвале
+soup.select("section &gt; h2, section &gt; p + h3")
+# и «последний заголовок перед списком» — через соседей, а не по номеру уровня
+h3.find_next("ul")</code></pre>
+    <p class="warn">Сортировка «по уровню» (<code>min(int(t.name[1]) for t in headings)</code>) и проверка иерархии (<code>h4</code> без <code>h3</code> выше) — стандартная часть валидатора статей. На этой странице она упадёт намеренно: уровень четвёртый идёт раньше третьего, а скрытый <code>h2</code> вообще не виден в браузере.</p>
+  </section>
+
+  <section id="check">
+    <h2>Самопроверка</h2>
+    <p>Сосчитайте узлы и сверьтесь. Считаем по исходному HTML, то есть вместе со скрытыми блоками и футером.</p>
+    <table class="table--striped">
+      <caption>Сколько заголовков на странице</caption>
+      <thead><tr><th>Тег</th><th>Всего</th><th>С id</th><th>С data-level</th><th>Внутри footer или .hidden-block</th></tr></thead>
+      <tbody>
+        <tr><td><code>h1</code></td><td>1</td><td>0</td><td>0</td><td>0</td></tr>
+        <tr><td><code>h2</code></td><td>7</td><td>1</td><td>1</td><td>0</td></tr>
+        <tr><td><code>h3</code></td><td>9</td><td>2</td><td>2</td><td>4</td></tr>
+        <tr><td><code>h4</code></td><td>8</td><td>1</td><td>1</td><td>1</td></tr>
+        <tr><td><code>h5</code></td><td>3</td><td>1</td><td>1</td><td>0</td></tr>
+        <tr><td><code>h6</code></td><td>3</td><td>1</td><td>1</td><td>0</td></tr>
+      </tbody>
+      <tfoot><tr><td>Все заголовки</td><td>31</td><td>6</td><td>6</td><td>5</td></tr></tfoot>
+    </table>
+<pre><code>from collections import Counter
+from bs4 import BeautifulSoup
+
+soup = BeautifulSoup(html, "html.parser")
+headings = soup.find_all(re.compile("^h[1-6]$"))
+Counter(h.name for h in headings)                # сверьте с таблицей
+[h.get_text(strip=True) for h in headings if "footer" in [p.name for p in h.parents]]</code></pre>
+    <p class="tip">Проверить без Python: откройте консоль браузера и выполните <code>document.querySelectorAll('h2, h3').length</code>, затем сравните с <code>len(soup.find_all(['h2','h3']))</code>. Числа должны совпасть — на этой странице всё дорисовано разметкой, а не скриптом.</p>
+  </section>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>

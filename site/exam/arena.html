@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Полигон экзамена · Экзамен · Парсинг-тренажёр</title>
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <meta name="description" content="Одна плотная страница, на которой живут все 12 экзаменационных заданий: карточки, таблицы, тени ловушек, комментарии-двойники." />
+</head>
+<body data-page="exam/arena" data-module="exam">
+<!-- inject:nav -->
+<main class="page page--wide">
+  <h1>Полигон: одна страница — двенадцать заданий</h1>
+  <p class="lede">Ответы на задания <a href="index.html">экзамена</a> извлекаются только отсюда. Разметка плотная и злой-доброй рукой:
+  классы-двойники, спрятанные блоки, комментарии-приманки и псевдопагинация. Единственное правило честности: каждый ответ
+  однозначно получается из HTML этой страницы.</p>
+
+  <ul class="breadcrumbs">
+    <li><a href="../index.html">Главная</a></li>
+    <li><a href="index.html">Экзамен</a></li>
+    <li>Полигон</li>
+  </ul>
+
+  <!-- ============ 1–3: витрина карточек ============ -->
+  <h2>Блок «Витрина»</h2>
+  <section class="grid grid--3" id="showcase" data-zone="showcase" data-question="E-01">
+    <div class="card product" data-test="product-card" data-sku="TB-1001" data-price="2490">
+      <h3 class="product-card__title">Складной стул «Бриз»</h3>
+      <p><span class="price">2 490 ₽</span></p>
+    </div>
+    <div class="card product" data-test="product-card" data-sku="TB-1002" data-price="640" data-question="E-02">
+      <h3 class="product-card__title">Картуш газовой смеси 450 мл</h3>
+      <p><span class="price">640 ₽</span></p>
+    </div>
+    <div class="card product" data-test="product-card" data-sku="TB-2010" data-price="8990">
+      <h3 class="product-card__title">Куртка штормовая «Маяк»</h3>
+      <p><span class="price">8 990 ₽</span></p>
+    </div>
+    <div class="card product" data-test="product-card" data-sku="TB-3020" data-price="1990">
+      <h3 class="product-card__title">Фонарь налобный «Светляк 400»</h3>
+      <p><span class="price">1 990 ₽</span></p>
+    </div>
+    <div class="card product" data-test="product-card" data-sku="TB-5040" data-price="3290">
+      <h3 class="product-card__title">Термос 0.75 л «Полночь»</h3>
+      <p><span class="price">3 290 ₽</span></p>
+    </div>
+    <div class="card product" data-test="product-card" data-sku="TB-6050" data-price="9800" data-question="E-03">
+      <h3 class="product-card__title">Рюкзак забросный 65 л</h3>
+      <p><span class="price">9 800 ₽</span></p>
+    </div>
+  </section>
+
+  <!-- ============ 4: складская таблица с итогом ============ -->
+  <h2>Блок «Склад»</h2>
+  <table class="table--striped" id="stock-table" data-question="E-04">
+    <caption>Остатки: считается только tbody</caption>
+    <thead><tr><th>Артикул</th><th>Товар</th><th>Количество</th></tr></thead>
+    <tbody>
+      <tr class="row-stock" data-sku="TB-5040" data-qty="12"><td class="mono">TB-5040</td><td>Термос 0.75 л «Полночь»</td><td>12</td></tr>
+      <tr class="row-stock" data-sku="TB-5041" data-qty="5"><td class="mono">TB-5041</td><td>Котелок титановый 700 мл</td><td>5</td></tr>
+      <tr class="row-stock" data-sku="TB-6051" data-qty="30"><td class="mono">TB-6051</td><td>Гермомешок 25 л</td><td>30</td></tr>
+      <tr class="row-stock" data-sku="TB-3021" data-qty="7"><td class="mono">TB-3021</td><td>Гирлянда кемпинговая 10 м</td><td>7</td></tr>
+      <tr class="row-stock" data-sku="TB-2011" data-qty="4"><td class="mono">TB-2011</td><td>Носки трекинговые, пара</td><td>4</td></tr>
+    </tbody>
+    <tfoot><tr><td>Итого</td><td class="itog-label">Сумма по столбцу «Количество»</td><td class="itog" data-final="58">58</td></tr></tfoot>
+  </table>
+
+  <!-- ============ 5: классификатор — три уровня вложенности ============ -->
+  <h2>Блок «Классификатор»</h2>
+  <ul class="tree" id="classifier" data-question="E-05">
+    <li>Снаряжение
+      <ul class="tree">
+        <li>Лагерь
+          <ul class="tree">
+            <li>Палатки и тенты</li>
+          </ul>
+        </li>
+        <li>Одеяла и спальники</li>
+      </ul>
+    </li>
+    <li>Такелаж
+      <ul class="tree">
+        <li>Верёвки
+          <ul class="tree">
+            <li>Кольцо штормового фала</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>Быт
+      <ul class="tree">
+        <li>Посуда</li>
+        <li>Огонь</li>
+      </ul>
+    </li>
+  </ul>
+
+  <!-- ============ 6: прибор — только data-атрибуты ============ -->
+  <h2>Блок «Прибор»</h2>
+  <section class="card" id="device" data-question="E-06" data-serial="TBX-77-42" data-calibration="2026-04-01" data-weight="840">
+    <h3>Барометр «Створ-М»</h3>
+    <p class="muted">Наружная часть блока намеренно без данных: серийный номер, дата поверки и вес живут только в атрибутах секции.</p>
+  </section>
+
+  <!-- ============ 7: скрытый блок ============ -->
+  <div class="hidden-block" id="whisper" data-question="E-07">Свет маяка виден за 12 миль</div>
+
+  <!-- ============ 8: форма со скрытым полем ============ -->
+  <h2>Блок «Заявка»</h2>
+  <form action="#" method="post" id="request-form" data-question="E-08">
+    <input type="hidden" name="session_hash" value="hb-9k2m" />
+    <input type="hidden" name="discount" value="0" />
+    <div class="field">
+      <label for="fio">Имя</label>
+      <input type="text" id="fio" name="fio" placeholder="Иван Петрович" />
+    </div>
+    <div class="field">
+      <label for="phone">Телефон</label>
+      <input type="tel" id="phone" name="phone" value="+7 000 000-00-00" />
+    </div>
+    <p><button type="submit">Отправить</button></p>
+    <p class="hint">В форме два скрытых поля — на экзамене спрашивается только то, что в имени содержит «hash».</p>
+  </form>
+
+  <!-- ============ 9: цитата с тегами ============ -->
+  <h2>Блок «Цитата»</h2>
+  <blockquote class="quote-block" data-question="E-09">
+    <small class="quote">«Закат над причалом — это чайки, которые наконец замолчали.»</small>
+    <span class="author">Инга Приморская</span>
+    <div class="tags"><a class="tag" href="#">причал</a><a class="tag" href="#">закат</a><a class="tag" href="#">чайки</a></div>
+  </blockquote>
+  <blockquote class="quote-block">
+    <small class="quote">«Два узла — это больше, чем один, но меньше, чем беда.»</small>
+    <span class="author">Осип Маячный</span>
+    <div class="tags"><a class="tag" href="#">узлы</a><a class="tag" href="#">юмор</a></div>
+  </blockquote>
+
+  <!-- ============ 10: псевдопагинация ============ -->
+  <nav class="pager-wrap" aria-label="Пагинация полигона" data-question="E-10">
+    <ul class="pager">
+      <li><span class="is-current" aria-current="page">1</span></li>
+      <li><a href="index.html" rel="next">Следующая →</a></li>
+    </ul>
+  </nav>
+
+  <!-- ============ 11: комментарий-ловушка ============ -->
+  <h2>Блок «Цена по скидке»</h2>
+  <!-- price: 99999 -->
+  <!-- старая цена, не удалять: <span class="price">4 700 ₽</span> -->
+  <p>Итоговая цена: <span class="price" id="final-price" data-price="1250" data-question="E-11">1 250 ₽</span> <span class="price price--old">3 100 ₽</span></p>
+
+  <!-- ============ 12: три блока с одним data-id ============ -->
+  <h2>Блок «Промо»</h2>
+  <div class="grid grid--3">
+    <div class="side" data-zone="left"><div class="card promo" data-id="promo-block" data-order="1">Скидка слева</div></div>
+    <div class="side" data-zone="center" data-question="E-12"><div class="card promo" data-id="promo-block" data-order="2">Скидка в центре</div></div>
+    <div class="side" data-zone="right"><div class="card promo" data-id="promo-block" data-order="3">Скидка справа</div></div>
+  </div>
+  <p class="note">У трёх карточек промо-акции одинаковый <code>data-id="promo-block"</code> — как в грязной разметке, где «id» не уникальны.
+  Порядок решает <code>data-order</code> и позиция в DOM.</p>
+
+  <h2>Перекрёстные ссылки (для задания про пути)</h2>
+  <ul>
+    <li><a href="../js/dynamic-table.html">Динамическая таблица</a> — JS-модуль</li>
+    <li><a href="../scrapy/quotes.html">Лента цитат</a> — Scrapy-модуль</li>
+    <li><a href="../data/products.json">Эталон каталога</a> — JSON-раздатка</li>
+  </ul>
+
+  <p class="warn">На этой странице нет ни одного ответа в открытом виде: всё, что просят задания, нужно извлечь кодом.
+  Проверка — на <a href="index.html">странице экзамена</a>.</p>
+<!-- inject:tasks -->
+</main>
+<!-- inject:footer -->
+<script src="../assets/js/trainer.js" defer></script>
+</body>
+</html>
