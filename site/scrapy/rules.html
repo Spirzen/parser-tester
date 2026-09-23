@@ -109,6 +109,7 @@ class DedupeBySkuPipeline:
       <tr><td>Отбросить карточки без цены</td><td>pipeline + <code>DropItem</code></td><td><a href="item-01.html">item-01.html</a></td></tr>
       <tr><td>Не собрать один товар дважды</td><td>множество по sku в pipeline; <code>dont_filter</code> не включать</td><td><a href="index.html">index.html</a> + <a href="item-01.html">item-01.html</a></td></tr>
       <tr><td>Починить относительный src у iframe без браузера</td><td><code>urljoin(response.url, src)</code> или <code>response.follow(src)</code></td><td><a href="../js/iframe-outer.html">js/iframe-outer.html</a></td></tr>
+      <tr><td>Взять первое значение, а не список</td><td><code>response.css(".price::text").get()</code> — вернёт текст или <code>None</code>; метода <code>css_first()</code> в Scrapy нет, он выдуманный</td><td><a href="item-01.html">item-01.html</a></td></tr>
     </tbody>
   </table>
 <!-- inject:tasks -->

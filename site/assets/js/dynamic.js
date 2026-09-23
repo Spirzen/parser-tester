@@ -184,7 +184,16 @@
         setText(findNode(config.count), String(shown));
         setText(findNode(config.totalNode), String(catalog.length));
         if (shown >= catalog.length) finish();
-        else setText(status, 'загружено ' + shown + ' из ' + catalog.length + ' — крутите дальше');
+        else {
+          setText(status, 'загружено ' + shown + ' из ' + catalog.length + ' — крутите дальше');
+          // Наблюдатель сообщает только об изменении пересечения. Если маркер после догрузки
+          // всё ещё в области видимости (порция короче экрана), второго вызова не будет и
+          // лента встанет на первой же пачке — поэтому пересечение проверяем заново.
+          if (observer) {
+            observer.unobserve(sentinel);
+            observer.observe(sentinel);
+          }
+        }
       }
 
       var observer = null;
@@ -195,6 +204,13 @@
           });
         }, { rootMargin: '120px 0px' });
         observer.observe(sentinel);
+        // Наблюдатель сообщает только об изменении пересечения: резкий прыжок через маркер
+        // (scrollTo до низа, Ctrl+End) он не заметит, и лента встанет на первой порции.
+        // Поэтому ту же проверку дублируем на событии прокрутки.
+        window.addEventListener('scroll', function () {
+          var vh = window.innerHeight || document.documentElement.clientHeight;
+          if (shown < catalog.length && sentinel.getBoundingClientRect().top <= vh + 120) step();
+        }, { passive: true });
       } else {
         // Браузер без IntersectionObserver: грузим сразу, урок всё равно показывается.
         while (shown < catalog.length) step();

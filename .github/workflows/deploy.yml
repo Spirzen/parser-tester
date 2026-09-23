@@ -30,6 +30,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Источник Pages — GitHub Actions?
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Без этого шага configure-pages падает малопонятным HttpError: Not Found.
+          code=$(curl -sS -o pages.json -w '%{http_code}' \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/pages")
+          if [ "$code" != "200" ]; then
+            echo "::error::Pages для этого репозитория не подключён к GitHub Actions (ответ API: $code). Включите: Settings → Pages → Build and deployment → Source: GitHub Actions. Если там выбрано «Deploy from a branch», сайт отдаёт Jekyll, а не наша сборка."
+            exit 1
+          fi
+          build_type=$(python3 -c "import json; print(json.load(open('pages.json')).get('build_type'))")
+          if [ "$build_type" != "workflow" ]; then
+            echo "::error::Сейчас Pages публикуется из ветки (build_type: $build_type). Переключите Source на GitHub Actions — этот workflow сам соберёт dist."
+            exit 1
+          fi
       - id: pages
         uses: actions/configure-pages@v5
       - name: Сборка с адресом публикации

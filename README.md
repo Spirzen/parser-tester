@@ -68,7 +68,7 @@ XPath-решению в блоке заданий отправляет его в
 - `smoke_test.py` — проверка согласованности страниц и примеров.
 
 ```bash
-scrapy runspider examples/06_scrapy_spider.py -s TRAINER_BASE=http://127.0.0.1:8000 -O items.jsonl
+python examples/06_scrapy_spider.py catalog -O items.jsonl   # цитаты: ... quotes -O quotes.jsonl
 ```
 
 ## Публикация

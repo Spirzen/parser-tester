@@ -28,7 +28,7 @@ def dynamic_table(page) -> None:
 
     page.click("#refresh-btn")
     expect(page.locator("#status")).to_contain_text("обновление", timeout=2000)
-    expect(page.locator("#status")).to_contain_text("данные готовы", timeout=10000)
+    expect(page.locator("#status")).to_contain_text("данные обновлены", timeout=10000)
     show("после обновления", rows.count())
 
 
@@ -58,7 +58,7 @@ def spa_hash_routing(page) -> None:
     expect(page.locator("#spa-root")).to_contain_text("Цены", timeout=10000)
     show("роут #/prices", page.inner_text("#spa-root")[:60].replace("\n", " "))
     page.click("a[href='#/reviews']")
-    expect(page.locator("#spa-root")).to_contain_text("Отзыв", timeout=10000)
+    expect(page.locator("#spa-root")).to_contain_text("Свежие отзывы", timeout=10000)
     show("роут #/reviews", page.inner_text("#spa-root")[:60].replace("\n", " "))
     show("адрес в браузере", page.url)
     show("что получил бы requests по этому адресу", "оболочка без разделов: хэш сервер не передаётся")
@@ -83,15 +83,19 @@ def infinite_scroll(page) -> None:
     feed = page.locator(".feed-item")
     expect(feed.first).to_be_visible(timeout=10000)
     start = feed.count()
-    for _ in range(4):
-        page.mouse.wheel(0, 4000)
-        page.wait_for_timeout(300)
+    # Крутим понемногу: IntersectionObserver реагирует на вход маркера в область видимости,
+    # поэтому один резкий прыжок на несколько экранов маркер перескакивает — и порции не приходит.
+    for _ in range(8):
+        if page.locator("[data-empty='true']").count():
+            break
+        page.mouse.wheel(0, 500)
+        page.wait_for_timeout(250)
     show("элементов до/после прокрутки", f"{start} → {feed.count()}")
-    end_marker = page.locator("[data-empty='true']")
-    show("дошли ли до конца списка", end_marker.count() > 0)
-    page.evaluate("() => window.scrollTo(0, document.body.scrollHeight)")
-    page.wait_for_timeout(600)
-    show("после прокрутки до низа", feed.count())
+    show("дошли ли до конца списка", page.locator("[data-empty='true']").count() > 0)
+    show("сколько показано по data-shown", page.locator("#feed").get_attribute("data-shown"))
+    page.locator("#feed-sentinel").scroll_into_view_if_needed()
+    page.wait_for_timeout(400)
+    show("после прокрутки к маркеру", feed.count())
 
 
 def cookies_and_context(page) -> None:

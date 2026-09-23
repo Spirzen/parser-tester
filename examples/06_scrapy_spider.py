@@ -1,8 +1,14 @@
 """06 · Scrapy: два учебных паука на одном полигоне.
 
     pip install scrapy
-    scrapy runspider examples/06_scrapy_spider.py -s TRAINER_BASE=http://127.0.0.1:8000 -O items.jsonl
-    scrapy runspider examples/06_scrapy_spider.py -s TRAINER_BASE=http://127.0.0.1:8000 -t quotes -O quotes.jsonl
+    python examples/06_scrapy_spider.py catalog -O items.jsonl
+    python examples/06_scrapy_spider.py quotes  -O quotes.jsonl
+    # адрес полигона: PARSER_BASE_URL=http://127.0.0.1:8000 перед командой, по умолчанию он и так этот
+
+Важная деталь про `scrapy runspider`: у этой команды нет способа выбрать паука по имени,
+а в файле их двое — runspider молча берёт последнего. Поэтому файл сам разбирает аргументы:
+так один и тот же пример запускается и как модуль, и как сценарий, и студент не получает
+«странные» 20 строк там, где ждал двенадцать карточек.
 
 Первый паук идёт по каталогу «Тихой бухты» явными ссылками (список → карточка),
 второй собирает цитаты и обходит пагинацию по rel="next".
@@ -16,7 +22,7 @@ import re
 
 import scrapy
 
-BASE = os.environ.get("TRAINER_BASE", "http://127.0.0.1:8000").rstrip("/")
+BASE = os.environ.get("PARSER_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 
 COMMON_SETTINGS = {
     "ROBOTSTXT_OBEY": True,  # читает и Disallow, и Crawl-delay из robots.txt
@@ -24,7 +30,9 @@ COMMON_SETTINGS = {
     "RANDOMIZE_DOWNLOAD_DELAY": True,
     "CONCURRENT_REQUESTS": 4,
     "CONCURRENT_REQUESTS_PER_DOMAIN": 2,
-    "USER_AGENT": "ParsingTrainerCourse/1.0 (+учебный курс; contact: student@example.com)",
+    # Значение заголовка обязано быть латиницей: на кириллице Twisted падает с UnicodeEncodeError,
+    # и падает не при сборе данных, а на первом же запросе — выглядит как поломка полигона.
+    "USER_AGENT": "ParsingTrainerCourse/1.0 (+educational spider; contact: student@example.com)",
     "FEED_EXPORT_ENCODING": "utf-8",
     "RETRY_TIMES": 2,
     "RETRY_HTTP_CODES": [429, 500, 502, 503],
@@ -94,22 +102,24 @@ class CatalogSpider(scrapy.Spider):
                 response.css("dl.spec dd::text").getall(),
             )
         }
+        # .get() вместо воображаемого .css_first(): у SelectorList.get() ровно та же
+        # семантика — значение первого совпадения или None, — но он действительно существует.
         item = {
             "url": response.url,
             "list_url": response.meta["list_url"],
-            "sku": response.css_first("article.product-card::attr(data-sku)") or response.css_first(".sku::text"),
-            "category": response.css_first("article.product-card::attr(data-category)"),
-            "title": (response.css_first("h1::text") or "").strip(),
-            "price": parse_price(response.css_first(".price::attr(data-price)") or response.css_first(".price::text")),
-            "currency": response.css_first(".price::attr(data-currency)"),
-            "old_price": parse_price(response.css_first(".price--old::text")),
-            "stock": response.css_first("article.product-card::attr(data-stock)"),
-            "in_stock": "нет в наличии" not in (response.css_first(".stock::text") or ""),
-            "seller": (response.css_first(".seller::text") or "").strip(),
-            "rating": response.css_first("[data-rating]::attr(data-rating)"),
-            "reviews": response.css_first("[data-reviews]::attr(data-reviews)"),
+            "sku": response.css("article.product-card::attr(data-sku)").get() or response.css(".sku::text").get(),
+            "category": response.css("article.product-card::attr(data-category)").get(),
+            "title": (response.css("h1::text").get() or "").strip(),
+            "price": parse_price(response.css(".price::attr(data-price)").get() or response.css(".price::text").get()),
+            "currency": response.css(".price::attr(data-currency)").get(),
+            "old_price": parse_price(response.css(".price--old::text").get()),
+            "stock": response.css("article.product-card::attr(data-stock)").get(),
+            "in_stock": "нет в наличии" not in (response.css(".stock::text").get() or ""),
+            "seller": (response.css(".seller::text").get() or "").strip(),
+            "rating": response.css("[data-rating]::attr(data-rating)").get(),
+            "reviews": response.css("[data-reviews]::attr(data-reviews)").get(),
             "tags": [t.strip() for t in response.css(".tag-list .tag::text").getall()],
-            "updated_at": response.css_first("article.product-card::attr(data-updated)"),
+            "updated_at": response.css("article.product-card::attr(data-updated)").get(),
             "specs": specs,
             "breadcrumbs": [b.strip() for b in response.css(".breadcrumbs li::text").getall() if b.strip()],
         }
@@ -127,9 +137,9 @@ class QuotesSpider(scrapy.Spider):
         for quote in response.css("blockquote.quote-block"):
             yield {
                 "url": response.url,
-                "text": (quote.css_first(".quote-text::text") or quote.css_first("::text") or "").strip("«» \n"),
-                "author": (quote.css_first(".author::text") or "").strip(),
-                "author_link": quote.css_first("a.author::attr(href)"),
+                "text": (quote.css(".quote-text::text").get() or quote.css("::text").get() or "").strip("«» \n"),
+                "author": (quote.css(".author::text").get() or "").strip(),
+                "author_link": quote.css("a.author::attr(href)").get(),
                 "tags": [t.strip() for t in quote.css(".tags a.tag::text").getall()],
             }
         next_href = response.css('a[rel="next"]::attr(href)').get()
@@ -138,8 +148,36 @@ class QuotesSpider(scrapy.Spider):
 
     def parse_authors(self, response):  # отдельная стадия: заходим по ссылке автора
         yield {
-            "author": (response.css_first("h1::text") or "").strip(),
-            "born": response.css_first("[data-born]::attr(data-born)"),
-            "born_country": response.css_first("[data-born-country]::attr(data-born-country)"),
+            "author": (response.css("h1::text").get() or "").strip(),
+            "born": response.css("[data-born]::attr(data-born)").get(),
+            "born_country": response.css("[data-born-country]::attr(data-born-country)").get(),
             "quotes": len(response.css("blockquote.quote-block")),
         }
+
+
+SPIDERS = {"catalog": CatalogSpider, "quotes": QuotesSpider}
+
+
+def main(argv=None):
+    """Выбор паука именем: в файле их двое, а runspider берёт последний и молчит об этом."""
+    import argparse
+
+    from scrapy.crawler import CrawlerProcess
+
+    ap = argparse.ArgumentParser(description="Учебные пауки полигона «Тихая бухта».")
+    ap.add_argument("spider", nargs="?", default="catalog", choices=sorted(SPIDERS))
+    ap.add_argument("-O", "--output", metavar="FILE", help="выгрузить items в файл (jsonl)")
+    args = ap.parse_args(argv)
+
+    settings = dict(COMMON_SETTINGS)
+    if args.output:
+        settings["FEEDS"] = {args.output: {"format": "jsonlines", "overwrite": True}}
+
+    process = CrawlerProcess(settings)
+    process.crawl(SPIDERS[args.spider])
+    process.start()  # блокирует до конца работы краулера
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

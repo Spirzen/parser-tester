@@ -47,22 +47,30 @@ def wait_for_dynamic_table(d) -> None:
     fresh = d.find_elements(By.CSS_SELECTOR, "tr.row-stock")
     show("строк после обновления", len(fresh))
     show("артрикулы из data-sku", [r.get_attribute("data-sku") for r in fresh[:5]])
-    show("колонки таблицы", [th.text for th in d.find_elements(By.CSS_SELECTOR, "#stock-table thead th")])
+    show("колонки таблицы", [th.text for th in d.find_elements(By.CSS_SELECTOR, "table:has(#stock-body) > thead th")])
 
 
 def lazy_scroll(d) -> None:
-    """Ленивые блоки: карточка появляется только когда до неё доскроллили."""
+    """Ленивые карточки: узлы в DOM с самого начала, дозагружается только их содержимое."""
     d.get(base_url() + "/js/hidden-lazy.html")
-    before = len(d.find_elements(By.CSS_SELECTOR, ".lazy-card"))
-    d.find_element(By.ID, "load-rest").click()  # кнопка «Догрузить всё»
+    cards = d.find_elements(By.CSS_SELECTOR, ".lazy-card")
+    show("карточек сразу после загрузки", len(cards))
+    show("эндпоинты видны в атрибутах до всякой прокрутки", [c.get_attribute("data-src") for c in cards])
+
+    d.execute_script("arguments[0].scrollIntoView()", cards[0])
     WebDriverWait(d, TIMEOUT).until(
-        lambda x: len(x.find_elements(By.CSS_SELECTOR, ".lazy-card")) > before
+        ec.presence_of_element_located((By.CSS_SELECTOR, ".lazy-card.is-loaded"))
     )
-    show("карточек до и после", f"{before} → {len(d.find_elements(By.CSS_SELECTOR, '.lazy-card'))}")
-    d.execute_script("window.scrollTo(0, document.body.scrollHeight)")
-    loaded = d.find_elements(By.CSS_SELECTOR, ".lazy-card[data-loaded='true']")
-    show("догруженных по прокрутке", len(loaded))
-    show("значения лежали в атрибуте", [c.get_attribute("data-src") for c in loaded[:3]])
+    show("после прокрутки загружено", len(d.find_elements(By.CSS_SELECTOR, ".lazy-card.is-loaded")))
+
+    d.find_element(By.ID, "load-rest").click()  # «Догрузить всё» — тот же путь, что у наблюдателя
+    WebDriverWait(d, TIMEOUT).until(
+        lambda x: len(x.find_elements(By.CSS_SELECTOR, ".lazy-card.is-loaded")) == len(cards)
+    )
+    loaded = d.find_elements(By.CSS_SELECTOR, ".lazy-card.is-loaded")
+    show("всех карточек дозагружено", len(loaded))
+    show("сколько записей отдал каждый JSON", [c.get_attribute("data-count") for c in loaded])
+    show("текст в карточке", loaded[0].find_element(By.CSS_SELECTOR, ".lazy-status").text)
 
 
 def inside_iframe(d) -> None:

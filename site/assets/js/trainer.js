@@ -4,9 +4,21 @@
   'use strict';
 
   var MODES = {
-    css: { label: 'CSS', placeholder: 'div.product-card > h3.title' },
-    xpath: { label: 'XPath', placeholder: "//div[@class='product-card']//h3" },
-    regex: { label: 'Regex', placeholder: '<h3[^>]*>(.*?)</h3>' },
+    css: {
+      label: 'CSS',
+      placeholder: 'div.product-card > h3.title',
+      hint: 'CSS ищет узлы: .класс, #id, tag > child, [data-price], :nth-child(2n)',
+    },
+    xpath: {
+      label: 'XPath',
+      placeholder: "//div[@class='product-card']//h3",
+      hint: 'XPath ищет узлы: //tag[@attr="x"], text(), contains(), ../following-sibling::',
+    },
+    regex: {
+      label: 'Regex',
+      placeholder: '<h3[^>]*>(.*?)</h3>',
+      hint: 'Regex ищет по тексту разметки: совпадения — строки, группы в скобках показываются первыми',
+    },
   };
 
   var OUT = {
@@ -68,6 +80,7 @@
       '</div>' +
       '<div class="trainer__body">' +
       '<div class="trainer__modes" data-role="modes"></div>' +
+      '<p class="trainer__hint" data-role="mode-hint"></p>' +
       '<div class="trainer__row">' +
       '<input type="text" data-role="sel" spellcheck="false" autocomplete="off" />' +
       '<button type="button" data-role="run">Найти</button>' +
@@ -91,12 +104,7 @@
       b.setAttribute('data-mode', key);
       b.setAttribute('aria-pressed', String(state.mode === key));
       b.addEventListener('click', function () {
-        state.mode = key;
-        modes.querySelectorAll('button').forEach(function (x) {
-          x.setAttribute('aria-pressed', String(x.getAttribute('data-mode') === key));
-        });
-        panel.querySelector('[data-role=sel]').placeholder = MODES[key].placeholder;
-        save();
+        setMode(key);
         run();
       });
       modes.appendChild(b);
@@ -120,10 +128,23 @@
       run();
     });
 
-    panel.querySelector('[data-role=sel]').placeholder = MODES[state.mode].placeholder;
+    setMode(state.mode);
     panel.querySelector('[data-role=out]').value = state.out;
     panel.querySelector('[data-role=hl]').checked = state.highlight;
     syncAttrField();
+  }
+
+  function setMode(key) {
+    if (!MODES[key]) return;
+    var panel = document.getElementById('trainer');
+    state.mode = key;
+    if (!panel) return;
+    panel.querySelectorAll('[data-role=modes] button').forEach(function (x) {
+      x.setAttribute('aria-pressed', String(x.getAttribute('data-mode') === key));
+    });
+    panel.querySelector('[data-role=sel]').placeholder = MODES[key].placeholder;
+    panel.querySelector('[data-role=mode-hint]').textContent = MODES[key].hint;
+    save();
   }
 
   function syncAttrField() {
@@ -164,8 +185,59 @@
     return esc(text.length > limit ? text.slice(0, limit) + '…' : text);
   }
 
+  // Текст для regex-режима: разметка страницы БЕЗ самой панели, иначе тренажёр
+  // начинает находить собственные подсказки и только что введённую строку.
+  function regexSource() {
+    var clone = document.documentElement.cloneNode(true);
+    var panel = clone.querySelector ? clone.querySelector('#trainer') : null;
+    if (panel) panel.parentNode.removeChild(panel);
+    return clone.outerHTML || new XMLSerializer().serializeToString(clone);
+  }
+
   function collectCss(sel) {
     return Array.prototype.slice.call(document.querySelectorAll(sel));
+  }
+
+  // Эвристика «это выражение из другого синтаксиса»: нужна, чтобы вместо текста из недр
+  // браузера показать кнопку «найти как XPath/regex». Ошибается — только в лишнюю подсказку.
+  function looksLike(expr) {
+    var s = String(expr || '').trim();
+    if (!s) return null;
+    if (/^(\/\/|\/[a-z*(]|\(\s*\/)/i.test(s) || /\]\s*\//.test(s) || /(^|\[)@[\w-]/.test(s) ||
+        /\b(contains|starts-with|normalize-space|text|following-sibling|preceding-sibling|not)\s*\(/i.test(s)) return 'xpath';
+    if (/\\[wdWsSdDBb]|\.\*|\[\^|\(\?:|\{\d+(,\d*)?\}/.test(s)) return 'regex';
+    if (/^[.#][\w-]/.test(s) || /^[a-z][\w-]*([.:#[>]|$)/i.test(s)) return 'css';
+    return null;
+  }
+
+  function currentSel() {
+    return (document.querySelector('.trainer [data-role=sel]').value || '').trim();
+  }
+
+  function humanError(err, mode) {
+    var name = (err && err.name) || '';
+    if (/SyntaxError|InvalidExpressionError|DOMException|InvalidCharacterError/.test(name)) {
+      return {
+        css: 'Браузер не распознал CSS-селектор.',
+        xpath: 'Такое выражение не проходит как XPath — проверьте слэши, кавычки и скобки.',
+        regex: 'Такое выражение не проходит как регулярка — проверьте скобки, классы [...] и экранирование.',
+      }[mode];
+    }
+    return name + ': ' + ((err && err.message) || 'ошибка');
+  }
+
+  function suggestBox(box, expr) {
+    var kind = looksLike(expr);
+    if (!kind || kind === state.mode || !MODES[kind]) return;
+    var tip = el('span', 'trainer__suggest');
+    var swap = el('button', 'trainer__swap', 'Найти как ' + MODES[kind].label);
+    swap.type = 'button';
+    swap.addEventListener('click', function () { setMode(kind); run(); });
+    tip.appendChild(swap);
+    var note = document.createElement('span');
+    note.textContent = ' — выражение написано в другом синтаксисе, вкладки слева.';
+    tip.appendChild(note);
+    box.appendChild(tip);
   }
 
   function collectXPath(expr) {
@@ -187,15 +259,18 @@
     return out;
   }
 
-  function pyEquivalent(sel) {
-    var s = sel.replace(/'/g, "\\'");
-    if (state.mode === 'css') {
-      return "soup.select('" + s + "')   # bs4 · len() = ";
-    }
-    if (state.mode === 'xpath') {
-      return 'tree.xpath("' + s + '")   # lxml · select.xpath() в bs4';
-    }
-    return "re.findall(r'" + s + "', html)   # только по исходному HTML";
+  // Кавычки в Python-эквиваленте подбираем так, чтобы не экранировать лишнего:
+  // «\'request-anatomy\'» внутри "...'..." не нужно, а студент читает эту строку как образец.
+  function pyString(expr) {
+    if (expr.indexOf('"') === -1) return '"' + expr + '"';
+    if (expr.indexOf("'") === -1) return "'" + expr + "'";
+    return '"' + expr.replace(/"/g, '\\"') + '"';
+  }
+
+  function pyEquivalent(sel, n) {
+    if (state.mode === 'css') return 'soup.select(' + pyString(sel) + ')   # bs4 · len() = ' + n;
+    if (state.mode === 'xpath') return 'tree.xpath(' + pyString(sel) + ')   # lxml · len() = ' + n;
+    return 're.findall(r' + pyString(sel) + ', html)   # re · len() = ' + n;
   }
 
   function render(list) {
@@ -205,7 +280,10 @@
     box.innerHTML = '';
 
     if (!list.length) {
-      box.appendChild(el('span', 'trainer__err', 'Ничего не найдено. Проверьте регистр, кавычки и область поиска.'));
+      box.appendChild(el('span', 'trainer__err',
+        'На этой странице совпадений нет: поиск идёт только по текущему документу (' +
+        location.pathname.split('/').pop() + '), а задания разбросаны по всем страницам модуля.'));
+      suggestBox(box, currentSel());
       return;
     }
 
@@ -256,17 +334,23 @@
     if (!sel) {
       box.innerHTML = '';
       document.querySelector('.trainer [data-role=count]').textContent = '0';
-      py.textContent = 'Введите селектор. Примеры: #id, .class, tag > child, [data-price], :nth-child(2n).';
+      py.textContent = 'Режим «' + MODES[state.mode].label + '»: ' + MODES[state.mode].hint + '.';
       return;
     }
     try {
-      var list = state.mode === 'css' ? collectCss(sel) : state.mode === 'xpath' ? collectXPath(sel) : collectRegex(document.documentElement.outerHTML, sel);
+      var list = state.mode === 'css' ? collectCss(sel) : state.mode === 'xpath' ? collectXPath(sel) : collectRegex(regexSource(), sel);
       highlight(list);
       render(list);
-      py.textContent = pyEquivalent(sel) + list.length;
+      py.textContent = pyEquivalent(sel, list.length);
     } catch (err) {
       clearHighlights();
-      box.innerHTML = '<span class="trainer__err">' + esc(err.name + ': ' + err.message) + '</span>';
+      box.innerHTML = '';
+      box.appendChild(el('span', 'trainer__err', esc(humanError(err, state.mode))));
+      suggestBox(box, sel);
+      var raw = document.createElement('span');
+      raw.className = 'trainer__raw';
+      raw.textContent = err.name + ': ' + err.message;
+      box.appendChild(raw);
       document.querySelector('.trainer [data-role=count]').textContent = '!';
       py.textContent = '';
     }
@@ -282,7 +366,11 @@
     });
     var params = new URLSearchParams(location.search);
     if (params.get('q')) {
-      document.querySelector('.trainer [data-role=sel]').value = params.get('q');
+      var expr = params.get('q');
+      document.querySelector('.trainer [data-role=sel]').value = expr;
+      // Выражение можно передать ссылкой: режим подбирается по синтаксису, ?syntax= перекрывает.
+      var kind = params.get('syntax') || looksLike(expr);
+      if (kind && kind !== state.mode) setMode(kind);
       if (!state.open) toggle();
       run();
     }

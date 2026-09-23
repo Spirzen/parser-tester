@@ -3,7 +3,7 @@
 import { mkdir, rm, cp, readFile, writeFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { nav, footer, taskCards, pageIdOf, prefixFor, escapeHtml, SITE_NAME, PROJECT } from './templates.mjs';
+import { nav, footer, taskCards, lessonNav, pageIdOf, prefixFor, escapeHtml, SITE_NAME, PROJECT, LESSON_ROUTES } from './templates.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const SITE = path.join(ROOT, 'site');
@@ -44,7 +44,20 @@ if (existsSync(tasksDir)) {
 }
 await writeFile(path.join(DIST, 'data', 'tasks.json'), JSON.stringify(allTasks, null, 2) + '\n');
 
-// 3. Внедрение маркеров
+// 3. Маршруты уроков: заголовки страниц нужны, чтобы подпись «Дальше» была осмысленной
+const titles = {};
+for (const [mod, route] of Object.entries(LESSON_ROUTES)) {
+  for (const file of route) {
+    const rel = `${mod}/${file}`;
+    const full = path.join(DIST, rel);
+    if (!existsSync(full)) throw new Error(`LESSON_ROUTES: нет страницы ${rel}`);
+    const src = await readFile(full, 'utf8');
+    const h1 = src.match(/<h1[^>]*>([\s\S]*?)<\/h1>/);
+    titles[rel] = h1 ? h1[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() : file;
+  }
+}
+
+// 4. Внедрение маркеров
 let pages = 0;
 for await (const full of walk(DIST)) {
   if (!full.endsWith('.html')) continue;
@@ -60,8 +73,10 @@ for await (const full of walk(DIST)) {
     return taskCards(pageId, list);
   });
 
-  html = html.replace(/<script[^>]+assets\/js\/trainer\.js"[^>]*><\/script>/g, (match) => {
-    const p = prefixFor(rel);
+  const route = lessonNav(rel, titles);
+  if (route) html = html.replace(/<\/main>/, () => `${route}\n</main>`);
+
+  html = html.replace(/<script[^>]+assets\/js\/trainer\.js"[^>]*><\/script>/g, (match) => {    const p = prefixFor(rel);
     return `${match}\n<script src="${p}assets/js/common.js" defer></script>`;
   });
 
@@ -78,7 +93,7 @@ for await (const full of walk(DIST)) {
   pages += 1;
 }
 
-// 4. sitemap.xml и RSS из собранной карты страниц
+// 5. sitemap.xml и RSS из собранной карты страниц
 const urls = [];
 for await (const full of walk(DIST)) {
   if (!full.endsWith('.html')) continue;
