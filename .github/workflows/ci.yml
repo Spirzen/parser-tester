@@ -108,12 +108,12 @@ jobs:
       - run: |
           node tools/serve.mjs --port 8000 > server.log 2>&1 &
           for i in $(seq 1 20); do curl -sf http://127.0.0.1:8000/index.html > /dev/null && break; sleep 1; done
-      - name: Каталог: 12 карточек без дублей
+      - name: "Каталог: 12 карточек без дублей"
         run: |
           scrapy runspider examples/06_scrapy_spider.py -s TRAINER_BASE=http://127.0.0.1:8000 -O items.jsonl
           test "$(wc -l < items.jsonl)" -eq 12
           python -c "import json;rows=[json.loads(l) for l in open('items.jsonl',encoding='utf-8')];assert len({r['sku'] for r in rows})==12, rows[:2];assert all(r['price'] for r in rows);print('ok', sorted(r['sku'] for r in rows))"
-      - name: Цитаты: две страницы по rel=next
+      - name: "Цитаты: две страницы по rel=next"
         run: |
           scrapy runspider examples/06_scrapy_spider.py -t quotes -s TRAINER_BASE=http://127.0.0.1:8000 -O quotes.jsonl
           python -c "import json;rows=[json.loads(l) for l in open('quotes.jsonl',encoding='utf-8')];assert len(rows)==20, len(rows);assert all(r['author'] for r in rows);print('ok', len(rows))"

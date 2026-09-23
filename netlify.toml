@@ -5,17 +5,9 @@
   command = "npm run build"
   publish = "dist"
 
-# Настоящий 301: парсер видит его в заголовке Location, а не в meta refresh.
-[[redirects]]
-  from = "/old/catalog.html"
-  to = "/selectors/products.html"
-  status = 301
-
-[[redirects]]
-  from = "/promo/2024"
-  to = "/pagination/index.html"
-  status = 302
-  force = true
+# Настоящие 301/302 лежат в site/_redirects — сборка кладёт этот файл в dist,
+# и Netlify читает его сам. Держим правила в одном месте, чтобы они не разъезжались
+# с Cloudflare Pages, который понимает только _redirects.
 
 # Заголовки для урока про CORS и content-type у «JSON API».
 [[headers]]

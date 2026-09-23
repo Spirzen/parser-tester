@@ -67,6 +67,12 @@ for await (const full of walk(DIST)) {
 
   html = html.replace(/<link rel="stylesheet" href="([^"]*)assets\/css\/main\.css" \/>/, (match, p) => `${match}\n  <link rel="icon" href="${p}favicon.svg" type="image/svg+xml" />`);
 
+  // 404 отдаётся сервером на любом пути, поэтому её относительные ссылки разрешались бы
+  // относительно папки запроса (/forms/post.html -> /forms/assets/...). base это чинит.
+  if (rel === '404.html') {
+    html = html.replace(/(<meta name="viewport"[^>]*\/>)/, `$1\n  <base href="${BASE_URL}/" />`);
+  }
+
   if (/<title>/.test(html) === false) throw new Error(`${rel}: нет <title>`);
   await writeFile(full, html);
   pages += 1;

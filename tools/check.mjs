@@ -53,7 +53,7 @@ for (const r of htmlFiles) {
   if (/<!--\s*inject:/.test(html)) fail(`${r}: маркер сборки остался в выводе`);
   if (!NO_TRAINER.has(r) && !/assets\/js\/trainer\.js/.test(html)) fail(`${r}: нет подключенного тренажёра селекторов`);
   if (!/<body[^>]+data-page="/.test(html)) fail(`${r}: у <body> нет data-page`);
-  if (/\s(src|href)="\/(?!\/)/.test(html)) fail(`${r}: абсолютный путь «/...» — сайт лежит в подпапке, используйте относительные пути`);
+  if (/\s(src|href)="\/(?!\/)/.test(html.replace(/<base\b[^>]*>/g, ''))) fail(`${r}: абсолютный путь «/...» — сайт лежит в подпапке, используйте относительные пути`);
 
   // внешние ресурсы
   for (const m of html.matchAll(/(?:src|href)="(https?:)?\/\/[^"]+"/g)) {
@@ -78,7 +78,8 @@ function resolve(from, href) {
 let linkCount = 0;
 for (const [r, rawHtml] of pages) {
   // В учебном тексте много примеров разметки внутри <pre>/<code>: ссылки проверяем только в настоящей вёрстке.
-  const html = rawHtml.replace(/<pre[\s\S]*?<\/pre>/g, '').replace(/<code[\s\S]*?<\/code>/g, '');
+  // <base href> — директива разрешения путей, а не ссылка: страница 404 намеренно её получает.
+  const html = rawHtml.replace(/<pre[\s\S]*?<\/pre>/g, '').replace(/<code[\s\S]*?<\/code>/g, '').replace(/<base\b[^>]*>/g, '');
   for (const m of html.matchAll(/(?:href|src|action|data-src)="([^"#][^"]*)"/g)) {
     const href = m[1].trim();
     if (/^(https?:|mailto:|javascript:|data:|tel:)/.test(href)) continue;
@@ -146,9 +147,20 @@ const sitemap = await readFile(path.join(DIST, 'sitemap.xml'), 'utf8');
 const locs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
 if (!locs.length) fail('sitemap.xml пуст');
 for (const loc of locs) {
-  const target = loc.replace(/^https?:\/\/[^/]+/, '').replace(/^\//, '');
-  const key = target === '' ? 'index.html' : target;
-  if (!pages.has(key)) fail(`sitemap.xml: страницы нет в сборке — ${key}`);
+  // Адрес публикации — домен плюс подпапка репозитория (/parser-tester/…).
+  // Срезаем префикс подбором: ключ страницы — самый длинный суффикс пути, который есть в сборке.
+  const segs = loc.replace(/^https?:\/\/[^/]+/, '').split('/').filter(Boolean);
+  // Корень сайта пишется как «/» или «/<подпапка>/» — без имени файла: это index.html.
+  const bare = !segs.some((s) => s.endsWith('.html'));
+  let key = bare && pages.has('index.html') ? 'index.html' : null;
+  for (let i = 0; key === null && i < segs.length; i += 1) {
+    const cand = segs.slice(i).join('/') || 'index.html';
+    if (pages.has(cand)) {
+      key = cand;
+      break;
+    }
+  }
+  if (!key) fail(`sitemap.xml: страницы нет в сборке — ${loc}`);
 }
 if (locs.length !== pages.size - 1) fail(`sitemap.xml: ${locs.length} URL, страниц ${pages.size} (без 404)`);
 
@@ -162,6 +174,11 @@ if (existsSync(path.join(DIST, 'feed.xml'))) {
     if (items !== articles.articles.length) fail(`feed.xml: ${items} item, в articles.json ${articles.articles.length}`);
   }
 }
+
+// 404 отдаётся на любом пути: без <base> её ссылки разрешаются относительно папки запроса,
+// и страница на вложенном адресе теряет стили, favicon и навигацию.
+const notFoundPage = await readFile(path.join(DIST, '404.html'), 'utf8');
+if (!/<base href="[^"]*" \/>/.test(notFoundPage)) fail('404.html: нет <base href> — страница потеряет ассеты на вложенном пути');
 
 // ---------- 5. Чек-лист учебных конструкций ----------
 const all = [...pages.values()].join('\n');

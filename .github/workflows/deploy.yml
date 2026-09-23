@@ -18,14 +18,13 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
-environment:
-  name: github-pages
-  url: ${{ steps.deploy.outputs.page_url }}
-
 jobs:
   deploy:
     name: Публикация dist
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
